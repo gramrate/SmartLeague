@@ -3,6 +3,7 @@ package service_provider
 import (
 	"SmartLeague/internal/adapters/controller/api/validator"
 	"SmartLeague/pkg/logger"
+	"database/sql"
 
 	"github.com/go-playground/form"
 	"github.com/minio/minio-go/v7"
@@ -20,6 +21,7 @@ type ServiceProvider struct {
 
 	redis *redis.Client
 	minio *minio.Client
+	sqlDB *sql.DB
 
 	logger      *logger.Logger
 	validator   *validator.Validator
@@ -29,6 +31,7 @@ type ServiceProvider struct {
 	tokenService     tokenService
 	cookieService    cookieService
 	userService      userService
+	profileService   profileService
 }
 
 func New() *ServiceProvider {

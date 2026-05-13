@@ -5,6 +5,7 @@ import (
 	"SmartLeague/internal/adapters/app"
 	"SmartLeague/internal/adapters/controller/api/middleware/auth"
 	"SmartLeague/internal/adapters/controller/api/middleware/role"
+	"SmartLeague/internal/adapters/controller/api/v1/profile"
 	"SmartLeague/internal/adapters/controller/api/v1/ping"
 	"SmartLeague/internal/adapters/controller/api/v1/token"
 	"SmartLeague/internal/adapters/controller/api/v1/user"
@@ -83,4 +84,7 @@ func addRouters(app *app.App) {
 
 	userHandler := user.NewHandler(serviceProvider.UserService(), serviceProvider.CookieService(), serviceProvider.JWTConfig(), serviceProvider.ServerConfig(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
 	userHandler.Setup(apiV1)
+
+	profileHandler := profile.NewHandler(serviceProvider.ProfileService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
+	profileHandler.Setup(apiV1)
 }
