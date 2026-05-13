@@ -17,34 +17,7 @@ type Repo struct {
 }
 
 func NewRepo(db *sql.DB) (*Repo, error) {
-	r := &Repo{db: db}
-	if err := r.ensureSchema(context.Background()); err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-func (r *Repo) ensureSchema(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx, `
-CREATE TABLE IF NOT EXISTS profiles (
-	id uuid PRIMARY KEY,
-	nickname text NOT NULL DEFAULT '',
-	name text NOT NULL,
-	show_name boolean NOT NULL DEFAULT true,
-	description text NULL,
-	email text NOT NULL,
-	password_hash text NOT NULL,
-	club_id uuid NULL,
-	club_state smallint NOT NULL DEFAULT 0,
-	role smallint NOT NULL DEFAULT 0,
-	created_at timestamptz NOT NULL DEFAULT now(),
-	updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX IF NOT EXISTS profiles_email_uq ON profiles (lower(email));
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS club_id uuid NULL;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS club_state smallint NOT NULL DEFAULT 0;
-`)
-	return err
+	return &Repo{db: db}, nil
 }
 
 type Profile struct {

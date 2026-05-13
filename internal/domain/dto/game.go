@@ -33,6 +33,14 @@ type GetGameRequest struct {
 
 type GetGameResponse Game
 
+type GameFull struct {
+	Game
+	ParticipantIDs []uuid.UUID     `json:"participant_ids"`
+	Results        []GameResultRow `json:"results"`
+}
+
+type GetGameFullResponse GameFull
+
 type GetSeriesGamesRequest struct {
 	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Limit    *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
@@ -53,6 +61,10 @@ type UpdateGameRequest struct {
 }
 
 type UpdateGameResponse Game
+
+type DeleteGameRequest struct {
+	ID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+}
 
 type SetGameParticipantsRequest struct {
 	GameID         uuid.UUID   `json:"-" validate:"required,uuid" swaggerignore:"true"`
@@ -92,4 +104,3 @@ type GetSeriesLeaderboardResponse struct {
 	Items      []*LeaderboardRow `json:"items"`
 	Pagination PaginationInfo    `json:"pagination"`
 }
-

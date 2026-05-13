@@ -273,6 +273,90 @@ LIMIT $2 OFFSET $3
 	return out, total, nil
 }
 
+func (r *Repo) ListGameParticipants(ctx context.Context, gameID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := r.db.QueryContext(ctx, `SELECT profile_id FROM game_participants WHERE game_id=$1 ORDER BY created_at ASC`, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (r *Repo) ListGameResults(ctx context.Context, gameID uuid.UUID) ([]model.GameResultRow, error) {
+	rows, err := r.db.QueryContext(ctx, `
+SELECT game_id, profile_id, place, role, best_move, first_killed, compensation, yellow_cards, removed, extra_points, total_points
+FROM game_results
+WHERE game_id=$1
+ORDER BY profile_id ASC
+`, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []model.GameResultRow
+	for rows.Next() {
+		var row model.GameResultRow
+		var place sql.NullInt64
+		var role sql.NullString
+		if err := rows.Scan(
+			&row.GameID,
+			&row.ProfileID,
+			&place,
+			&role,
+			&row.BestMove,
+			&row.FirstKilled,
+			&row.Compensation,
+			&row.YellowCards,
+			&row.Removed,
+			&row.ExtraPoints,
+			&row.TotalPoints,
+		); err != nil {
+			return nil, err
+		}
+		if place.Valid {
+			p := int(place.Int64)
+			row.Place = &p
+		}
+		if role.Valid {
+			rv := role.String
+			row.Role = &rv
+		}
+		out = append(out, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (r *Repo) DeleteGame(ctx context.Context, id uuid.UUID) error {
+	res, err := r.db.ExecContext(ctx, `DELETE FROM games WHERE id=$1`, id)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errorz.GameNotFound
+	}
+	return nil
+}
+
 func ptrToNullUUID(p *uuid.UUID) any {
 	if p == nil || *p == uuid.Nil {
 		return nil

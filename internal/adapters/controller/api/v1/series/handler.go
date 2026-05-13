@@ -18,17 +18,26 @@ type seriesService interface {
 	GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req *dto.GetClubSeriesRequest) (*dto.GetClubSeriesResponse, error)
 	UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateSeriesRequest) (*dto.UpdateSeriesResponse, error)
 	DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteSeriesRequest) error
+	GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error)
+	Join(ctx context.Context, req *dto.JoinSeriesRequest) error
+	Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error
+	GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error)
+}
 
-	CreateGame(ctx context.Context, requesterID uuid.UUID, req *dto.CreateGameRequest) (*dto.CreateGameResponse, error)
-	GetSeriesGames(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesGamesRequest) (*dto.GetSeriesGamesResponse, error)
-	UpdateGame(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateGameRequest) (*dto.UpdateGameResponse, error)
-	SetGameParticipants(ctx context.Context, requesterID uuid.UUID, req *dto.SetGameParticipantsRequest) error
-	UpsertGameResults(ctx context.Context, requesterID uuid.UUID, req *dto.UpsertGameResultsRequest) error
-	GetSeriesLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error)
+type gameService interface {
+	Create(ctx context.Context, requesterID uuid.UUID, req *dto.CreateGameRequest) (*dto.CreateGameResponse, error)
+	ListBySeries(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesGamesRequest) (*dto.GetSeriesGamesResponse, error)
+	Get(ctx context.Context, requesterID *uuid.UUID, req *dto.GetGameRequest) (*dto.GetGameResponse, error)
+	GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.GetGameRequest) (*dto.GetGameFullResponse, error)
+	Update(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateGameRequest) (*dto.UpdateGameResponse, error)
+	Delete(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteGameRequest) error
+	SetParticipants(ctx context.Context, requesterID uuid.UUID, req *dto.SetGameParticipantsRequest) error
+	UpsertResults(ctx context.Context, requesterID uuid.UUID, req *dto.UpsertGameResultsRequest) error
 }
 
 type handler struct {
 	seriesService  seriesService
+	gameService    gameService
 	authMiddleware *auth.Middleware
 	roleMiddleware *role.Middleware
 	validator      *validator.Validator
@@ -37,6 +46,7 @@ type handler struct {
 
 func NewHandler(
 	seriesService seriesService,
+	gameService gameService,
 	authMiddleware *auth.Middleware,
 	roleMiddleware *role.Middleware,
 	validator *validator.Validator,
@@ -44,6 +54,7 @@ func NewHandler(
 ) *handler {
 	return &handler{
 		seriesService:  seriesService,
+		gameService:    gameService,
 		authMiddleware: authMiddleware,
 		roleMiddleware: roleMiddleware,
 		validator:      validator,
@@ -59,12 +70,18 @@ func (h *handler) Setup(router *echo.Group) {
 
 	router.GET("/club/:id/series", h.GetClubSeries)
 
+	router.GET("/series/:id/participants", h.GetParticipants)
+	router.POST("/series/:id/join", h.JoinSeries, h.authMiddleware.RequireAuth)
+	router.POST("/series/:id/leave", h.LeaveSeries, h.authMiddleware.RequireAuth)
+
 	router.POST("/series/:id/games", h.CreateGame, h.authMiddleware.RequireAuth)
 	router.GET("/series/:id/games", h.GetSeriesGames)
 	router.GET("/series/:id/leaderboard", h.GetLeaderboard)
 
+	router.GET("/game/:id", h.GetGame)
+	router.GET("/game/:id/full", h.GetGameFull)
+	router.DELETE("/game/:id", h.DeleteGame, h.authMiddleware.RequireAuth)
 	router.PATCH("/game/:id", h.UpdateGame, h.authMiddleware.RequireAuth)
 	router.POST("/game/:id/participants", h.SetParticipants, h.authMiddleware.RequireAuth)
 	router.POST("/game/:id/results", h.UpsertResults, h.authMiddleware.RequireAuth)
 }
-

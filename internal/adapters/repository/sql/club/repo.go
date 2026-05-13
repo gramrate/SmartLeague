@@ -16,46 +16,7 @@ type Repo struct {
 }
 
 func NewRepo(db *sql.DB) (*Repo, error) {
-	r := &Repo{db: db}
-	if err := r.ensureSchema(context.Background()); err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-func (r *Repo) ensureSchema(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx, `
-CREATE TABLE IF NOT EXISTS clubs (
-	id uuid PRIMARY KEY,
-	creator_id uuid NOT NULL,
-	name text NOT NULL,
-	description text NULL,
-	created_at timestamptz NOT NULL DEFAULT now(),
-	updated_at timestamptz NOT NULL DEFAULT now()
-);
-
--- FK to profiles for creator_id (profiles must exist)
-DO $$
-BEGIN
-	ALTER TABLE clubs
-		ADD CONSTRAINT clubs_creator_id_fk
-		FOREIGN KEY (creator_id) REFERENCES profiles(id) ON DELETE RESTRICT;
-EXCEPTION
-	WHEN duplicate_object THEN NULL;
-END $$;
-
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS club_id uuid NULL;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS club_state smallint NOT NULL DEFAULT 0;
-DO $$
-BEGIN
-	ALTER TABLE profiles
-		ADD CONSTRAINT profiles_club_id_fk
-		FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE SET NULL;
-EXCEPTION
-	WHEN duplicate_object THEN NULL;
-END $$;
-`)
-	return err
+	return &Repo{db: db}, nil
 }
 
 func (r *Repo) Create(ctx context.Context, c model.Club) (*model.Club, error) {

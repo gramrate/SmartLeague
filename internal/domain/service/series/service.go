@@ -11,6 +11,11 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	maxParticipantsDefault   = 20
+	maxParticipantsSportMafia = 10
+)
+
 type repo interface {
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
 
@@ -20,12 +25,12 @@ type repo interface {
 	UpdateSeries(ctx context.Context, id uuid.UUID, patch model.SeriesUpdatePatch) (*model.Series, error)
 	DeleteSeries(ctx context.Context, id uuid.UUID) error
 
-	CreateGame(ctx context.Context, g model.Game) (*model.Game, error)
-	GetGameByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
-	ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.Game, int, error)
-	UpdateGame(ctx context.Context, id uuid.UUID, patch model.GameUpdatePatch) (*model.Game, error)
-	ReplaceGameParticipants(ctx context.Context, gameID uuid.UUID, participantIDs []uuid.UUID) error
-	UpsertGameResults(ctx context.Context, gameID uuid.UUID, rows []model.GameResultRow) error
+	AddSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) error
+	RemoveSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) error
+	CountSeriesParticipants(ctx context.Context, seriesID uuid.UUID) (int, error)
+	ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.Profile, int, error)
+	IsSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) (bool, error)
+
 	ListSeriesLeaderboard(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.LeaderboardRow, int, error)
 }
 
@@ -37,10 +42,22 @@ func NewService(repo repo) *Service {
 	return &Service{repo: repo}
 }
 
-func toSeriesDTO(s *model.Series) *dto.Series {
+func canManageClub(state types.ClubState) bool {
+	return state == types.ClubStateLeader || state == types.ClubStatePresident
+}
+
+func maxParticipantsForGameType(gameType types.GameType) int {
+	if gameType == types.GameTypeSportMafia {
+		return maxParticipantsSportMafia
+	}
+	return maxParticipantsDefault
+}
+
+func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 	return &dto.Series{
 		ID:           s.ID,
 		ClubID:       s.ClubID,
+		CreatorID:    creatorID,
 		Name:         s.Name,
 		ScoringRules: s.ScoringRules,
 		StartAt:      s.StartAt,
@@ -53,20 +70,18 @@ func toSeriesDTO(s *model.Series) *dto.Series {
 	}
 }
 
-func toGameDTO(g *model.Game) *dto.Game {
-	return &dto.Game{
-		ID:          g.ID,
-		SeriesID:    g.SeriesID,
-		Name:        g.Name,
-		Number:      g.Number,
-		Description: g.Description,
-		HostID:      g.HostID,
-		Status:      g.Status,
+func profileToDTO(p *model.Profile) *dto.Profile {
+	return &dto.Profile{
+		ID:          p.ID,
+		Nickname:    p.Nickname,
+		Name:        p.Name,
+		ShowName:    p.ShowName,
+		Description: p.Description,
+		Email:       p.Email,
+		ClubID:      p.ClubID,
+		ClubState:   p.ClubState,
+		Role:        p.Role,
 	}
-}
-
-func canManageClub(state types.ClubState) bool {
-	return state == types.ClubStateLeader || state == types.ClubStatePresident
 }
 
 func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.CreateSeriesRequest) (*dto.CreateSeriesResponse, error) {
@@ -96,7 +111,7 @@ func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		return nil, err
 	}
 
-	resp := dto.CreateSeriesResponse(*toSeriesDTO(created))
+	resp := dto.CreateSeriesResponse(*seriesToDTO(created, &requesterID))
 	return &resp, nil
 }
 
@@ -104,6 +119,17 @@ func (s *Service) GetSeries(ctx context.Context, requesterID *uuid.UUID, req *dt
 	ser, err := s.repo.GetSeriesByID(ctx, req.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	var creatorID *uuid.UUID
+	if requesterID != nil {
+		clubID, clubState, err := s.repo.GetProfileClubState(ctx, *requesterID)
+		if err != nil {
+			return nil, err
+		}
+		if clubID != nil && *clubID == ser.ClubID && canManageClub(clubState) {
+			creatorID = &ser.CreatorID
+		}
 	}
 
 	if ser.IsClosed {
@@ -119,7 +145,7 @@ func (s *Service) GetSeries(ctx context.Context, requesterID *uuid.UUID, req *dt
 		}
 	}
 
-	resp := dto.GetSeriesResponse(*toSeriesDTO(ser))
+	resp := dto.GetSeriesResponse(*seriesToDTO(ser, creatorID))
 	return &resp, nil
 }
 
@@ -134,12 +160,14 @@ func (s *Service) GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req
 	}
 
 	includeClosed := false
+	isLeader := false
 	if requesterID != nil {
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+		clubID, clubState, err := s.repo.GetProfileClubState(ctx, *requesterID)
 		if err != nil {
 			return nil, err
 		}
 		includeClosed = clubID != nil && *clubID == req.ClubID
+		isLeader = includeClosed && canManageClub(clubState)
 	}
 
 	items, total, err := s.repo.ListSeriesByClub(ctx, req.ClubID, includeClosed, limit, offset)
@@ -149,7 +177,11 @@ func (s *Service) GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req
 
 	outItems := make([]*dto.Series, 0, len(items))
 	for _, it := range items {
-		outItems = append(outItems, toSeriesDTO(it))
+		var creatorID *uuid.UUID
+		if isLeader {
+			creatorID = &it.CreatorID
+		}
+		outItems = append(outItems, seriesToDTO(it, creatorID))
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
@@ -200,7 +232,7 @@ func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *
 	if err != nil {
 		return nil, err
 	}
-	resp := dto.UpdateSeriesResponse(*toSeriesDTO(updated))
+	resp := dto.UpdateSeriesResponse(*seriesToDTO(updated, &updated.CreatorID))
 	return &resp, nil
 }
 
@@ -219,46 +251,12 @@ func (s *Service) DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *
 	return s.repo.DeleteSeries(ctx, req.ID)
 }
 
-func (s *Service) CreateGame(ctx context.Context, requesterID uuid.UUID, req *dto.CreateGameRequest) (*dto.CreateGameResponse, error) {
+func (s *Service) GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error) {
 	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
 	if err != nil {
 		return nil, err
 	}
-	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
-	if err != nil {
-		return nil, err
-	}
-	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
-		return nil, errorz.Unauthorized
-	}
 
-	name := ""
-	if req.Name != nil {
-		name = *req.Name
-	}
-
-	created, err := s.repo.CreateGame(ctx, model.Game{
-		ID:          uuid.New(),
-		SeriesID:    req.SeriesID,
-		Name:        name,
-		Number:      req.Number,
-		Description: req.Description,
-		HostID:      req.HostID,
-		Status:      req.Status,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	resp := dto.CreateGameResponse(*toGameDTO(created))
-	return &resp, nil
-}
-
-func (s *Service) GetSeriesGames(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesGamesRequest) (*dto.GetSeriesGamesResponse, error) {
-	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
-	if err != nil {
-		return nil, err
-	}
 	if ser.IsClosed {
 		if requesterID == nil {
 			return nil, errorz.Unauthorized
@@ -281,14 +279,14 @@ func (s *Service) GetSeriesGames(ctx context.Context, requesterID *uuid.UUID, re
 		offset = *req.Offset
 	}
 
-	items, total, err := s.repo.ListGamesBySeries(ctx, req.SeriesID, limit, offset)
+	items, total, err := s.repo.ListSeriesParticipants(ctx, req.SeriesID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	outItems := make([]*dto.Game, 0, len(items))
+	outItems := make([]*dto.Profile, 0, len(items))
 	for _, it := range items {
-		outItems = append(outItems, toGameDTO(it))
+		outItems = append(outItems, profileToDTO(it))
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
@@ -298,7 +296,7 @@ func (s *Service) GetSeriesGames(ctx context.Context, requesterID *uuid.UUID, re
 		currentPage = 1
 	}
 
-	return &dto.GetSeriesGamesResponse{
+	return &dto.GetSeriesParticipantsResponse{
 		Items: outItems,
 		Pagination: dto.PaginationInfo{
 			TotalItems:  total,
@@ -310,95 +308,39 @@ func (s *Service) GetSeriesGames(ctx context.Context, requesterID *uuid.UUID, re
 	}, nil
 }
 
-func (s *Service) UpdateGame(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateGameRequest) (*dto.UpdateGameResponse, error) {
-	game, err := s.repo.GetGameByID(ctx, req.ID)
+func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
 	if err != nil {
-		return nil, err
-	}
-	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
-	if err != nil {
-		return nil, err
-	}
-	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
-	if err != nil {
-		return nil, err
-	}
-	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
-		return nil, errorz.Unauthorized
+		return err
 	}
 
-	updated, err := s.repo.UpdateGame(ctx, req.ID, model.GameUpdatePatch{
-		Name:        req.Name,
-		Description: req.Description,
-		HostID:      req.HostID,
-		Status:      req.Status,
-	})
-	if err != nil {
-		return nil, err
+	if ser.IsClosed {
+		clubID, _, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
+		if err != nil {
+			return err
+		}
+		if clubID == nil || *clubID != ser.ClubID {
+			return errorz.Unauthorized
+		}
 	}
-	resp := dto.UpdateGameResponse(*toGameDTO(updated))
-	return &resp, nil
-}
 
-func (s *Service) SetGameParticipants(ctx context.Context, requesterID uuid.UUID, req *dto.SetGameParticipantsRequest) error {
-	game, err := s.repo.GetGameByID(ctx, req.GameID)
+	maxParticipants := maxParticipantsForGameType(ser.GameType)
+	count, err := s.repo.CountSeriesParticipants(ctx, req.SeriesID)
 	if err != nil {
 		return err
 	}
-	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
-	if err != nil {
-		return err
-	}
-	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
-	if err != nil {
-		return err
-	}
-	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
-		return errorz.Unauthorized
-	}
-	if ser.GameType == types.GameTypeSportMafia && len(req.ParticipantIDs) != 10 {
+	if count >= maxParticipants {
 		return errorz.InvalidRequest
 	}
-	return s.repo.ReplaceGameParticipants(ctx, req.GameID, req.ParticipantIDs)
+
+	return s.repo.AddSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
 }
 
-func (s *Service) UpsertGameResults(ctx context.Context, requesterID uuid.UUID, req *dto.UpsertGameResultsRequest) error {
-	game, err := s.repo.GetGameByID(ctx, req.GameID)
-	if err != nil {
-		return err
-	}
-	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
-	if err != nil {
-		return err
-	}
-	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
-	if err != nil {
-		return err
-	}
-	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
-		return errorz.Unauthorized
-	}
-
-	rows := make([]model.GameResultRow, 0, len(req.Rows))
-	for _, rrow := range req.Rows {
-		rows = append(rows, model.GameResultRow{
-			GameID:       req.GameID,
-			ProfileID:    rrow.ProfileID,
-			Place:        rrow.Place,
-			Role:         rrow.Role,
-			BestMove:     rrow.BestMove,
-			FirstKilled:  rrow.FirstKilled,
-			Compensation: rrow.Compensation,
-			YellowCards:  rrow.YellowCards,
-			Removed:      rrow.Removed,
-			ExtraPoints:  rrow.ExtraPoints,
-			TotalPoints:  rrow.TotalPoints,
-		})
-	}
-	return s.repo.UpsertGameResults(ctx, req.GameID, rows)
+func (s *Service) Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error {
+	return s.repo.RemoveSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
 }
 
-func (s *Service) GetSeriesLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error) {
+func (s *Service) GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error) {
 	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
 	if err != nil {
 		return nil, err
@@ -453,3 +395,4 @@ func (s *Service) GetSeriesLeaderboard(ctx context.Context, requesterID *uuid.UU
 		},
 	}, nil
 }
+

@@ -1,7 +1,7 @@
 package service_provider
 
 import (
-	refreshTokenMem "SmartLeague/internal/adapters/repository/memory/refresh_token"
+	refreshTokenSQL "SmartLeague/internal/adapters/repository/sql/refresh_token"
 	accessTokenValkey "SmartLeague/internal/adapters/repository/valkey/access_token"
 	"SmartLeague/internal/domain/service/token"
 	"context"
@@ -21,7 +21,7 @@ type tokenService interface {
 func (s *ServiceProvider) TokenService() tokenService {
 	if s.tokenService == nil {
 		s.tokenService = token.NewTokenService(
-			refreshTokenMem.New(),
+			refreshTokenSQL.NewRepo(s.SQLDB()),
 			accessTokenValkey.NewTokenRepo(s.Redis()),
 			s.JWTService(),
 			s.JWTConfig(),

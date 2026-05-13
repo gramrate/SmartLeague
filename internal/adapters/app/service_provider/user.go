@@ -1,7 +1,7 @@
 package service_provider
 
 import (
-	userMem "SmartLeague/internal/adapters/repository/memory/user"
+	userSQL "SmartLeague/internal/adapters/repository/sql/user"
 	"SmartLeague/internal/domain/dto"
 	"SmartLeague/internal/domain/service/user"
 	"SmartLeague/internal/domain/types"
@@ -24,7 +24,7 @@ type userService interface {
 
 func (s *ServiceProvider) UserService() userService {
 	if s.userService == nil {
-		s.userService = user.NewUserService(userMem.New(), s.TokenService(), s.ServerConfig())
+		s.userService = user.NewUserService(userSQL.NewRepo(s.SQLDB()), s.TokenService(), s.ServerConfig())
 	}
 	return s.userService
 }

@@ -9,6 +9,18 @@ import (
 )
 
 func (h *handler) GetClubSeries(c echo.Context) error {
+	// Get club series list (paginated)
+	//
+	// @Summary Get club series list
+	// @Tags series
+	// @Produce json
+	// @Param id path string true "Club ID"
+	// @Param limit query int false "limit"
+	// @Param offset query int false "offset"
+	// @Success 200 {object} dto.GetClubSeriesResponse
+	// @Failure 400 {object} dto.HTTPStatus
+	// @Failure 500 {object} dto.HTTPStatus
+	// @Router /api/v1/club/{id}/series [get]
 	clubID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
@@ -29,4 +41,3 @@ func (h *handler) GetClubSeries(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

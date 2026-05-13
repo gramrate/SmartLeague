@@ -4,6 +4,7 @@ import (
 	"SmartLeague/pkg/closer"
 	"context"
 	"database/sql"
+	"SmartLeague/internal/adapters/repository/sql/migrate"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -24,6 +25,10 @@ func (s *ServiceProvider) SQLDB() *sql.DB {
 			s.Logger().Panicf("failed to connect to sql database: %v", err)
 		}
 
+		if err := migrate.Up(db); err != nil {
+			s.Logger().Panicf("failed to apply migrations: %v", err)
+		}
+
 		closer.Add(func() error {
 			s.Logger().Info("Closing SQL database connection")
 			return db.Close()
@@ -34,4 +39,3 @@ func (s *ServiceProvider) SQLDB() *sql.DB {
 
 	return s.sqlDB
 }
-

@@ -9,6 +9,17 @@ import (
 )
 
 func (h *handler) GetSeries(c echo.Context) error {
+	// Get series by id
+	//
+	// @Summary Get series by id
+	// @Tags series
+	// @Produce json
+	// @Param id path string true "Series ID"
+	// @Success 200 {object} dto.GetSeriesResponse
+	// @Failure 400 {object} dto.HTTPStatus
+	// @Failure 403 {object} dto.HTTPStatus
+	// @Failure 500 {object} dto.HTTPStatus
+	// @Router /api/v1/series/{id} [get]
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
@@ -20,4 +31,3 @@ func (h *handler) GetSeries(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

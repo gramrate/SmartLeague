@@ -93,6 +93,6 @@ func addRouters(app *app.App) {
 	clubHandler := club.NewHandler(serviceProvider.ClubService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
 	clubHandler.Setup(apiV1)
 
-	seriesHandler := series.NewHandler(serviceProvider.SeriesService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
+	seriesHandler := series.NewHandler(serviceProvider.SeriesService(), serviceProvider.GameService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
 	seriesHandler.Setup(apiV1)
 }
