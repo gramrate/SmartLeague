@@ -1,0 +1,88 @@
+package user
+
+import (
+	"SmartLeague/internal/adapters/controller/api/middleware/auth"
+	"SmartLeague/internal/adapters/controller/api/middleware/role"
+	"SmartLeague/internal/adapters/controller/api/validator"
+	"SmartLeague/internal/domain/dto"
+	"SmartLeague/internal/domain/types"
+	"context"
+	"time"
+
+	"github.com/go-playground/form"
+	"github.com/labstack/echo/v4"
+)
+
+type userService interface {
+	Register(ctx context.Context, req *dto.RegisterUserRequest) (*dto.RegisterUserResponse, error)
+	Login(ctx context.Context, req *dto.LoginUserRequest) (*dto.LoginUserResponse, error)
+	ChangePassword(ctx context.Context, req *dto.ChangePasswordRequest) (*dto.ChangePasswordResponse, error)
+	GetByID(ctx context.Context, req *dto.GetUserRequest) (*dto.GetUserResponse, error)
+	GetAllByFilter(ctx context.Context, req *dto.GetAllByFilterUsersRequest) (*dto.GetAllByFilterUsersResponse, error)
+	UpdateCurrent(ctx context.Context, req *dto.UpdateCurrentUserRequest) (*dto.UpdateCurrentUserResponse, error)
+	UpdateEach(ctx context.Context, req *dto.UpdateEachUserRequest) (*dto.UpdateEachUserResponse, error)
+	Logout(ctx context.Context, req *dto.LogoutRequest) error
+}
+
+type cookieService interface {
+	// Access
+	ClearAccessTokenCookie(c echo.Context, devMode bool)
+
+	// Refresh
+	SetRefreshTokenCookie(c echo.Context, token string, ttl time.Duration, devMode bool)
+	ClearRefreshTokenCookie(c echo.Context, devMode bool)
+}
+
+type jwtConfig interface {
+	RefreshTokenExpires() time.Duration
+}
+
+type serverConfig interface {
+	DevMode() bool
+}
+
+type handler struct {
+	userService    userService
+	cookieService  cookieService
+	jwtConfig      jwtConfig
+	serverConfig   serverConfig
+	authMiddleware *auth.Middleware
+	roleMiddleware *role.Middleware
+	validator      *validator.Validator
+	formDecoder    *form.Decoder
+}
+
+func NewHandler(
+	userService userService,
+	cookieService cookieService,
+	jwtConfig jwtConfig,
+	serverConfig serverConfig,
+	authMiddleware *auth.Middleware,
+	roleMiddleware *role.Middleware,
+	validator *validator.Validator,
+	formDecoder *form.Decoder,
+
+) *handler {
+	return &handler{
+		userService:    userService,
+		cookieService:  cookieService,
+		jwtConfig:      jwtConfig,
+		serverConfig:   serverConfig,
+		authMiddleware: authMiddleware,
+		roleMiddleware: roleMiddleware,
+		validator:      validator,
+		formDecoder:    formDecoder,
+	}
+}
+
+func (h *handler) Setup(router *echo.Group) {
+	router.POST("/user/register", h.Register)
+	router.POST("/user/login", h.Login)
+	router.POST("/user/password", h.ChangePassword, h.authMiddleware.RequireAuth)
+	router.GET("/user", h.GetMe, h.authMiddleware.RequireAuth)
+	router.GET("/user/:id", h.GetById, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
+	router.GET("/user/all", h.GetAllByFilter, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
+	router.PATCH("/user", h.UpdateCurrent, h.authMiddleware.RequireAuth)
+	router.PATCH("/user/:id", h.UpdateEach, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
+	router.POST("/user/logout", h.Logout, h.authMiddleware.RequireAuth)
+}

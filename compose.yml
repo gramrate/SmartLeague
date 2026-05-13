@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: LeechApp
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: LeechPostgres
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:7.2-alpine
+    container_name: LeechValkey
+    env_file:
+      - .env
+    environment:
+      - VALKEY_PASSWORD=${VALKEY_PASSWORD}
+    volumes:
+      - valkey_data:/data
+    command: [ "valkey-server", "--appendonly", "yes", "--requirepass", "${VALKEY_PASSWORD}" ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "-a", "${VALKEY_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  minio:
+    image: minio/minio
+    container_name: LeechMinIO
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  valkey_data:
+  minio_data:
