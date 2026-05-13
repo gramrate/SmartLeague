@@ -8,6 +8,7 @@ import (
 	"SmartLeague/internal/adapters/controller/api/v1/club"
 	"SmartLeague/internal/adapters/controller/api/v1/profile"
 	"SmartLeague/internal/adapters/controller/api/v1/ping"
+	"SmartLeague/internal/adapters/controller/api/v1/series"
 	"SmartLeague/internal/adapters/controller/api/v1/token"
 	"SmartLeague/internal/adapters/controller/api/v1/user"
 	"io"
@@ -91,4 +92,7 @@ func addRouters(app *app.App) {
 
 	clubHandler := club.NewHandler(serviceProvider.ClubService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
 	clubHandler.Setup(apiV1)
+
+	seriesHandler := series.NewHandler(serviceProvider.SeriesService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
+	seriesHandler.Setup(apiV1)
 }

@@ -33,6 +33,7 @@ type ServiceProvider struct {
 	userService      userService
 	profileService   profileService
 	clubService      clubService
+	seriesService    seriesService
 }
 
 func New() *ServiceProvider {
