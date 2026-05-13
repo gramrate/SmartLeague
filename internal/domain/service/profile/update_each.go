@@ -47,7 +47,7 @@ func (s *service) UpdateEach(ctx context.Context, req *dto.UpdateEachProfileRequ
 		Name:         name,
 		ShowName:     req.ShowName,
 		Description:  req.Description,
-		Club:         req.Club,
+		ClubID:       req.ClubID,
 		Email:        email,
 		PasswordHash: passwordHash,
 		Role:         role,

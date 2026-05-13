@@ -15,7 +15,8 @@ type Profile struct {
 	Description  *string
 	Email        string
 	PasswordHash string
-	Club         *string
+	ClubID       *uuid.UUID
+	ClubState    types.ClubState
 	Role         types.Role
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -26,7 +27,8 @@ type ProfileUpdatePatch struct {
 	Name         *string
 	ShowName     *bool
 	Description  *string
-	Club         *string
+	ClubID       *uuid.UUID
+	ClubState    *types.ClubState
 	Email        *string
 	PasswordHash *string
 	Role         *types.Role

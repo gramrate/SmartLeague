@@ -12,7 +12,7 @@ func (s *service) UpdateCurrent(ctx context.Context, req *dto.UpdateCurrentProfi
 		Name:        req.Name,
 		ShowName:    req.ShowName,
 		Description: req.Description,
-		Club:        req.Club,
+		ClubID:      req.ClubID,
 	})
 	if err != nil {
 		return nil, err

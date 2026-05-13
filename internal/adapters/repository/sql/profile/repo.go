@@ -34,12 +34,15 @@ CREATE TABLE IF NOT EXISTS profiles (
 	description text NULL,
 	email text NOT NULL,
 	password_hash text NOT NULL,
-	club text NULL,
+	club_id uuid NULL,
+	club_state smallint NOT NULL DEFAULT 0,
 	role smallint NOT NULL DEFAULT 0,
 	created_at timestamptz NOT NULL DEFAULT now(),
 	updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS profiles_email_uq ON profiles (lower(email));
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS club_id uuid NULL;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS club_state smallint NOT NULL DEFAULT 0;
 `)
 	return err
 }
@@ -54,9 +57,9 @@ func (r *Repo) Create(ctx context.Context, p model.Profile) (*model.Profile, err
 	}
 
 	row := r.db.QueryRowContext(ctx, `
-INSERT INTO profiles (id, nickname, name, show_name, description, email, password_hash, club, role)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-RETURNING id, nickname, name, show_name, description, email, password_hash, club, role, created_at, updated_at
+INSERT INTO profiles (id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+RETURNING id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, created_at, updated_at
 `,
 		p.ID,
 		p.Nickname,
@@ -65,12 +68,14 @@ RETURNING id, nickname, name, show_name, description, email, password_hash, club
 		ptrToNullString(p.Description),
 		p.Email,
 		p.PasswordHash,
-		ptrToNullString(p.Club),
+		ptrToNullUUID(p.ClubID),
+		int16(p.ClubState),
 		int16(p.Role),
 	)
 
 	var desc sql.NullString
-	var club sql.NullString
+	var clubID sql.NullString
+	var clubState int16
 	var role int16
 	var out model.Profile
 	if err := row.Scan(
@@ -81,7 +86,8 @@ RETURNING id, nickname, name, show_name, description, email, password_hash, club
 		&desc,
 		&out.Email,
 		&out.PasswordHash,
-		&club,
+		&clubID,
+		&clubState,
 		&role,
 		&out.CreatedAt,
 		&out.UpdatedAt,
@@ -93,21 +99,23 @@ RETURNING id, nickname, name, show_name, description, email, password_hash, club
 		return nil, err
 	}
 	out.Description = nullStringToPtr(desc)
-	out.Club = nullStringToPtr(club)
+	out.ClubID = nullStringToUUIDPtr(clubID)
+	out.ClubState = types.ClubState(clubState)
 	out.Role = types.Role(role)
 	return &out, nil
 }
 
 func (r *Repo) GetByID(ctx context.Context, id uuid.UUID) (*model.Profile, error) {
 	row := r.db.QueryRowContext(ctx, `
-SELECT id, nickname, name, show_name, description, email, password_hash, club, role, created_at, updated_at
+SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, created_at, updated_at
 FROM profiles
 WHERE id = $1
 `, id)
 
 	var out model.Profile
 	var desc sql.NullString
-	var club sql.NullString
+	var clubID sql.NullString
+	var clubState int16
 	var role int16
 	if err := row.Scan(
 		&out.ID,
@@ -117,7 +125,8 @@ WHERE id = $1
 		&desc,
 		&out.Email,
 		&out.PasswordHash,
-		&club,
+		&clubID,
+		&clubState,
 		&role,
 		&out.CreatedAt,
 		&out.UpdatedAt,
@@ -128,21 +137,23 @@ WHERE id = $1
 		return nil, err
 	}
 	out.Description = nullStringToPtr(desc)
-	out.Club = nullStringToPtr(club)
+	out.ClubID = nullStringToUUIDPtr(clubID)
+	out.ClubState = types.ClubState(clubState)
 	out.Role = types.Role(role)
 	return &out, nil
 }
 
 func (r *Repo) GetByEmail(ctx context.Context, email string) (*model.Profile, error) {
 	row := r.db.QueryRowContext(ctx, `
-SELECT id, nickname, name, show_name, description, email, password_hash, club, role, created_at, updated_at
+SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, created_at, updated_at
 FROM profiles
 WHERE lower(email) = lower($1)
 `, email)
 
 	var out model.Profile
 	var desc sql.NullString
-	var club sql.NullString
+	var clubID sql.NullString
+	var clubState int16
 	var role int16
 	if err := row.Scan(
 		&out.ID,
@@ -152,7 +163,8 @@ WHERE lower(email) = lower($1)
 		&desc,
 		&out.Email,
 		&out.PasswordHash,
-		&club,
+		&clubID,
+		&clubState,
 		&role,
 		&out.CreatedAt,
 		&out.UpdatedAt,
@@ -163,7 +175,8 @@ WHERE lower(email) = lower($1)
 		return nil, err
 	}
 	out.Description = nullStringToPtr(desc)
-	out.Club = nullStringToPtr(club)
+	out.ClubID = nullStringToUUIDPtr(clubID)
+	out.ClubState = types.ClubState(clubState)
 	out.Role = types.Role(role)
 	return &out, nil
 }
@@ -182,7 +195,7 @@ func (r *Repo) List(ctx context.Context, limit, offset int) ([]*model.Profile, i
 	}
 
 	rows, err := r.db.QueryContext(ctx, `
-SELECT id, nickname, name, show_name, description, email, password_hash, club, role, created_at, updated_at
+SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, created_at, updated_at
 FROM profiles
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -196,7 +209,8 @@ LIMIT $1 OFFSET $2
 	for rows.Next() {
 		var p model.Profile
 		var desc sql.NullString
-		var club sql.NullString
+		var clubID sql.NullString
+		var clubState int16
 		var role int16
 		if err := rows.Scan(
 			&p.ID,
@@ -206,7 +220,8 @@ LIMIT $1 OFFSET $2
 			&desc,
 			&p.Email,
 			&p.PasswordHash,
-			&club,
+			&clubID,
+			&clubState,
 			&role,
 			&p.CreatedAt,
 			&p.UpdatedAt,
@@ -214,7 +229,8 @@ LIMIT $1 OFFSET $2
 			return nil, 0, err
 		}
 		p.Description = nullStringToPtr(desc)
-		p.Club = nullStringToPtr(club)
+		p.ClubID = nullStringToUUIDPtr(clubID)
+		p.ClubState = types.ClubState(clubState)
 		p.Role = types.Role(role)
 		out = append(out, &p)
 	}
@@ -248,8 +264,11 @@ func (r *Repo) Update(ctx context.Context, id uuid.UUID, patch model.ProfileUpda
 	if patch.Description != nil {
 		next.Description = patch.Description
 	}
-	if patch.Club != nil {
-		next.Club = patch.Club
+	if patch.ClubID != nil {
+		next.ClubID = patch.ClubID
+	}
+	if patch.ClubState != nil {
+		next.ClubState = *patch.ClubState
 	}
 	if patch.Email != nil {
 		next.Email = *patch.Email
@@ -269,11 +288,12 @@ SET nickname=$2,
     description=$5,
     email=$6,
     password_hash=$7,
-    club=$8,
-    role=$9,
+    club_id=$8,
+    club_state=$9,
+    role=$10,
     updated_at=now()
 WHERE id=$1
-RETURNING id, nickname, name, show_name, description, email, password_hash, club, role, created_at, updated_at
+RETURNING id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, created_at, updated_at
 `,
 		id,
 		next.Nickname,
@@ -282,13 +302,15 @@ RETURNING id, nickname, name, show_name, description, email, password_hash, club
 		ptrToNullString(next.Description),
 		next.Email,
 		next.PasswordHash,
-		ptrToNullString(next.Club),
+		ptrToNullUUID(next.ClubID),
+		int16(next.ClubState),
 		int16(next.Role),
 	)
 
 	var out model.Profile
 	var desc sql.NullString
-	var club sql.NullString
+	var clubID sql.NullString
+	var clubState int16
 	var role int16
 	if err := row.Scan(
 		&out.ID,
@@ -298,7 +320,8 @@ RETURNING id, nickname, name, show_name, description, email, password_hash, club
 		&desc,
 		&out.Email,
 		&out.PasswordHash,
-		&club,
+		&clubID,
+		&clubState,
 		&role,
 		&out.CreatedAt,
 		&out.UpdatedAt,
@@ -313,7 +336,8 @@ RETURNING id, nickname, name, show_name, description, email, password_hash, club
 		return nil, err
 	}
 	out.Description = nullStringToPtr(desc)
-	out.Club = nullStringToPtr(club)
+	out.ClubID = nullStringToUUIDPtr(clubID)
+	out.ClubState = types.ClubState(clubState)
 	out.Role = types.Role(role)
 	return &out, nil
 }
@@ -346,4 +370,22 @@ func nullStringToPtr(ns sql.NullString) *string {
 	}
 	s := ns.String
 	return &s
+}
+
+func ptrToNullUUID(p *uuid.UUID) sql.NullString {
+	if p == nil || *p == uuid.Nil {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: p.String(), Valid: true}
+}
+
+func nullStringToUUIDPtr(ns sql.NullString) *uuid.UUID {
+	if !ns.Valid {
+		return nil
+	}
+	id, err := uuid.Parse(ns.String)
+	if err != nil {
+		return nil
+	}
+	return &id
 }

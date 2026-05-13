@@ -42,7 +42,8 @@ func toDTO(p *model.Profile) *dto.Profile {
 		ShowName:    p.ShowName,
 		Description: p.Description,
 		Email:       p.Email,
-		Club:        p.Club,
+		ClubID:      p.ClubID,
+		ClubState:   p.ClubState,
 		Role:        p.Role,
 	}
 }
@@ -80,7 +81,7 @@ func (s *service) Create(ctx context.Context, req *dto.CreateProfileRequest) (*d
 		Description:  req.Description,
 		Email:        email,
 		PasswordHash: passwordHash,
-		Club:         req.Club,
+		ClubID:       req.ClubID,
 		Role:         role,
 	})
 	switch {
