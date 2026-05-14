@@ -6,7 +6,8 @@ import { createGame, listGames } from "../../api/games";
 import { queryClient } from "../../shared/queryClient";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GameStatus } from "../../types/enums";
+import { ClubState, GameStatus } from "../../types/enums";
+import { useAuthStore } from "../../store/authStore";
 
 const createGameSchema = z.object({
   name: z.string().max(200).optional(),
@@ -22,6 +23,7 @@ export function SeriesDetailPage() {
   const { id } = useParams();
   const seriesId = id!;
   const navigate = useNavigate();
+  const { clubId: myClubID, clubState } = useAuthStore();
 
   const seriesQ = useQuery({ queryKey: ["series", seriesId], queryFn: () => getSeries(seriesId), staleTime: 60_000 });
   const participantsQ = useQuery({ queryKey: ["series", seriesId, "participants", { limit: 20, offset: 0 }], queryFn: () => getSeriesParticipants(seriesId, { limit: 20, offset: 0 }) });
@@ -63,6 +65,8 @@ export function SeriesDetailPage() {
   if (seriesQ.isLoading) return <div>Loading...</div>;
   if (seriesQ.isError) return <div>Failed to load series</div>;
   if (!seriesQ.data) return <div>No data</div>;
+  const canManageSeriesGames =
+    myClubID === seriesQ.data.club_id && (clubState === ClubState.Leader || clubState === ClubState.President);
 
   return (
     <div className="space-y-4">
@@ -123,25 +127,27 @@ export function SeriesDetailPage() {
 
       <div className="rounded bg-white p-6 shadow">
         <h2 className="text-lg font-semibold">Games</h2>
-        <form
-          className="mt-3 grid gap-2 rounded border p-3"
-          onSubmit={createForm.handleSubmit(async (data) => createGameM.mutateAsync(data))}
-        >
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <input className="rounded border px-3 py-2 text-sm" placeholder="Game name (optional)" {...createForm.register("name")} />
-            <input className="rounded border px-3 py-2 text-sm" type="number" min={1} placeholder="Number" {...createForm.register("number")} />
-            <select className="rounded border px-3 py-2 text-sm" {...createForm.register("status")}>
-              <option value={GameStatus.Draft}>Draft</option>
-              <option value={GameStatus.InProgress}>In progress</option>
-              <option value={GameStatus.Finished}>Finished</option>
-            </select>
-          </div>
-          <input className="rounded border px-3 py-2 text-sm" placeholder="Host UUID (optional)" {...createForm.register("host_id")} />
-          <textarea className="rounded border px-3 py-2 text-sm" rows={2} placeholder="Description (optional)" {...createForm.register("description")} />
-          <button className="w-fit rounded bg-gray-900 px-3 py-2 text-sm text-white disabled:opacity-50" disabled={!createForm.formState.isValid || createGameM.isPending}>
-            Create game
-          </button>
-        </form>
+        {canManageSeriesGames ? (
+          <form
+            className="mt-3 grid gap-2 rounded border p-3"
+            onSubmit={createForm.handleSubmit(async (data) => createGameM.mutateAsync(data))}
+          >
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              <input className="rounded border px-3 py-2 text-sm" placeholder="Game name (optional)" {...createForm.register("name")} />
+              <input className="rounded border px-3 py-2 text-sm" type="number" min={1} placeholder="Number" {...createForm.register("number")} />
+              <select className="rounded border px-3 py-2 text-sm" {...createForm.register("status")}>
+                <option value={GameStatus.Draft}>Draft</option>
+                <option value={GameStatus.InProgress}>In progress</option>
+                <option value={GameStatus.Finished}>Finished</option>
+              </select>
+            </div>
+            <input className="rounded border px-3 py-2 text-sm" placeholder="Host UUID (optional)" {...createForm.register("host_id")} />
+            <textarea className="rounded border px-3 py-2 text-sm" rows={2} placeholder="Description (optional)" {...createForm.register("description")} />
+            <button className="w-fit rounded bg-gray-900 px-3 py-2 text-sm text-white disabled:opacity-50" disabled={!createForm.formState.isValid || createGameM.isPending}>
+              Create game
+            </button>
+          </form>
+        ) : null}
         {gamesQ.data ? (
           <div className="mt-3 space-y-2">
             {gamesQ.data.items.map((g) => (

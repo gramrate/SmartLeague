@@ -25,16 +25,30 @@ const rowCount = 10;
 export function GameManagePage() {
   const { id } = useParams();
   const gameId = id!;
-  const q = useQuery({ queryKey: ["game", gameId, "full"], queryFn: () => getGameFull(gameId) });
-  const seriesId = q.data?.series_id;
-  const participantsQ = useQuery({
-    queryKey: ["series", seriesId, "participants", { limit: 200, offset: 0 }],
-    queryFn: () => getSeriesParticipants(seriesId!, { limit: 200, offset: 0 }),
-    enabled: !!seriesId
-  });
   const [rows, setRows] = useState<Row[]>([]);
   const [participantError, setParticipantError] = useState<string | null>(null);
   const [activePickerRow, setActivePickerRow] = useState<number | null>(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const q = useQuery({ queryKey: ["game", gameId, "full"], queryFn: () => getGameFull(gameId) });
+  const seriesId = q.data?.series_id;
+  const allParticipantsQ = useQuery({
+    queryKey: ["series", seriesId, "participants", { limit: 11, offset: 0 }],
+    queryFn: () => getSeriesParticipants(seriesId!, { limit: 11, offset: 0 }),
+    enabled: !!seriesId
+  });
+  const activeSearchTerm = activePickerRow != null ? rows[activePickerRow]?.profile_label?.trim() ?? "" : "";
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(activeSearchTerm), 150);
+    return () => clearTimeout(timer);
+  }, [activeSearchTerm]);
+
+  const participantsQ = useQuery({
+    queryKey: ["series", seriesId, "participants", { limit: 11, offset: 0, q: debouncedSearchTerm }],
+    queryFn: () => getSeriesParticipants(seriesId!, { limit: 11, offset: 0, q: debouncedSearchTerm || undefined }),
+    enabled: !!seriesId
+  });
 
   const participantIDs = useMemo<string[]>(() => {
     if (!q.data) return [];
@@ -50,14 +64,17 @@ export function GameManagePage() {
 
   useEffect(() => {
     const byProfile = new Map(existingResults.map((result) => [result.profile_id, result]));
-    const labelsByID = new Map((participantsQ.data?.items ?? []).map((item) => [item.id, item.nickname || item.name]));
-    const merged: Row[] = Array.from({ length: rowCount }, (_, index) => {
+    const labelsByID = new Map((allParticipantsQ.data?.items ?? []).map((item) => [item.id, item.nickname || item.name]));
+    setRows((prev) =>
+      Array.from({ length: rowCount }, (_, index) => {
       const profileID = participantIDs[index] ?? "";
       const current = profileID ? byProfile.get(profileID) : undefined;
-      const label = profileID ? labelsByID.get(profileID) ?? profileID : "";
+      const prevRow = prev[index];
+      const prevLabelForSameUser = prevRow && prevRow.profile_id === profileID ? prevRow.profile_label : "";
+      const resolvedLabel = profileID ? prevLabelForSameUser || labelsByID.get(profileID) || "" : "";
       return {
         profile_id: profileID,
-        profile_label: label,
+        profile_label: resolvedLabel,
         place: index + 1,
         role: current?.role ?? MafiaRole.Civilian,
         best_move: current?.best_move ?? "",
@@ -68,9 +85,9 @@ export function GameManagePage() {
         extra_points: current?.extra_points ?? 0,
         total_points: current?.total_points ?? 0
       };
-    });
-    setRows(merged);
-  }, [participantIDs, existingResults, participantsQ.data?.items]);
+      })
+    );
+  }, [participantIDs, existingResults, allParticipantsQ.data?.items]);
 
   const setParticipantsM = useMutation({
     mutationFn: (ids: string[]) => setGameParticipants(gameId, ids),
@@ -90,18 +107,10 @@ export function GameManagePage() {
     setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
-  async function saveParticipants() {
-    const ids = rows.map((row) => row.profile_id.trim());
-    if (ids.some((idValue) => idValue === "")) {
-      setParticipantError("Fill all 10 participant UUID fields");
-      return;
-    }
-    if (new Set(ids).size !== rowCount) {
-      setParticipantError("Participant UUIDs must be unique");
-      return;
-    }
-    setParticipantError(null);
-    await setParticipantsM.mutateAsync(ids);
+  function saveDraft() {
+    localStorage.setItem(`game_manage_draft_${gameId}`, JSON.stringify(rows));
+    setSaveNotice("Saved");
+    setTimeout(() => setSaveNotice(null), 1500);
   }
 
   async function submitResults() {
@@ -110,8 +119,19 @@ export function GameManagePage() {
       setParticipantError("Fill participants before submitting results");
       return;
     }
+    if (new Set(ids).size !== rowCount) {
+      setParticipantError("Participant UUIDs must be unique");
+      return;
+    }
     setParticipantError(null);
-    await upsertResultsM.mutateAsync(rows.map((row) => ({ ...row, profile_id: row.profile_id.trim() })));
+    await setParticipantsM.mutateAsync(ids);
+    await upsertResultsM.mutateAsync(
+      rows.map((row) => ({
+        ...row,
+        profile_id: row.profile_id.trim(),
+        best_move: row.best_move && row.best_move.trim() ? row.best_move.trim() : undefined
+      }))
+    );
   }
 
   if (q.isLoading) return <div>Loading...</div>;
@@ -129,6 +149,7 @@ export function GameManagePage() {
 
       <div className="rounded bg-white p-6 shadow">
         <h2 className="text-lg font-semibold">Game table (10 players)</h2>
+        {saveNotice ? <p className="mt-2 text-xs text-green-700">{saveNotice}</p> : null}
         <div className="mt-3 overflow-auto">
           <table className="min-w-full text-left text-xs">
             <thead>
@@ -261,10 +282,10 @@ export function GameManagePage() {
         </div>
         {participantError ? <p className="mt-2 text-xs text-red-600">{participantError}</p> : null}
         <div className="mt-3 flex gap-2">
-          <button className="rounded bg-gray-900 px-4 py-2 text-sm text-white disabled:opacity-50" disabled={setParticipantsM.isPending} onClick={saveParticipants}>
-            Save participants
+          <button className="rounded bg-gray-900 px-4 py-2 text-sm text-white" onClick={saveDraft}>
+            Save
           </button>
-          <button className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50" disabled={upsertResultsM.isPending} onClick={submitResults}>
+          <button className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50" disabled={upsertResultsM.isPending || setParticipantsM.isPending} onClick={submitResults}>
             Submit results
           </button>
         </div>

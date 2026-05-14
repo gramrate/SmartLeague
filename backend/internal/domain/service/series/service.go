@@ -25,7 +25,7 @@ type repo interface {
 	AddSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) error
 	RemoveSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) error
 	CountSeriesParticipants(ctx context.Context, seriesID uuid.UUID) (int, error)
-	ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.User, int, error)
+	ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int, query *string) ([]*model.User, int, error)
 	IsSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) (bool, error)
 
 	ListSeriesLeaderboard(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.LeaderboardRow, int, error)
@@ -272,7 +272,7 @@ func (s *Service) GetParticipants(ctx context.Context, requesterID *uuid.UUID, r
 		offset = *req.Offset
 	}
 
-	items, total, err := s.repo.ListSeriesParticipants(ctx, req.SeriesID, limit, offset)
+	items, total, err := s.repo.ListSeriesParticipants(ctx, req.SeriesID, limit, offset, req.Query)
 	if err != nil {
 		return nil, err
 	}

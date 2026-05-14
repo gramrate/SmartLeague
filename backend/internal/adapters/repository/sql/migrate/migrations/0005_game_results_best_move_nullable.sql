@@ -1,0 +1,3 @@
+ALTER TABLE game_results
+	ALTER COLUMN best_move DROP NOT NULL,
+	ALTER COLUMN best_move DROP DEFAULT;

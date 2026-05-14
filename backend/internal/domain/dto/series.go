@@ -76,6 +76,7 @@ type GetSeriesParticipantsRequest struct {
 	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Limit    *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
 	Offset   *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+	Query    *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
 }
 
 type GetSeriesParticipantsResponse struct {

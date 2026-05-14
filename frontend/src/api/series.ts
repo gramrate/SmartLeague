@@ -54,10 +54,11 @@ export interface GetSeriesParticipantsResponse {
   pagination: PaginationInfo;
 }
 
-export function getSeriesParticipants(id: UUID, params: { limit?: number; offset?: number }) {
+export function getSeriesParticipants(id: UUID, params: { limit?: number; offset?: number; q?: string }) {
   const q = new URLSearchParams();
   if (params.limit != null) q.set("limit", String(params.limit));
   if (params.offset != null) q.set("offset", String(params.offset));
+  if (params.q) q.set("q", params.q);
   return apiFetch<GetSeriesParticipantsResponse>(`/api/v1/series/${id}/participants?${q.toString()}`, { method: "GET" });
 }
 

@@ -5,6 +5,8 @@ import (
 	"SmartLeague/internal/domain/types"
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -43,7 +45,7 @@ SELECT exists(
 	return exists, nil
 }
 
-func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.User, int, error) {
+func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int, query *string) ([]*model.User, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -51,8 +53,21 @@ func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, l
 		offset = 0
 	}
 
+	where := "sp.series_id=$1"
+	countArgs := []any{seriesID}
+	listArgs := []any{seriesID}
+	if query != nil {
+		qv := strings.TrimSpace(*query)
+		if qv != "" {
+			where += " AND (lower(p.nickname) LIKE lower($2) OR lower(p.name) LIKE lower($2) OR lower(p.email) LIKE lower($2))"
+			like := "%" + strings.ToLower(qv) + "%"
+			countArgs = append(countArgs, like)
+			listArgs = append(listArgs, like)
+		}
+	}
+
 	var total int
-	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM series_participants WHERE series_id=$1`, seriesID).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM series_participants sp JOIN profiles p ON p.id = sp.profile_id WHERE `+where, countArgs...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -60,10 +75,10 @@ func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, l
 SELECT p.id, p.nickname, p.name, p.show_name, p.description, p.email, p.password_hash, p.club_id, p.club_state, p.role
 FROM series_participants sp
 JOIN profiles p ON p.id = sp.profile_id
-WHERE sp.series_id=$1
+WHERE `+where+`
 ORDER BY sp.created_at ASC
-LIMIT $2 OFFSET $3
-`, seriesID, limit, offset)
+LIMIT $`+fmt.Sprintf("%d", len(listArgs)+1)+` OFFSET $`+fmt.Sprintf("%d", len(listArgs)+2)+`
+`, append(listArgs, limit, offset)...)
 	if err != nil {
 		return nil, 0, err
 	}
