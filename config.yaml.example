@@ -23,17 +23,17 @@ service:
     timeout: 10
 
   mail:
-    host: 'smtp.gmail.com'
-    port: 587
-    mail: 'example@mail.com'
-    password: 'xxxx xxxx xxxx xxxx'
+    host: ''
+    port: 0
+    mail: ''
+    password: ''
 
   jwt:
     path-to-private-key: "keys/private.pem"
     refresh-token-expires: "720h"
     access-token-expires: "15m"
 
-  info: # информация о проекте
+  info:
     path-to-json-file: "files/info/info.json"
 
 backend:
