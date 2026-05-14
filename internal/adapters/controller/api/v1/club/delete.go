@@ -8,6 +8,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Delete Delete club by id
+//
+// @Summary Delete club by id
+// @Tags club
+// @Produce json
+// @Param id path string true "Club ID"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/{id} [delete]
 func (h *handler) Delete(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -19,4 +31,3 @@ func (h *handler) Delete(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
-

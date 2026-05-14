@@ -9,10 +9,10 @@ import (
 	"net/http"
 )
 
-// GetById Get each user
+// GetById Get user by id (admin)
 //
 // @Description Get each user by id. Only for admins
-// @Summary Get current user info
+// @Summary Get user by id
 // @Tags user
 // @Accept json
 // @Produce json

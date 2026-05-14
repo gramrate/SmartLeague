@@ -48,7 +48,7 @@ func (s *userService) UpdateEach(ctx context.Context, req *dto.UpdateEachUserReq
 		if err != nil {
 			return nil, err
 		}
-		userToUpdate.Password = passwordHash
+		userToUpdate.PasswordHash = passwordHash
 	}
 	if req.Role != nil {
 		userToUpdate.Role = *req.Role

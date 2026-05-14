@@ -7,21 +7,21 @@ import (
 )
 
 type Game struct {
-	ID          uuid.UUID      `json:"id"`
-	SeriesID    uuid.UUID      `json:"series_id"`
-	Name        string         `json:"name"`
-	Number      int            `json:"number"`
-	Description *string        `json:"description,omitempty"`
-	HostID      *uuid.UUID     `json:"host_id,omitempty"`
+	ID          uuid.UUID        `json:"id"`
+	SeriesID    uuid.UUID        `json:"series_id"`
+	Name        string           `json:"name"`
+	Number      int              `json:"number"`
+	Description *string          `json:"description,omitempty"`
+	HostID      *uuid.UUID       `json:"host_id,omitempty"`
 	Status      types.GameStatus `json:"status"`
 }
 
 type CreateGameRequest struct {
-	SeriesID    uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string   `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	Number      int       `json:"number" validate:"required,min=1,max=100000"`
-	Description *string   `json:"description,omitempty" validate:"omitempty,max=5000"`
-	HostID      *uuid.UUID `json:"host_id,omitempty" validate:"omitempty,uuid"`
+	SeriesID    uuid.UUID        `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Name        *string          `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
+	Number      int              `json:"number" validate:"required,min=1,max=100000"`
+	Description *string          `json:"description,omitempty" validate:"omitempty,max=5000"`
+	HostID      *uuid.UUID       `json:"host_id,omitempty" validate:"omitempty,uuid"`
 	Status      types.GameStatus `json:"status" validate:"min=0,max=2"`
 }
 
@@ -48,15 +48,15 @@ type GetSeriesGamesRequest struct {
 }
 
 type GetSeriesGamesResponse struct {
-	Items      []*Game         `json:"items"`
-	Pagination PaginationInfo  `json:"pagination"`
+	Items      []*Game        `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type UpdateGameRequest struct {
-	ID          uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string   `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	Description *string   `json:"description,omitempty" validate:"omitempty,max=5000"`
-	HostID      *uuid.UUID `json:"host_id,omitempty" validate:"omitempty,uuid"`
+	ID          uuid.UUID         `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Name        *string           `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
+	Description *string           `json:"description,omitempty" validate:"omitempty,max=5000"`
+	HostID      *uuid.UUID        `json:"host_id,omitempty" validate:"omitempty,uuid"`
 	Status      *types.GameStatus `json:"status,omitempty" validate:"omitempty,min=0,max=2"`
 }
 
@@ -72,7 +72,7 @@ type SetGameParticipantsRequest struct {
 }
 
 type UpsertGameResultsRequest struct {
-	GameID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	GameID uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Rows   []GameResultRow `json:"rows" validate:"required,min=1,max=100,dive"`
 }
 

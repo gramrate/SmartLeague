@@ -49,20 +49,20 @@ type GetClubSeriesRequest struct {
 }
 
 type GetClubSeriesResponse struct {
-	Items      []*Series       `json:"items"`
-	Pagination PaginationInfo  `json:"pagination"`
+	Items      []*Series      `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type UpdateSeriesRequest struct {
-	ID           uuid.UUID          `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name         *string            `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	ScoringRules *string            `json:"scoring_rules,omitempty" validate:"omitempty,min=1,max=10000"`
-	StartAt      *time.Time         `json:"start_at,omitempty"`
-	EndAt        *time.Time         `json:"end_at,omitempty"`
-	Description  *string            `json:"description,omitempty" validate:"omitempty,max=5000"`
-	PriceRub     *int               `json:"price_rub,omitempty" validate:"omitempty,min=0,max=100000000"`
-	IsClosed     *bool              `json:"is_closed,omitempty"`
-	GameType     *types.GameType    `json:"game_type,omitempty" validate:"omitempty,min=0,max=3"`
+	ID           uuid.UUID           `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Name         *string             `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
+	ScoringRules *string             `json:"scoring_rules,omitempty" validate:"omitempty,min=1,max=10000"`
+	StartAt      *time.Time          `json:"start_at,omitempty"`
+	EndAt        *time.Time          `json:"end_at,omitempty"`
+	Description  *string             `json:"description,omitempty" validate:"omitempty,max=5000"`
+	PriceRub     *int                `json:"price_rub,omitempty" validate:"omitempty,min=0,max=100000000"`
+	IsClosed     *bool               `json:"is_closed,omitempty"`
+	GameType     *types.GameType     `json:"game_type,omitempty" validate:"omitempty,min=0,max=3"`
 	Status       *types.SeriesStatus `json:"status,omitempty" validate:"omitempty,min=0,max=3"`
 }
 
@@ -79,16 +79,16 @@ type GetSeriesParticipantsRequest struct {
 }
 
 type GetSeriesParticipantsResponse struct {
-	Items      []*Profile      `json:"items"`
-	Pagination PaginationInfo  `json:"pagination"`
+	Items      []*Profile     `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type JoinSeriesRequest struct {
-	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	SeriesID  uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	ProfileID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 }
 
 type LeaveSeriesRequest struct {
-	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	SeriesID  uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	ProfileID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 }

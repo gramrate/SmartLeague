@@ -73,4 +73,3 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 	return nil
 }
-

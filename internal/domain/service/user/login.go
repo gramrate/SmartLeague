@@ -17,7 +17,7 @@ func (s *userService) Login(ctx context.Context, req *dto.LoginUserRequest) (*dt
 	case err != nil:
 		return nil, err
 	}
-	if !password.VerifyPassword(u.Password, req.Password) {
+	if !password.VerifyPassword(u.PasswordHash, req.Password) {
 		return nil, errorz.PasswordMismatch
 	}
 

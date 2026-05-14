@@ -44,4 +44,3 @@ func (s *service) GetAll(ctx context.Context, req *dto.GetAllProfilesRequest) (*
 		},
 	}, nil
 }
-

@@ -9,11 +9,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Refresh refreshes access and refresh tokens.
+// Refresh Refresh tokens
 //
 // @Summary      Refresh tokens
 // @Description  Refreshes access and refresh tokens using valid refresh token from cookies
-// @Tags         auth
+// @Tags         token
 // @Accept       json
 // @Produce      json
 // @Param        goyda    query     string                  true   "Must be 'true'"  Enums(true)

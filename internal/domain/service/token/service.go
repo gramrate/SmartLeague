@@ -1,7 +1,7 @@
 package token
 
 import (
-	"SmartLeague/pkg/ent"
+	"SmartLeague/internal/domain/model"
 	"context"
 	"github.com/google/uuid"
 	"time"
@@ -14,9 +14,9 @@ type accessTokenRepo interface {
 }
 
 type refreshTokenRepo interface {
-	GetByUserID(ctx context.Context, userID uuid.UUID) (*ent.RefreshToken, error)
-	Update(ctx context.Context, entity ent.RefreshToken) (*ent.RefreshToken, error)
-	Upsert(ctx context.Context, entity ent.RefreshToken) (*ent.RefreshToken, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*model.RefreshToken, error)
+	Update(ctx context.Context, entity model.RefreshToken) (*model.RefreshToken, error)
+	Upsert(ctx context.Context, entity model.RefreshToken) (*model.RefreshToken, error)
 }
 
 type jwtService interface {

@@ -8,18 +8,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetGame Get game by id
+//
+// @Summary Get game by id
+// @Tags game
+// @Produce json
+// @Param id path string true "Game ID"
+// @Success 200 {object} dto.GetGameResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id} [get]
 func (h *handler) GetGame(c echo.Context) error {
-	// Get game by id
-	//
-	// @Summary Get game by id
-	// @Tags game
-	// @Produce json
-	// @Param id path string true "Game ID"
-	// @Success 200 {object} dto.GetGameResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/game/{id} [get]
 	gameID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
@@ -31,18 +31,18 @@ func (h *handler) GetGame(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetGameFull Get full game object (participants + results)
+//
+// @Summary Get full game object
+// @Tags game
+// @Produce json
+// @Param id path string true "Game ID"
+// @Success 200 {object} dto.GetGameFullResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id}/full [get]
 func (h *handler) GetGameFull(c echo.Context) error {
-	// Get full game object (participants + results)
-	//
-	// @Summary Get full game object
-	// @Tags game
-	// @Produce json
-	// @Param id path string true "Game ID"
-	// @Success 200 {object} dto.GetGameFullResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/game/{id}/full [get]
 	gameID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
@@ -54,19 +54,19 @@ func (h *handler) GetGameFull(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// DeleteGame Delete game by id
+//
+// @Summary Delete game by id
+// @Tags game
+// @Produce json
+// @Param id path string true "Game ID"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id} [delete]
 func (h *handler) DeleteGame(c echo.Context) error {
-	// Delete game by id
-	//
-	// @Summary Delete game by id
-	// @Tags game
-	// @Produce json
-	// @Param id path string true "Game ID"
-	// @Success 204
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/game/{id} [delete]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})

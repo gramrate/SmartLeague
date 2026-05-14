@@ -8,6 +8,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Create Create club
+//
+// @Summary Create club
+// @Tags club
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateClubRequest true "Club data"
+// @Success 201 {object} dto.CreateClubResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club [post]
 func (h *handler) Create(c echo.Context) error {
 	userID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || userID == uuid.Nil {
@@ -28,4 +40,3 @@ func (h *handler) Create(c echo.Context) error {
 	}
 	return c.JSON(http.StatusCreated, resp)
 }
-

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxParticipantsDefault   = 20
+	maxParticipantsDefault    = 20
 	maxParticipantsSportMafia = 10
 )
 
@@ -395,4 +395,3 @@ func (s *Service) GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, re
 		},
 	}, nil
 }
-

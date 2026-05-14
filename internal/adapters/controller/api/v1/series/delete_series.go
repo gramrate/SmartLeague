@@ -8,19 +8,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// DeleteSeries Delete series by id
+//
+// @Summary Delete series by id
+// @Tags series
+// @Produce json
+// @Param id path string true "Series ID"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series/{id} [delete]
 func (h *handler) DeleteSeries(c echo.Context) error {
-	// Delete series by id
-	//
-	// @Summary Delete series by id
-	// @Tags series
-	// @Produce json
-	// @Param id path string true "Series ID"
-	// @Success 204
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/series/{id} [delete]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})

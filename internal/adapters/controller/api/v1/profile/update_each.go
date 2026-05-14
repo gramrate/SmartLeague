@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Update profile by id (admin)
+// UpdateEach Update profile by id (admin)
 //
 // @Summary Update profile by id
 // @Tags profile
@@ -44,4 +44,3 @@ func (h *handler) UpdateEach(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

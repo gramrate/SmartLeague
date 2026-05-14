@@ -8,6 +8,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetMembers Get club members (paginated)
+//
+// @Summary Get club members
+// @Tags club
+// @Produce json
+// @Param id path string true "Club ID"
+// @Param limit query int false "limit"
+// @Param offset query int false "offset"
+// @Success 200 {object} dto.GetClubMembersResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/{id}/members [get]
 func (h *handler) GetMembers(c echo.Context) error {
 	clubID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -30,4 +42,3 @@ func (h *handler) GetMembers(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

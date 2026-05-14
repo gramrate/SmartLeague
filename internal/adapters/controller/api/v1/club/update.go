@@ -8,6 +8,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Update Update club by id
+//
+// @Summary Update club by id
+// @Tags club
+// @Accept json
+// @Produce json
+// @Param id path string true "Club ID"
+// @Param request body dto.UpdateClubRequest true "Update data"
+// @Success 200 {object} dto.UpdateClubResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/{id} [patch]
 func (h *handler) Update(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -30,4 +44,3 @@ func (h *handler) Update(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

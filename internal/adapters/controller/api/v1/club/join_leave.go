@@ -8,6 +8,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Join Join club
+//
+// @Summary Join club
+// @Tags club
+// @Produce json
+// @Param id path string true "Club ID"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/{id}/join [post]
 func (h *handler) Join(c echo.Context) error {
 	userID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || userID == uuid.Nil {
@@ -25,6 +36,15 @@ func (h *handler) Join(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// Leave Leave current club
+//
+// @Summary Leave club
+// @Tags club
+// @Produce json
+// @Success 204
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/leave [post]
 func (h *handler) Leave(c echo.Context) error {
 	userID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || userID == uuid.Nil {
@@ -36,4 +56,3 @@ func (h *handler) Leave(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
-

@@ -1,22 +1,4 @@
 definitions:
-  dto.Category:
-    properties:
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      name:
-        example: Shampoo
-        maxLength: 150
-        minLength: 1
-        type: string
-    required:
-    - id
-    - image_id
-    - name
-    type: object
   dto.ChangePasswordRequest:
     properties:
       new_password:
@@ -35,390 +17,279 @@ definitions:
     - new_password
     - old_password
     type: object
-  dto.Cosmetics:
-    description: Contains product information such as category, title, description,
-      and volume.
+  dto.Club:
     properties:
-      application_method:
-        example: Apply to wet hair, lather, rinse.
+      creator_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      category:
-        $ref: '#/definitions/dto.Category'
       description:
-        example: Suitable for daily use.
+        example: Best club
         type: string
       id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      links:
-        $ref: '#/definitions/dto.Links'
-      title:
-        example: Hair Shampoo
-        type: string
-      volume:
-        example: 250
-        type: integer
-    type: object
-  dto.CreateCategoryRequest:
-    properties:
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       name:
-        example: Shampoo
-        maxLength: 150
+        example: Smart League
+        type: string
+    type: object
+  dto.CreateClubRequest:
+    properties:
+      description:
+        example: Best club
+        maxLength: 2000
+        type: string
+      name:
+        example: Smart League
+        maxLength: 200
         minLength: 1
         type: string
     required:
-    - image_id
     - name
     type: object
-  dto.CreateCategoryResponse:
+  dto.CreateClubResponse:
     properties:
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      name:
-        example: Shampoo
-        maxLength: 150
-        minLength: 1
-        type: string
-    required:
-    - id
-    - image_id
-    - name
-    type: object
-  dto.CreateCosmeticsRequest:
-    properties:
-      application_method:
-        example: Apply to wet hair, lather, rinse.
-        maxLength: 500
-        minLength: 3
-        type: string
-      category_id:
-        example: 123e4567-e89b-12d3-a456-426614174000
+      creator_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       description:
-        example: Suitable for daily use.
-        maxLength: 3000
-        minLength: 3
+        example: Best club
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174000
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      is_hidden:
-        example: false
-        type: boolean
-      links:
-        $ref: '#/definitions/dto.Links'
-      title:
-        example: Hair Shampoo
-        maxLength: 100
-        minLength: 3
+      name:
+        example: Smart League
         type: string
-      volume:
-        example: 250
-        maximum: 10000
+    type: object
+  dto.CreateGameRequest:
+    properties:
+      description:
+        maxLength: 5000
+        type: string
+      host_id:
+        type: string
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+      number:
+        maximum: 100000
         minimum: 1
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/types.GameStatus'
+        maximum: 2
+        minimum: 0
     required:
-    - category_id
-    - image_id
-    - is_hidden
-    - title
+    - number
     type: object
-  dto.CreateCosmeticsResponse:
-    description: Contains product information such as category, title, description,
-      and volume.
+  dto.CreateGameResponse:
     properties:
-      application_method:
-        example: Apply to wet hair, lather, rinse.
-        type: string
-      category:
-        $ref: '#/definitions/dto.Category'
       description:
-        example: Suitable for daily use.
+        type: string
+      host_id:
         type: string
       id:
-        example: 123e4567-e89b-12d3-a456-426614174000
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
+      name:
         type: string
-      is_hidden:
-        example: false
-        type: boolean
-      links:
-        $ref: '#/definitions/dto.Links'
-      title:
-        example: Hair Shampoo
-        type: string
-      volume:
-        example: 250
+      number:
         type: integer
+      series_id:
+        type: string
+      status:
+        $ref: '#/definitions/types.GameStatus'
     type: object
-  dto.CreateImageResponse:
+  dto.CreateProfileRequest:
     properties:
-      file:
-        $ref: '#/definitions/dto.FilePackage'
-      id:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-    type: object
-  dto.CreateMainPageRequest:
-    properties:
-      content:
-        example: Main banner description text goes here...
-        maxLength: 1000
-        minLength: 2
-        type: string
-      fluid:
-        example: true
-        type: boolean
-      href:
-        example: https://example.com/page
-        maxLength: 2000
-        minLength: 1
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Main banner title
-        maxLength: 100
-        minLength: 2
-        type: string
-    required:
-    - content
-    - fluid
-    - href
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.CreateMainPageResponse:
-    properties:
-      content:
-        example: Main banner description text goes here...
-        maxLength: 1000
-        minLength: 2
-        type: string
-      fluid:
-        example: true
-        type: boolean
-      href:
-        example: https://example.com/page
-        maxLength: 2000
-        minLength: 1
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Main banner title
-        maxLength: 100
-        minLength: 2
-        type: string
-    required:
-    - content
-    - fluid
-    - href
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.CreateNewsRequest:
-    properties:
-      content:
-        example: This is the full news content...
-        maxLength: 5000
-        type: string
-      image_id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Breaking News
-        maxLength: 255
-        type: string
-    required:
-    - content
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.CreateNewsResponse:
-    properties:
-      content:
-        example: This is the full news content...
-        maxLength: 5000
-        type: string
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Breaking News
-        maxLength: 255
-        type: string
-    required:
-    - content
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.CreateOrderRequest:
-    properties:
-      customer_info:
-        $ref: '#/definitions/dto.CustomerInfo'
-      order_details:
-        $ref: '#/definitions/dto.OrderDetails'
-    required:
-    - customer_info
-    - order_details
-    type: object
-  dto.CreateOrderResponse:
-    properties:
-      customer_info:
-        $ref: '#/definitions/dto.CustomerInfo'
-      order_details:
-        $ref: '#/definitions/dto.OrderDetails'
-      total_price:
-        example: 3499.5
-        type: number
-    type: object
-  dto.CreatePartnerRequest:
-    properties:
       description:
-        example: Leading supplier of industrial equipment
-        maxLength: 500
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.PartnersLink'
-        type: array
-      name:
-        example: Backend's department
-        maxLength: 100
-        minLength: 1
-        type: string
-    required:
-    - name
-    type: object
-  dto.CreatePartnerResponse:
-    properties:
-      description:
-        example: Leading supplier of industrial equipment
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.PartnersLink'
-        type: array
-      name:
-        example: Backend's department
-        type: string
-    type: object
-  dto.CustomerInfo:
-    properties:
-      address:
-        example: г. Москва, ул. Ленина, д. 1, кв. 10
-        maxLength: 200
-        minLength: 5
-        type: string
-      comment:
-        example: Позвоните за час до доставки
-        maxLength: 500
+        example: About me
+        maxLength: 2000
         type: string
       email:
-        example: ivanov@example.com
+        example: user@example.com
         maxLength: 254
         minLength: 6
         type: string
-      fio:
-        example: Иванов Иван Иванович
+      name:
+        example: Ivan
         maxLength: 100
-        minLength: 2
+        minLength: 1
         type: string
-      phone_number:
-        example: "+79991234567"
+      nickname:
+        example: mishmish
+        maxLength: 100
+        minLength: 1
         type: string
+      password:
+        example: SecurePass123!
+        format: password
+        maxLength: 100
+        minLength: 8
+        type: string
+      show_name:
+        example: true
+        type: boolean
     required:
-    - address
     - email
-    - fio
-    - phone_number
+    - name
+    - password
     type: object
-  dto.FilePackage:
+  dto.CreateProfileResponse:
     properties:
-      content_type:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      filename:
-        maxLength: 250
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
         type: string
-      last_modified:
+      email:
+        example: user@example.com
         type: string
-      size:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: Ivan
+        type: string
+      nickname:
+        example: mishmish
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/types.Role'
+        example: 0
+      show_name:
+        example: true
+        type: boolean
+    type: object
+  dto.CreateSeriesRequest:
+    properties:
+      description:
+        maxLength: 5000
+        type: string
+      end_at:
+        type: string
+      game_type:
+        allOf:
+        - $ref: '#/definitions/types.GameType'
+        maximum: 3
+        minimum: 0
+      is_closed:
+        type: boolean
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+      price_rub:
+        maximum: 100000000
+        minimum: 0
+        type: integer
+      scoring_rules:
+        maxLength: 10000
+        minLength: 1
+        type: string
+      start_at:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/types.SeriesStatus'
+        maximum: 3
+        minimum: 0
+    required:
+    - end_at
+    - name
+    - scoring_rules
+    - start_at
+    type: object
+  dto.CreateSeriesResponse:
+    properties:
+      club_id:
+        type: string
+      creator_id:
+        type: string
+      description:
+        type: string
+      end_at:
+        type: string
+      game_type:
+        $ref: '#/definitions/types.GameType'
+      id:
+        type: string
+      is_closed:
+        type: boolean
+      name:
+        type: string
+      price_rub:
+        type: integer
+      scoring_rules:
+        type: string
+      start_at:
+        type: string
+      status:
+        $ref: '#/definitions/types.SeriesStatus'
+    type: object
+  dto.Game:
+    properties:
+      description:
+        type: string
+      host_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      number:
+        type: integer
+      series_id:
+        type: string
+      status:
+        $ref: '#/definitions/types.GameStatus'
+    type: object
+  dto.GameResultRow:
+    properties:
+      best_move:
+        type: boolean
+      compensation:
+        maximum: 1000000
+        minimum: 0
+        type: integer
+      extra_points:
+        maximum: 1000000
+        minimum: -1000000
+        type: integer
+      first_killed:
+        type: boolean
+      place:
+        maximum: 10
+        minimum: 1
+        type: integer
+      profile_id:
+        type: string
+      removed:
+        type: boolean
+      role:
+        maxLength: 100
+        minLength: 1
+        type: string
+      total_points:
+        maximum: 1000000
+        minimum: -1000000
+        type: integer
+      yellow_cards:
+        maximum: 10
+        minimum: 0
         type: integer
     required:
-    - content_type
-    - filename
-    - size
-    type: object
-  dto.GetAllByFilterCosmeticsResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/dto.Cosmetics'
-        type: array
-      pagination:
-        $ref: '#/definitions/dto.PaginationInfo'
-    type: object
-  dto.GetAllByFilterForAdminsNewsResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/dto.NewsListItem'
-        type: array
-      pagination:
-        $ref: '#/definitions/dto.PaginationInfo'
-    type: object
-  dto.GetAllByFilterNewsResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/dto.NewsListItem'
-        type: array
-      pagination:
-        $ref: '#/definitions/dto.PaginationInfo'
+    - profile_id
     type: object
   dto.GetAllByFilterUsersResponse:
     properties:
@@ -429,188 +300,184 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
-  dto.GetAllCategoriesResponse:
+  dto.GetAllClubsResponse:
     properties:
       items:
         items:
-          $ref: '#/definitions/dto.Category'
+          $ref: '#/definitions/dto.Club'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
-  dto.GetAllMainPageResponse:
+  dto.GetAllProfilesResponse:
     properties:
       items:
         items:
-          $ref: '#/definitions/dto.MainPage'
+          $ref: '#/definitions/dto.Profile'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
-  dto.GetAllPartnerResponse:
+  dto.GetClubMembersResponse:
     properties:
       items:
         items:
-          $ref: '#/definitions/dto.Partner'
+          $ref: '#/definitions/dto.Profile'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
-  dto.GetByIdCategoryResponse:
+  dto.GetClubResponse:
     properties:
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      creator_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
+      description:
+        example: Best club
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       name:
-        example: Shampoo
-        maxLength: 150
-        minLength: 1
+        example: Smart League
         type: string
-    required:
-    - id
-    - image_id
-    - name
     type: object
-  dto.GetByIdCosmeticsResponse:
-    description: Contains product information such as category, title, description,
-      and volume.
+  dto.GetClubSeriesResponse:
     properties:
-      application_method:
-        example: Apply to wet hair, lather, rinse.
-        type: string
-      category:
-        $ref: '#/definitions/dto.Category'
+      items:
+        items:
+          $ref: '#/definitions/dto.Series'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetGameFullResponse:
+    properties:
       description:
-        example: Suitable for daily use.
+        type: string
+      host_id:
         type: string
       id:
-        example: 123e4567-e89b-12d3-a456-426614174000
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
+      name:
         type: string
-      is_hidden:
-        example: false
-        type: boolean
-      links:
-        $ref: '#/definitions/dto.Links'
-      title:
-        example: Hair Shampoo
-        type: string
-      volume:
-        example: 250
+      number:
         type: integer
-    type: object
-  dto.GetByIdMainPageResponse:
-    properties:
-      content:
-        example: Main banner description text goes here...
-        maxLength: 1000
-        minLength: 2
+      participant_ids:
+        items:
+          type: string
+        type: array
+      results:
+        items:
+          $ref: '#/definitions/dto.GameResultRow'
+        type: array
+      series_id:
         type: string
-      fluid:
+      status:
+        $ref: '#/definitions/types.GameStatus'
+    type: object
+  dto.GetGameResponse:
+    properties:
+      description:
+        type: string
+      host_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      number:
+        type: integer
+      series_id:
+        type: string
+      status:
+        $ref: '#/definitions/types.GameStatus'
+    type: object
+  dto.GetProfileResponse:
+    properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: Ivan
+        type: string
+      nickname:
+        example: mishmish
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/types.Role'
+        example: 0
+      show_name:
         example: true
         type: boolean
-      href:
-        example: https://example.com/page
-        maxLength: 2000
-        minLength: 1
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Main banner title
-        maxLength: 100
-        minLength: 2
-        type: string
-    required:
-    - content
-    - fluid
-    - href
-    - id
-    - image_id
-    - is_hidden
-    - title
     type: object
-  dto.GetByIdNewsResponse:
+  dto.GetSeriesGamesResponse:
     properties:
-      content:
-        example: This is the full news content...
-        maxLength: 5000
-        type: string
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Breaking News
-        maxLength: 255
-        type: string
-    required:
-    - content
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.GetByIdPartnerResponse:
-    properties:
-      description:
-        example: Leading supplier of industrial equipment
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      links:
+      items:
         items:
-          $ref: '#/definitions/dto.PartnersLink'
+          $ref: '#/definitions/dto.Game'
         type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetSeriesLeaderboardResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.LeaderboardRow'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetSeriesParticipantsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.Profile'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetSeriesResponse:
+    properties:
+      club_id:
+        type: string
+      creator_id:
+        type: string
+      description:
+        type: string
+      end_at:
+        type: string
+      game_type:
+        $ref: '#/definitions/types.GameType'
+      id:
+        type: string
+      is_closed:
+        type: boolean
       name:
-        example: Backend's department
         type: string
-    type: object
-  dto.GetInfoResponse:
-    properties:
-      description:
-        example: We are a global leader in innovation and technology.
-        maxLength: 500
-        minLength: 10
+      price_rub:
+        type: integer
+      scoring_rules:
         type: string
-      heading:
-        example: Welcome to our company
-        maxLength: 100
-        minLength: 3
+      start_at:
         type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.InfoLinks'
-        maxItems: 10
-        minItems: 0
-        type: array
-      schedule:
-        items:
-          $ref: '#/definitions/dto.ScheduleEntry'
-        maxItems: 7
-        minItems: 1
-        type: array
-    required:
-    - description
-    - heading
+      status:
+        $ref: '#/definitions/types.SeriesStatus'
     type: object
   dto.GetUserResponse:
     properties:
@@ -638,42 +505,11 @@ definitions:
       message:
         type: string
     type: object
-  dto.Hours:
+  dto.LeaderboardRow:
     properties:
-      close:
-        example: "18:00"
-        type: string
-      open:
-        example: "09:00"
-        type: string
-    required:
-    - close
-    - open
-    type: object
-  dto.InfoLinks:
-    properties:
-      href:
-        example: https://instagram.com/company
-        maxLength: 500
-        type: string
-      label:
-        example: Instagram
-        maxLength: 50
-        minLength: 2
-        type: string
-    required:
-    - href
-    - label
-    type: object
-  dto.Links:
-    properties:
-      ozon:
-        example: https://www.ozon.ru/product/gel-girudo-dr-nikonov-dlya-tela-100-ml-1907286044/?at=OgtEDAg59hR8AYgGimrnA9YIqYo9mocJYEzPjHR666Gm
-        maxLength: 500
-        type: string
-      wildberries:
-        example: https://www.wildberries.ru/catalog/344283033/detail.aspx
-        maxLength: 500
+      points:
+        type: integer
+      profile_id:
         type: string
     type: object
   dto.LoginUserRequest:
@@ -712,94 +548,6 @@ definitions:
         example: Ivanov
         type: string
     type: object
-  dto.MainPage:
-    properties:
-      content:
-        example: Main banner description text goes here...
-        maxLength: 1000
-        minLength: 2
-        type: string
-      fluid:
-        example: true
-        type: boolean
-      href:
-        example: https://example.com/page
-        maxLength: 2000
-        minLength: 1
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Main banner title
-        maxLength: 100
-        minLength: 2
-        type: string
-    required:
-    - content
-    - fluid
-    - href
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.NewsListItem:
-    properties:
-      content_preview:
-        example: This is a short preview...
-        maxLength: 255
-        type: string
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Breaking News
-        maxLength: 255
-        type: string
-    required:
-    - content_preview
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.OrderDetails:
-    properties:
-      leech_size_1:
-        example: 100
-        maximum: 500
-        minimum: 0
-        type: integer
-      leech_size_2:
-        example: 200
-        maximum: 500
-        minimum: 0
-        type: integer
-      leech_size_3:
-        example: 150
-        maximum: 500
-        minimum: 0
-        type: integer
-      package_type:
-        allOf:
-        - $ref: '#/definitions/types.Package'
-        example: 1
-    required:
-    - package_type
-    type: object
   dto.PaginationInfo:
     properties:
       current_page:
@@ -818,43 +566,43 @@ definitions:
         example: 13
         type: integer
     type: object
-  dto.Partner:
-    properties:
-      description:
-        example: Leading supplier of industrial equipment
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.PartnersLink'
-        type: array
-      name:
-        example: Backend's department
-        type: string
-    type: object
-  dto.PartnersLink:
-    properties:
-      href:
-        example: https://example.com
-        maxLength: 2000
-        minLength: 1
-        type: string
-      label:
-        example: Official Website
-        maxLength: 150
-        minLength: 1
-        type: string
-    required:
-    - href
-    - label
-    type: object
   dto.PingResponse:
     properties:
       message:
         example: ok
         type: string
+    type: object
+  dto.Profile:
+    properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: Ivan
+        type: string
+      nickname:
+        example: mishmish
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/types.Role'
+        example: 0
+      show_name:
+        example: true
+        type: boolean
     type: object
   dto.RegisterUserRequest:
     properties:
@@ -904,115 +652,125 @@ definitions:
         example: Ivanov
         type: string
     type: object
-  dto.ScheduleEntry:
+  dto.Series:
     properties:
-      hours:
-        $ref: '#/definitions/dto.Hours'
-      weekday:
-        allOf:
-        - $ref: '#/definitions/types.Weekday'
-        example: 1
-    required:
-    - hours
-    - weekday
-    type: object
-  dto.UpdateCategoryRequest:
-    properties:
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      club_id:
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      name:
-        example: Hair conditioner
-        maxLength: 150
-        minLength: 1
-        type: string
-    required:
-    - id
-    type: object
-  dto.UpdateCategoryResponse:
-    properties:
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      name:
-        example: Shampoo
-        maxLength: 150
-        minLength: 1
-        type: string
-    required:
-    - id
-    - image_id
-    - name
-    type: object
-  dto.UpdateCosmeticsRequest:
-    properties:
-      application_method:
-        example: Apply evenly and rinse well.
-        maxLength: 500
-        minLength: 3
-        type: string
-      category_id:
-        example: 123e4567-e89b-12d3-a456-426614174000
+      creator_id:
         type: string
       description:
-        example: Updated product description.
-        maxLength: 3000
-        minLength: 3
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174000
+      end_at:
         type: string
-      is_hidden:
-        example: false
+      game_type:
+        $ref: '#/definitions/types.GameType'
+      id:
+        type: string
+      is_closed:
         type: boolean
-      links:
-        $ref: '#/definitions/dto.Links'
-      title:
-        example: New Hair Shampoo
+      name:
+        type: string
+      price_rub:
+        type: integer
+      scoring_rules:
+        type: string
+      start_at:
+        type: string
+      status:
+        $ref: '#/definitions/types.SeriesStatus'
+    type: object
+  dto.SetGameParticipantsRequest:
+    properties:
+      participant_ids:
+        items:
+          type: string
+        maxItems: 100
+        minItems: 1
+        type: array
+    required:
+    - participant_ids
+    type: object
+  dto.UpdateClubRequest:
+    properties:
+      description:
+        example: Best club
+        maxLength: 2000
+        type: string
+      name:
+        example: Smart League
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  dto.UpdateClubResponse:
+    properties:
+      creator_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      description:
+        example: Best club
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: Smart League
+        type: string
+    type: object
+  dto.UpdateCurrentProfileRequest:
+    properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      description:
+        example: About me
+        maxLength: 2000
+        type: string
+      name:
+        example: Ivan
         maxLength: 100
-        minLength: 3
+        minLength: 1
         type: string
-      volume:
-        example: 500
-        maximum: 10000
-        minimum: 1
-        type: integer
+      nickname:
+        example: mishmish
+        maxLength: 100
+        minLength: 1
+        type: string
+      show_name:
+        example: true
+        type: boolean
     type: object
-  dto.UpdateCosmeticsResponse:
-    description: Contains product information such as category, title, description,
-      and volume.
+  dto.UpdateCurrentProfileResponse:
     properties:
-      application_method:
-        example: Apply to wet hair, lather, rinse.
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      category:
-        $ref: '#/definitions/dto.Category'
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
       description:
-        example: Suitable for daily use.
+        example: About me
+        type: string
+      email:
+        example: user@example.com
         type: string
       id:
-        example: 123e4567-e89b-12d3-a456-426614174000
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
+      name:
+        example: Ivan
         type: string
-      is_hidden:
-        example: false
+      nickname:
+        example: mishmish
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/types.Role'
+        example: 0
+      show_name:
+        example: true
         type: boolean
-      links:
-        $ref: '#/definitions/dto.Links'
-      title:
-        example: Hair Shampoo
-        type: string
-      volume:
-        example: 250
-        type: integer
     type: object
   dto.UpdateCurrentUserRequest:
     properties:
@@ -1045,6 +803,74 @@ definitions:
       surname:
         example: Ivanov
         type: string
+    type: object
+  dto.UpdateEachProfileRequest:
+    properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      description:
+        example: About me
+        maxLength: 2000
+        type: string
+      email:
+        example: user@example.com
+        maxLength: 254
+        minLength: 6
+        type: string
+      name:
+        example: Ivan
+        maxLength: 100
+        minLength: 1
+        type: string
+      nickname:
+        example: mishmish
+        maxLength: 100
+        minLength: 1
+        type: string
+      password:
+        example: SecurePass123!
+        format: password
+        maxLength: 100
+        minLength: 8
+        type: string
+      role:
+        $ref: '#/definitions/types.Role'
+      show_name:
+        example: true
+        type: boolean
+    type: object
+  dto.UpdateEachProfileResponse:
+    properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: Ivan
+        type: string
+      nickname:
+        example: mishmish
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/types.Role'
+        example: 0
+      show_name:
+        example: true
+        type: boolean
     type: object
   dto.UpdateEachUserRequest:
     properties:
@@ -1091,203 +917,111 @@ definitions:
         example: Ivanov
         type: string
     type: object
-  dto.UpdateInfoRequest:
+  dto.UpdateGameRequest:
     properties:
       description:
-        example: Updated long description about the company.
-        maxLength: 500
-        minLength: 10
-        type: string
-      heading:
-        example: Updated Heading
-        maxLength: 100
-        minLength: 3
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.InfoLinks'
-        maxItems: 10
-        minItems: 0
-        type: array
-      schedule:
-        items:
-          $ref: '#/definitions/dto.ScheduleEntry'
-        maxItems: 7
-        minItems: 1
-        type: array
-    type: object
-  dto.UpdateInfoResponse:
-    properties:
-      description:
-        example: We are a global leader in innovation and technology.
-        maxLength: 500
-        minLength: 10
-        type: string
-      heading:
-        example: Welcome to our company
-        maxLength: 100
-        minLength: 3
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.InfoLinks'
-        maxItems: 10
-        minItems: 0
-        type: array
-      schedule:
-        items:
-          $ref: '#/definitions/dto.ScheduleEntry'
-        maxItems: 7
-        minItems: 1
-        type: array
-    required:
-    - description
-    - heading
-    type: object
-  dto.UpdateMainPageRequest:
-    properties:
-      content:
-        example: Updated main banner description text...
-        maxLength: 1000
-        minLength: 2
-        type: string
-      fluid:
-        example: false
-        type: boolean
-      href:
-        example: https://example.com/updated
-        maxLength: 2000
-        minLength: 1
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      is_hidden:
-        example: true
-        type: boolean
-      title:
-        example: Updated main banner title
-        maxLength: 100
-        minLength: 2
-        type: string
-    type: object
-  dto.UpdateMainPageResponse:
-    properties:
-      content:
-        example: Main banner description text goes here...
-        maxLength: 1000
-        minLength: 2
-        type: string
-      fluid:
-        example: true
-        type: boolean
-      href:
-        example: https://example.com/page
-        maxLength: 2000
-        minLength: 1
-        type: string
-      id:
-        example: 123e4567-e89b-12d3-a456-426614174000
-        type: string
-      image_id:
-        example: 123e4567-e89b-12d3-a456-426614174100
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Main banner title
-        maxLength: 100
-        minLength: 2
-        type: string
-    required:
-    - content
-    - fluid
-    - href
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.UpdateNewsRequest:
-    properties:
-      content:
-        example: Updated full news content...
         maxLength: 5000
         type: string
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+      host_id:
         type: string
-      image_id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      is_hidden:
-        example: true
-        type: boolean
-      title:
-        example: Updated News Title
-        maxLength: 255
-        type: string
-    required:
-    - id
-    type: object
-  dto.UpdateNewsResponse:
-    properties:
-      content:
-        example: This is the full news content...
-        maxLength: 5000
-        type: string
-      id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      image_id:
-        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-        type: string
-      is_hidden:
-        example: false
-        type: boolean
-      title:
-        example: Breaking News
-        maxLength: 255
-        type: string
-    required:
-    - content
-    - id
-    - image_id
-    - is_hidden
-    - title
-    type: object
-  dto.UpdatePartnerRequest:
-    properties:
-      description:
-        example: Updated description of the partner
-        maxLength: 500
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.PartnersLink'
-        type: array
       name:
-        example: New Name
-        maxLength: 100
+        maxLength: 200
         minLength: 1
         type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/types.GameStatus'
+        maximum: 2
+        minimum: 0
     type: object
-  dto.UpdatePartnerResponse:
+  dto.UpdateGameResponse:
     properties:
       description:
-        example: Leading supplier of industrial equipment
+        type: string
+      host_id:
         type: string
       id:
-        example: 123e4567-e89b-12d3-a456-426614174000
         type: string
-      links:
-        items:
-          $ref: '#/definitions/dto.PartnersLink'
-        type: array
       name:
-        example: Backend's department
         type: string
+      number:
+        type: integer
+      series_id:
+        type: string
+      status:
+        $ref: '#/definitions/types.GameStatus'
+    type: object
+  dto.UpdateSeriesRequest:
+    properties:
+      description:
+        maxLength: 5000
+        type: string
+      end_at:
+        type: string
+      game_type:
+        allOf:
+        - $ref: '#/definitions/types.GameType'
+        maximum: 3
+        minimum: 0
+      is_closed:
+        type: boolean
+      name:
+        maxLength: 200
+        minLength: 1
+        type: string
+      price_rub:
+        maximum: 100000000
+        minimum: 0
+        type: integer
+      scoring_rules:
+        maxLength: 10000
+        minLength: 1
+        type: string
+      start_at:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/types.SeriesStatus'
+        maximum: 3
+        minimum: 0
+    type: object
+  dto.UpdateSeriesResponse:
+    properties:
+      club_id:
+        type: string
+      creator_id:
+        type: string
+      description:
+        type: string
+      end_at:
+        type: string
+      game_type:
+        $ref: '#/definitions/types.GameType'
+      id:
+        type: string
+      is_closed:
+        type: boolean
+      name:
+        type: string
+      price_rub:
+        type: integer
+      scoring_rules:
+        type: string
+      start_at:
+        type: string
+      status:
+        $ref: '#/definitions/types.SeriesStatus'
+    type: object
+  dto.UpsertGameResultsRequest:
+    properties:
+      rows:
+        items:
+          $ref: '#/definitions/dto.GameResultRow'
+        maxItems: 100
+        minItems: 1
+        type: array
+    required:
+    - rows
     type: object
   dto.User:
     properties:
@@ -1308,22 +1042,40 @@ definitions:
         example: Ivanov
         type: string
     type: object
-  types.Package:
+  types.ClubState:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - ClubStateNone
+    - ClubStateMember
+    - ClubStateLeader
+    - ClubStatePresident
+  types.GameStatus:
     enum:
     - 0
     - 1
     - 2
     type: integer
-    x-enum-comments:
-      PackagePeat: Торф
-    x-enum-descriptions:
-    - ""
-    - ""
-    - Торф
     x-enum-varnames:
-    - PackageWater
-    - PackageGel
-    - PackagePeat
+    - GameStatusDraft
+    - GameStatusInProgress
+    - GameStatusFinished
+  types.GameType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - GameTypeSportMafia
+    - GameTypeCity
+    - GameTypeExperimental
+    - GameTypeOther
   types.Role:
     enum:
     - 0
@@ -1336,82 +1088,27 @@ definitions:
     - RoleModerator
     - RoleAdmin
     - RoleSuperAdmin
-  types.Weekday:
+  types.SeriesStatus:
     enum:
     - 0
     - 1
     - 2
     - 3
-    - 4
-    - 5
-    - 6
     type: integer
     x-enum-varnames:
-    - Monday
-    - Tuesday
-    - Wednesday
-    - Thursday
-    - Friday
-    - Saturday
-    - Sunday
-host: пиявкипобеда.рф
+    - SeriesStatusClosed
+    - SeriesStatusRegistration
+    - SeriesStatusClosedRegistration
+    - SeriesStatusGames
+host: localhost:8000
 info:
   contact:
-    email: mmishin2107@gmail.com
-    name: API Support
-  description: Backend service for Leech-ru platform. Uses cookie-based authentication
-    with HttpOnly tokens.
-  title: Leech API
+    name: SmartLeague Backend
+  description: Backend service for SmartLeague. Cookie-based auth (HttpOnly access/refresh
+    cookies).
+  title: SmartLeague API
   version: "1.0"
 paths:
-  /api/v1/admin/news:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of news with pagination, preview length option,
-        and hidden flag (for admins).
-      parameters:
-      - description: Max number of items
-        in: query
-        maximum: 100
-        minimum: 1
-        name: limit
-        type: integer
-      - description: Offset for pagination
-        in: query
-        minimum: 0
-        name: offset
-        type: integer
-      - description: Number of characters for content preview
-        in: query
-        maximum: 500
-        minimum: 1
-        name: preview_length
-        type: integer
-      - description: Filter by hidden status (true/false)
-        in: query
-        name: is_hidden
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetAllByFilterForAdminsNewsResponse'
-        "400":
-          description: Invalid query parameters
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Get news by filters (admin)
-      tags:
-      - news
   /api/v1/auth/refresh:
     post:
       consumes:
@@ -1445,534 +1142,55 @@ paths:
             $ref: '#/definitions/dto.HTTPStatus'
       summary: Refresh tokens
       tags:
-      - auth
-  /api/v1/category:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of category filtered by category, volume, title,
-        etc.
-      parameters:
-      - description: Max number of items
-        in: query
-        maximum: 100
-        minimum: 1
-        name: limit
-        type: integer
-      - description: Offset for pagination
-        in: query
-        minimum: 0
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetAllCategoriesResponse'
-        "400":
-          description: Invalid query parameters
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get category by filters
-      tags:
-      - category
+      - token
+  /api/v1/club:
     post:
       consumes:
       - application/json
-      description: Creates a new category product with provided details.
       parameters:
-      - description: Category product data
+      - description: Club data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateCategoryRequest'
+          $ref: '#/definitions/dto.CreateClubRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.CreateCategoryResponse'
+            $ref: '#/definitions/dto.CreateClubResponse'
         "400":
-          description: Invalid request body or validation error
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-        "409":
-          description: 'Conflict: invalid category format'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Create a new category product
+      summary: Create club
       tags:
-      - category
-  /api/v1/category/{id}:
+      - club
+  /api/v1/club/{id}:
     delete:
-      description: Deletes the category product with the given UUID.
       parameters:
-      - description: Category ID (UUID)
-        format: uuid
+      - description: Club ID
         in: path
         name: id
         required: true
         type: string
+      produces:
+      - application/json
       responses:
         "204":
-          description: Successfully deleted
+          description: No Content
         "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Category not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Delete category by ID
-      tags:
-      - category
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a category product using its UUID.
-      parameters:
-      - description: Cosmetic ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetByIdCategoryResponse'
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Cosmetic not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get category by ID
-      tags:
-      - category
-    patch:
-      consumes:
-      - application/json
-      description: Updates category product fields by given ID.
-      parameters:
-      - description: Cosmetic ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Updated category fields
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdateCategoryResponse'
-        "400":
-          description: Validation or binding error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Cosmetic not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Update category
-      tags:
-      - category
-  /api/v1/cosmetics:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new cosmetic product with provided details.
-      parameters:
-      - description: Cosmetic product data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreateCosmeticsRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.CreateCosmeticsResponse'
-        "400":
-          description: Invalid request body or validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "409":
-          description: 'Conflict: invalid cosmetics format'
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Create a new cosmetic product
-      tags:
-      - cosmetics
-  /api/v1/cosmetics/{id}:
-    delete:
-      description: Deletes the cosmetic product with the given UUID.
-      parameters:
-      - description: Cosmetic ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: Successfully deleted
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Cosmetic not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Delete cosmetic by ID
-      tags:
-      - cosmetics
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a cosmetic product using its UUID.
-      parameters:
-      - description: Cosmetic ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetByIdCosmeticsResponse'
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Cosmetic not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get cosmetic by ID
-      tags:
-      - cosmetics
-    patch:
-      consumes:
-      - application/json
-      description: Updates cosmetic product fields by given ID.
-      parameters:
-      - description: Cosmetic ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Updated cosmetic fields
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateCosmeticsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdateCosmeticsResponse'
-        "400":
-          description: Validation or binding error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Cosmetic not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Update cosmetic
-      tags:
-      - cosmetics
-  /api/v1/cosmetics/admin:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of cosmetics filtered by category, volume, title,
-        etc and hidden parameters.
-      parameters:
-      - description: Max number of items
-        in: query
-        maximum: 100
-        minimum: 1
-        name: limit
-        type: integer
-      - description: Offset for pagination
-        in: query
-        minimum: 0
-        name: offset
-        type: integer
-      - description: Category UUID
-        example: 123e4567-e89b-12d3-a456-426614174000
-        format: uuid
-        in: query
-        name: category_id
-        type: string
-      - description: Filter by title prefix
-        in: query
-        name: titlePrefix
-        type: string
-      - description: Exact volume in ml
-        in: query
-        maximum: 10000
-        minimum: 1
-        name: volume
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetAllByFilterCosmeticsResponse'
-        "400":
-          description: Invalid query parameters
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Get cosmetics by filters
-      tags:
-      - cosmetics
-  /api/v1/cosmetics/search:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of cosmetics filtered by category, volume, title,
-        etc.
-      parameters:
-      - description: Max number of items
-        in: query
-        maximum: 100
-        minimum: 1
-        name: limit
-        type: integer
-      - description: Offset for pagination
-        in: query
-        minimum: 0
-        name: offset
-        type: integer
-      - description: Category UUID
-        example: 123e4567-e89b-12d3-a456-426614174000
-        format: uuid
-        in: query
-        name: category_id
-        type: string
-      - description: Filter by title prefix
-        in: query
-        name: titlePrefix
-        type: string
-      - description: Exact volume in ml
-        in: query
-        maximum: 10000
-        minimum: 1
-        name: volume
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetAllByFilterCosmeticsResponse'
-        "400":
-          description: Invalid query parameters
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get cosmetics by filters
-      tags:
-      - cosmetics
-  /api/v1/image:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Uploads an image file and stores it in the system
-      parameters:
-      - description: Image file
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.CreateImageResponse'
-        "400":
-          description: Invalid request or file is missing
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Upload a new image
-      tags:
-      - image
-  /api/v1/image/{image_id}:
-    get:
-      consumes:
-      - application/json
-      description: Returns the image file stream by its UUID identifier
-      parameters:
-      - description: Image UUID
-        in: path
-        name: image_id
-        required: true
-        type: string
-      produces:
-      - application/octet-stream
-      responses:
-        "200":
-          description: Image file stream
-          schema:
-            type: file
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Image not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Download image by ID
-      tags:
-      - image
-  /api/v1/info/corporation:
-    get:
-      consumes:
-      - application/json
-      description: 'Returns the current public corporation information: heading, description,
-        fluid status, schedule, and links.'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetInfoResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get corporation info
-      tags:
-      - info
-    patch:
-      consumes:
-      - application/json
-      description: |-
-        Updates the corporation info fields. Only accessible by authenticated moderators.
-        Requires authentication via cookies (access_token, refresh_token)
-      parameters:
-      - description: Updated corporation info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateInfoRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdateInfoResponse'
-        "400":
-          description: Validation error
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "401":
@@ -1984,29 +1202,157 @@ paths:
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: UpdateCurrent corporation info
+      summary: Delete club by id
       tags:
-      - info
-  /api/v1/info/partner:
+      - club
     get:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetClubResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get club by id
+      tags:
+      - club
+    patch:
       consumes:
       - application/json
-      description: Retrieves a list of partners with pagination.
       parameters:
-      - description: Max number of items
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateClubRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateClubResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Update club by id
+      tags:
+      - club
+  /api/v1/club/{id}/join:
+    post:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Join club
+      tags:
+      - club
+  /api/v1/club/{id}/leader/{member_id}:
+    post:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member Profile ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Set club leader
+      tags:
+      - club
+  /api/v1/club/{id}/members:
+    get:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
         in: query
-        maximum: 100
-        minimum: 1
         name: limit
         type: integer
-      - description: Offset for pagination
+      - description: offset
         in: query
-        minimum: 0
         name: offset
         type: integer
       produces:
@@ -2015,172 +1361,32 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GetAllPartnerResponse'
+            $ref: '#/definitions/dto.GetClubMembersResponse'
         "400":
-          description: Invalid query parameters
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get partners with pagination
+      summary: Get club members
       tags:
-      - partner
-    post:
-      consumes:
-      - application/json
-      description: Creates a new cosmetic product with provided details.
-      parameters:
-      - description: Partner product data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreatePartnerRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.CreatePartnerResponse'
-        "400":
-          description: Invalid request body or validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "409":
-          description: 'Conflict: invalid partner format'
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Create a new cosmetic product
-      tags:
-      - partner
-  /api/v1/info/partner/{id}:
-    delete:
-      description: Deletes the partner with the given UUID.
-      parameters:
-      - description: Partner ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: Successfully deleted
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Partner not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Delete partner by ID
-      tags:
-      - partner
+      - club
+  /api/v1/club/{id}/series:
     get:
-      consumes:
-      - application/json
-      description: Retrieves a partner product using its UUID.
       parameters:
-      - description: Partner ID (UUID)
-        format: uuid
+      - description: Club ID
         in: path
         name: id
         required: true
         type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetByIdPartnerResponse'
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Partner not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get partner by ID
-      tags:
-      - partner
-    patch:
-      consumes:
-      - application/json
-      description: Updates partner product fields by given ID.
-      parameters:
-      - description: Partner ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Updated partner fields
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdatePartnerRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdatePartnerResponse'
-        "400":
-          description: Validation or binding error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Partner not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Update partner
-      tags:
-      - partner
-  /api/v1/main:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of main page contents with limit and offset
-      parameters:
-      - description: Max number of items
+      - description: limit
         in: query
-        maximum: 100
-        minimum: 1
         name: limit
         type: integer
-      - description: Offset for pagination
+      - description: offset
         in: query
-        minimum: 0
         name: offset
         type: integer
       produces:
@@ -2189,271 +1395,100 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GetAllMainPageResponse'
+            $ref: '#/definitions/dto.GetClubSeriesResponse'
         "400":
-          description: Invalid query parameters
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get all contents
+      summary: Get club series list
       tags:
-      - main
-    post:
-      consumes:
-      - application/json
-      description: Creates a new page content with provided details
-      parameters:
-      - description: Content data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreateMainPageRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.CreateMainPageResponse'
-        "400":
-          description: Invalid request body or validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "409":
-          description: 'Conflict: invalid content format'
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Create a new main page content
-      tags:
-      - main
-  /api/v1/main/{id}:
-    delete:
-      description: Deletes the main page content with the given UUID.
-      parameters:
-      - description: Content ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: Successfully deleted
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Content not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Delete content by ID
-      tags:
-      - main
+      - series
+  /api/v1/club/all:
     get:
-      consumes:
-      - application/json
-      description: Retrieves a main page content using its UUID.
       parameters:
-      - description: Content ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetByIdMainPageResponse'
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Content not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get content by ID
-      tags:
-      - main
-    patch:
-      consumes:
-      - application/json
-      description: Updates main page content fields by given ID.
-      parameters:
-      - description: Content ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Updated content fields
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateMainPageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdateMainPageResponse'
-        "400":
-          description: Validation or binding error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: Content not found
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Update content
-      tags:
-      - main
-  /api/v1/news:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of news with pagination and content preview length
-        option.
-      parameters:
-      - description: Max number of items
+      - description: limit
         in: query
-        maximum: 100
-        minimum: 1
         name: limit
         type: integer
-      - description: Offset for pagination
+      - description: offset
         in: query
-        minimum: 0
         name: offset
         type: integer
-      - description: Number of characters for content preview
-        in: query
-        maximum: 500
-        minimum: 1
-        name: preview_length
-        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GetAllByFilterNewsResponse'
+            $ref: '#/definitions/dto.GetAllClubsResponse'
         "400":
-          description: Invalid query parameters
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get news by filters
+      summary: Get clubs list
       tags:
-      - news
+      - club
+  /api/v1/club/leave:
     post:
-      consumes:
-      - application/json
-      description: Creates a news article with provided details.
-      parameters:
-      - description: News data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreateNewsRequest'
       produces:
       - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.CreateNewsResponse'
-        "400":
-          description: Invalid request body or validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "409":
-          description: 'Conflict: invalid news format'
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Create a news article
-      tags:
-      - news
-  /api/v1/news/{id}:
-    delete:
-      description: Deletes the news article with the given UUID.
-      parameters:
-      - description: News ID (UUID)
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       responses:
         "204":
-          description: Successfully deleted
-        "400":
-          description: Validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: News not found
+          description: No Content
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Delete news by ID
+      summary: Leave club
       tags:
-      - news
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a news article using its UUID.
+      - club
+  /api/v1/game/{id}:
+    delete:
       parameters:
-      - description: News ID (UUID)
-        format: uuid
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Delete game by id
+      tags:
+      - game
+    get:
+      parameters:
+      - description: Game ID
         in: path
         name: id
         required: true
@@ -2464,93 +1499,735 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GetByIdNewsResponse'
+            $ref: '#/definitions/dto.GetGameResponse'
         "400":
-          description: Validation error
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: News not found
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get news by ID
+      summary: Get game by id
       tags:
-      - news
+      - game
     patch:
       consumes:
       - application/json
-      description: Updates news article fields by given ID.
       parameters:
-      - description: News ID (UUID)
-        format: uuid
+      - description: Game ID
         in: path
         name: id
         required: true
         type: string
-      - description: Updated news fields
+      - description: Update data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdateNewsRequest'
+          $ref: '#/definitions/dto.UpdateGameRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UpdateNewsResponse'
+            $ref: '#/definitions/dto.UpdateGameResponse'
         "400":
-          description: Validation or binding error
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-        "404":
-          description: News not found
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
-      summary: Update news
+      summary: Update game by id
       tags:
-      - news
-  /api/v1/order:
+      - game
+  /api/v1/game/{id}/full:
+    get:
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetGameFullResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get full game object
+      tags:
+      - game
+  /api/v1/game/{id}/participants:
     post:
       consumes:
       - application/json
-      description: Creates a new leech order and send it to email.
       parameters:
-      - description: Leech order data
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Participant IDs
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateOrderRequest'
+          $ref: '#/definitions/dto.SetGameParticipantsRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Set game participants
+      tags:
+      - game
+  /api/v1/game/{id}/results:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Results
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpsertGameResultsRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Upsert game results
+      tags:
+      - game
+  /api/v1/profile:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Delete current profile
+      tags:
+      - profile
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get current profile
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateCurrentProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateCurrentProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Update current profile
+      tags:
+      - profile
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateProfileRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.CreateOrderResponse'
+            $ref: '#/definitions/dto.CreateProfileResponse'
         "400":
-          description: Invalid request body or validation error
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Create profile
+      tags:
+      - profile
+  /api/v1/profile/{id}:
+    delete:
+      parameters:
+      - description: Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      summary: Create a new leech order
+      summary: Delete profile by id
       tags:
-      - order
+      - profile
+    get:
+      parameters:
+      - description: Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get profile by id
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateEachProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateEachProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Update profile by id
+      tags:
+      - profile
+  /api/v1/profile/all:
+    get:
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetAllProfilesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get all profiles
+      tags:
+      - profile
+  /api/v1/series:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Series data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateSeriesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateSeriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Create series
+      tags:
+      - series
+  /api/v1/series/{id}:
+    delete:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Delete series by id
+      tags:
+      - series
+    get:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetSeriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get series by id
+      tags:
+      - series
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateSeriesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateSeriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Update series by id
+      tags:
+      - series
+  /api/v1/series/{id}/games:
+    get:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetSeriesGamesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get games in series
+      tags:
+      - game
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Game data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateGameRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateGameResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Create game in series
+      tags:
+      - game
+  /api/v1/series/{id}/join:
+    post:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Join series
+      tags:
+      - series
+  /api/v1/series/{id}/leaderboard:
+    get:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetSeriesLeaderboardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get series leaderboard
+      tags:
+      - series
+  /api/v1/series/{id}/leave:
+    post:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Leave series
+      tags:
+      - series
+  /api/v1/series/{id}/participants:
+    get:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetSeriesParticipantsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get series participants
+      tags:
+      - series
   /api/v1/user:
     get:
       consumes:
@@ -2635,14 +2312,13 @@ paths:
             $ref: '#/definitions/dto.HTTPStatus'
       security:
       - CookieAuth: []
-      summary: Get current user info
+      summary: Get user by id
       tags:
       - user
     patch:
       consumes:
       - application/json
-      description: Information updating the current user under which the input is
-        executed
+      description: Update user by id. Only for admins
       parameters:
       - description: User ID (UUID)
         in: path
@@ -2879,36 +2555,28 @@ paths:
       tags:
       - ping
 schemes:
-- https
+- http
 securityDefinitions:
   CookieAuth:
-    description: Authentication via HttpOnly cookies. System uses two cookies:\n-
-      `user_auth_access_token` (short-lived)\n- `user_auth_refresh_token` (long-lived)\n\nAll
-      protected endpoints require valid cookies to be automatically sent by browser.
+    description: Authentication via HttpOnly cookies:\n- `user_auth_access_token`
+      (short-lived)\n- `user_auth_refresh_token` (long-lived)\n\nProtected endpoints
+      require valid cookies to be sent by the client.
     in: cookie
     name: user_auth_access_token
     type: apiKey
 swagger: "2.0"
 tags:
-- description: The main check of server performance
+- description: Healthcheck
   name: ping
-- description: Leech order operations
-  name: order
-- description: User authentication and management
+- description: Users and auth actions
   name: user
-- description: Work with authorization
-  name: auth
-- description: Cosmetics view and management
-  name: cosmetics
-- description: Image view and management
-  name: image
-- description: Category view and management
-  name: category
-- description: Information about the center
-  name: info
-- description: Information about center's partners
-  name: partner
-- description: News view and management
-  name: news
-- description: information about main page
-  name: main
+- description: Access/refresh tokens
+  name: token
+- description: Profiles CRUD
+  name: profile
+- description: Clubs and membership
+  name: club
+- description: Series created by clubs
+  name: series
+- description: Games inside series
+  name: game

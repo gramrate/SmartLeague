@@ -6,4 +6,3 @@ type LeaderboardRow struct {
 	ProfileID uuid.UUID
 	Points    int
 }
-

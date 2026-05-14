@@ -8,20 +8,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// CreateSeries Create series
+//
+// @Summary Create series
+// @Tags series
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateSeriesRequest true "Series data"
+// @Success 201 {object} dto.CreateSeriesResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series [post]
 func (h *handler) CreateSeries(c echo.Context) error {
-	// Create series
-	//
-	// @Summary Create series
-	// @Tags series
-	// @Accept json
-	// @Produce json
-	// @Param request body dto.CreateSeriesRequest true "Series data"
-	// @Success 201 {object} dto.CreateSeriesResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/series [post]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})

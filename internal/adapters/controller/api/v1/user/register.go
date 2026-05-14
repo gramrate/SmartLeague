@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Register new user
+// Register Register new user
 //
 // @Summary Register new user
 // @Tags user

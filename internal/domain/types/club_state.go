@@ -8,4 +8,3 @@ const (
 	ClubStateLeader
 	ClubStatePresident
 )
-

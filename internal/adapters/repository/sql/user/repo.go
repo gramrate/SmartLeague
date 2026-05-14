@@ -2,8 +2,8 @@ package user
 
 import (
 	"SmartLeague/internal/domain/common/errorz"
+	"SmartLeague/internal/domain/model"
 	"SmartLeague/internal/domain/types"
-	"SmartLeague/pkg/ent"
 	"context"
 	"database/sql"
 	"errors"
@@ -25,9 +25,9 @@ func normalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }
 
-func (r *Repo) Create(ctx context.Context, userEntity ent.User) (*ent.User, error) {
-	if userEntity.ID == uuid.Nil {
-		userEntity.ID = uuid.New()
+func (r *Repo) Create(ctx context.Context, u model.User) (*model.User, error) {
+	if u.ID == uuid.Nil {
+		u.ID = uuid.New()
 	}
 
 	row := r.db.QueryRowContext(ctx, `
@@ -35,17 +35,17 @@ INSERT INTO profiles (id, nickname, name, show_name, description, email, passwor
 VALUES ($1,'',$2,true,NULL,$3,$4,NULL,0,$5,$6)
 RETURNING id, email, password_hash, name, surname, role
 `,
-		userEntity.ID,
-		userEntity.Name,
-		normalizeEmail(userEntity.Email),
-		userEntity.Password,
-		int16(userEntity.Role),
-		userEntity.Surname,
+		u.ID,
+		u.Name,
+		normalizeEmail(u.Email),
+		u.PasswordHash,
+		int16(u.Role),
+		u.Surname,
 	)
 
-	var out ent.User
+	var out model.User
 	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.Password, &out.Name, &out.Surname, &role); err != nil {
+	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return nil, errorz.EmailAlreadyExist
@@ -56,12 +56,12 @@ RETURNING id, email, password_hash, name, surname, role
 	return &out, nil
 }
 
-func (r *Repo) GetById(ctx context.Context, id uuid.UUID) (*ent.User, error) {
+func (r *Repo) GetById(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	row := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, name, surname, role FROM profiles WHERE id=$1`, id)
 
-	var out ent.User
+	var out model.User
 	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.Password, &out.Name, &out.Surname, &role); err != nil {
+	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errorz.UserNotFound
 		}
@@ -71,12 +71,12 @@ func (r *Repo) GetById(ctx context.Context, id uuid.UUID) (*ent.User, error) {
 	return &out, nil
 }
 
-func (r *Repo) GetByEmail(ctx context.Context, email string) (*ent.User, error) {
-	row := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, name, surname, role FROM profiles WHERE lower(email)=lower($1)`, email)
+func (r *Repo) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	row := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, name, surname, role FROM profiles WHERE lower(email)=lower($1)`, normalizeEmail(email))
 
-	var out ent.User
+	var out model.User
 	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.Password, &out.Name, &out.Surname, &role); err != nil {
+	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errorz.UserNotFound
 		}
@@ -91,7 +91,7 @@ func (r *Repo) GetAllByFilter(
 	limit, offset int,
 	role *types.Role,
 	query, emailPrefix *string,
-) ([]*ent.User, int, error) {
+) ([]*model.User, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -110,12 +110,13 @@ func (r *Repo) GetAllByFilter(
 	}
 	if emailPrefix != nil {
 		where += " AND lower(email) LIKE lower($" + itoa(argN) + ")"
-		args = append(args, *emailPrefix+"%")
+		args = append(args, normalizeEmail(*emailPrefix)+"%")
 		argN++
 	}
 	if query != nil {
+		q := strings.TrimSpace(*query)
 		where += " AND (lower(email) LIKE lower($" + itoa(argN) + ") OR lower(name) LIKE lower($" + itoa(argN) + ") OR lower(surname) LIKE lower($" + itoa(argN) + "))"
-		args = append(args, "%"+*query+"%")
+		args = append(args, "%"+strings.ToLower(q)+"%")
 		argN++
 	}
 
@@ -134,11 +135,11 @@ func (r *Repo) GetAllByFilter(
 	}
 	defer rows.Close()
 
-	var out []*ent.User
+	var out []*model.User
 	for rows.Next() {
-		var u ent.User
+		var u model.User
 		var rrole int16
-		if err := rows.Scan(&u.ID, &u.Email, &u.Password, &u.Name, &u.Surname, &rrole); err != nil {
+		if err := rows.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.Surname, &rrole); err != nil {
 			return nil, 0, err
 		}
 		u.Role = types.Role(rrole)
@@ -150,7 +151,7 @@ func (r *Repo) GetAllByFilter(
 	return out, total, nil
 }
 
-func (r *Repo) Update(ctx context.Context, userEntity ent.User) (*ent.User, error) {
+func (r *Repo) Update(ctx context.Context, u model.User) (*model.User, error) {
 	row := r.db.QueryRowContext(ctx, `
 UPDATE profiles
 SET email=$2,
@@ -162,17 +163,17 @@ SET email=$2,
 WHERE id=$1
 RETURNING id, email, password_hash, name, surname, role
 `,
-		userEntity.ID,
-		normalizeEmail(userEntity.Email),
-		userEntity.Password,
-		userEntity.Name,
-		userEntity.Surname,
-		int16(userEntity.Role),
+		u.ID,
+		normalizeEmail(u.Email),
+		u.PasswordHash,
+		u.Name,
+		u.Surname,
+		int16(u.Role),
 	)
 
-	var out ent.User
+	var out model.User
 	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.Password, &out.Name, &out.Surname, &role); err != nil {
+	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return nil, errorz.EmailAlreadyExist
@@ -202,7 +203,6 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func itoa(n int) string {
-	// small helper to avoid fmt in hot paths
 	const digits = "0123456789"
 	if n == 0 {
 		return "0"
@@ -216,4 +216,3 @@ func itoa(n int) string {
 	}
 	return string(buf[i:])
 }
-

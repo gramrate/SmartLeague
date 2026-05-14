@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// GetAllByFilter returns a list of users based on filter parameters.
+// GetAllByFilter Get users by filters (admin)
 //
 // @Summary     Get users by filters
 // @Description Retrieves a list of users filtered by role, one-line full name query, and email prefix. Only for admins

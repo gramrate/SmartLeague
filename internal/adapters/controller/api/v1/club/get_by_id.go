@@ -8,6 +8,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetByID Get club by id
+//
+// @Summary Get club by id
+// @Tags club
+// @Produce json
+// @Param id path string true "Club ID"
+// @Success 200 {object} dto.GetClubResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/{id} [get]
 func (h *handler) GetByID(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -20,4 +30,3 @@ func (h *handler) GetByID(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

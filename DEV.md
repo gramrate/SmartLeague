@@ -12,14 +12,13 @@
 - `internal/domain/service`  
   Бизнес-логика use-case уровня. Здесь не должно быть HTTP-деталей.
 
-- `internal/adapters/repository/postgres` / `.../valkey` / `.../minio` / `.../json`  
+- `internal/adapters/repository/sql` / `.../valkey` / `.../minio`  
   Доступ к хранилищам и внешним системам.
 
 - `internal/domain/dto`  
   Контракты запросов/ответов API.
 
-- `internal/domain/schema` + `pkg/ent`  
-  Схемы и сгенерированный ORM (Ent).
+ 
 
 Поток запроса:
 1. Handler принимает запрос.
@@ -51,8 +50,8 @@
 1. DTO  
    Добавь request/response структуры в `internal/domain/dto`.
 
-2. Schema / Ent (если есть новая таблица)  
-   Добавь/измени схему в `internal/domain/schema`.
+2. Миграции (если есть новая таблица)  
+   Добавь миграцию в `internal/adapters/repository/sql/migrate/migrations`.
 
 3. Repository  
    Реализуй интерфейс доступа к данным в `internal/adapters/repository/postgres/<module>`.
@@ -100,18 +99,6 @@
 - `total_items` считается отдельным `Count` с теми же фильтрами.
 
 ## Локальная генерация артефактов
-
-Генерация новой Ent-схемы:
-
-```bash
-go run entgo.io/ent/cmd/ent new --target internal/domain/schema [TableName]
-```
-
-Генерация Ent ORM:
-
-```bash
-go run -mod=mod entgo.io/ent/cmd/ent generate --target ./pkg/ent ./internal/domain/schema
-```
 
 Генерация Swagger:
 

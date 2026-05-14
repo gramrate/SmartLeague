@@ -6,53 +6,40 @@ import (
 	"log"
 )
 
-// @title           Leech API
+// @title           SmartLeague API
 // @version         1.0
-// @description     Backend service for Leech-ru platform. Uses cookie-based authentication with HttpOnly tokens.
+// @description     Backend service for SmartLeague. Cookie-based auth (HttpOnly access/refresh cookies).
 
-// @contact.name    API Support
-// @contact.email   mmishin2107@gmail.com
+// @contact.name    SmartLeague Backend
 
-// @host            пиявкипобеда.рф
-// @schemes         https
+// @host            localhost:8000
+// @schemes         http
 
 // @securityDefinitions.apikey  CookieAuth
 // @in                          cookie
 // @name                        user_auth_access_token
-// @description                 Authentication via HttpOnly cookies. System uses two cookies:\n- `user_auth_access_token` (short-lived)\n- `user_auth_refresh_token` (long-lived)\n\nAll protected endpoints require valid cookies to be automatically sent by browser.
+// @description                 Authentication via HttpOnly cookies:\n- `user_auth_access_token` (short-lived)\n- `user_auth_refresh_token` (long-lived)\n\nProtected endpoints require valid cookies to be sent by the client.
 
 // @tag.name        ping
-// @tag.description The main check of server performance
-
-// @tag.name        order
-// @tag.description Leech order operations
+// @tag.description Healthcheck
 
 // @tag.name        user
-// @tag.description User authentication and management
+// @tag.description Users and auth actions
 
-// @tag.name        auth
-// @tag.description Work with authorization
+// @tag.name        token
+// @tag.description Access/refresh tokens
 
-// @tag.name        cosmetics
-// @tag.description Cosmetics view and management
+// @tag.name        profile
+// @tag.description Profiles CRUD
 
-// @tag.name        image
-// @tag.description Image view and management
+// @tag.name        club
+// @tag.description Clubs and membership
 
-// @tag.name        category
-// @tag.description Category view and management
+// @tag.name        series
+// @tag.description Series created by clubs
 
-// @tag.name        info
-// @tag.description Information about the center
-
-// @tag.name        partner
-// @tag.description Information about center's partners
-
-// @tag.name        news
-// @tag.description News view and management
-
-// @tag.name        main
-// @tag.description information about main page
+// @tag.name        game
+// @tag.description Games inside series
 
 func main() {
 	mainApp, err := app.New()

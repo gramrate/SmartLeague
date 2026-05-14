@@ -1,23 +1,23 @@
 package user
 
 import (
+	"SmartLeague/internal/domain/model"
 	"SmartLeague/internal/domain/types"
-	"SmartLeague/pkg/ent"
 	"context"
 	"github.com/google/uuid"
 )
 
 type userRepo interface {
-	Create(ctx context.Context, userEntity ent.User) (*ent.User, error)
-	GetById(ctx context.Context, id uuid.UUID) (*ent.User, error)
-	GetByEmail(ctx context.Context, email string) (*ent.User, error)
+	Create(ctx context.Context, userEntity model.User) (*model.User, error)
+	GetById(ctx context.Context, id uuid.UUID) (*model.User, error)
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	GetAllByFilter(
 		ctx context.Context,
 		limit, offset int,
 		role *types.Role,
 		query, emailPrefix *string,
-	) ([]*ent.User, int, error)
-	Update(ctx context.Context, userEntity ent.User) (*ent.User, error)
+	) ([]*model.User, int, error)
+	Update(ctx context.Context, userEntity model.User) (*model.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 

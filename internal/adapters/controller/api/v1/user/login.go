@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Login User login
+// Login Authenticate user
 //
 // @Summary Authenticate user
 // @Tags user

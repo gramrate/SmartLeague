@@ -57,4 +57,3 @@ func (h *handler) Setup(router *echo.Group) {
 	router.PATCH("/profile/:id", h.UpdateEach, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
 	router.DELETE("/profile/:id", h.DeleteEach, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
 }
-

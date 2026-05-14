@@ -10,85 +10,13 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "API Support",
-            "email": "mmishin2107@gmail.com"
+            "name": "SmartLeague Backend"
         },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/admin/news": {
-            "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Retrieves a list of news with pagination, preview length option, and hidden flag (for admins).",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "news"
-                ],
-                "summary": "Get news by filters (admin)",
-                "parameters": [
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Max number of items",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "minimum": 0,
-                        "type": "integer",
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 500,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Number of characters for content preview",
-                        "name": "preview_length",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Filter by hidden status (true/false)",
-                        "name": "is_hidden",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetAllByFilterForAdminsNewsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid query parameters",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/auth/refresh": {
             "post": {
                 "description": "Refreshes access and refresh tokens using valid refresh token from cookies",
@@ -99,7 +27,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "token"
                 ],
                 "summary": "Refresh tokens",
                 "parameters": [
@@ -139,9 +67,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/category": {
-            "get": {
-                "description": "Retrieves a list of category filtered by category, volume, title, etc.",
+        "/api/v1/club": {
+            "post": {
                 "consumes": [
                     "application/json"
                 ],
@@ -149,22 +76,67 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "category"
+                    "club"
                 ],
-                "summary": "Get category by filters",
+                "summary": "Create club",
                 "parameters": [
                     {
-                        "maximum": 100,
-                        "minimum": 1,
+                        "description": "Club data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateClubRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateClubResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/all": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Get clubs list",
+                "parameters": [
+                    {
                         "type": "integer",
-                        "description": "Max number of items",
+                        "description": "limit",
                         "name": "limit",
                         "in": "query"
                     },
                     {
-                        "minimum": 0,
                         "type": "integer",
-                        "description": "Offset for pagination",
+                        "description": "offset",
                         "name": "offset",
                         "in": "query"
                     }
@@ -173,72 +145,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetAllCategoriesResponse"
+                            "$ref": "#/definitions/dto.GetAllClubsResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid query parameters",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Creates a new category product with provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "category"
-                ],
-                "summary": "Create a new category product",
-                "parameters": [
-                    {
-                        "description": "Category product data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateCategoryRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateCategoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict: invalid category format",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -246,24 +163,47 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/category/{id}": {
-            "get": {
-                "description": "Retrieves a category product using its UUID.",
-                "consumes": [
-                    "application/json"
-                ],
+        "/api/v1/club/leave": {
+            "post": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "category"
+                    "club"
                 ],
-                "summary": "Get category by ID",
+                "summary": "Leave club",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Get club by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "Cosmetic ID (UUID)",
+                        "description": "Club ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -273,23 +213,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetByIdCategoryResponse"
+                            "$ref": "#/definitions/dto.GetClubResponse"
                         }
                     },
                     "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Cosmetic not found",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -297,21 +231,17 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
+                "produces": [
+                    "application/json"
                 ],
-                "description": "Deletes the category product with the given UUID.",
                 "tags": [
-                    "category"
+                    "club"
                 ],
-                "summary": "Delete category by ID",
+                "summary": "Delete club by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "Category ID (UUID)",
+                        "description": "Club ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -319,625 +249,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Successfully deleted"
+                        "description": "No Content"
                     },
                     "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Category not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Updates category product fields by given ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "category"
-                ],
-                "summary": "Update category",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Cosmetic ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated category fields",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateCategoryRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateCategoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Validation or binding error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Cosmetic not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/cosmetics": {
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Creates a new cosmetic product with provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cosmetics"
-                ],
-                "summary": "Create a new cosmetic product",
-                "parameters": [
-                    {
-                        "description": "Cosmetic product data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateCosmeticsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateCosmeticsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict: invalid cosmetics format",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/cosmetics/admin": {
-            "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Retrieves a list of cosmetics filtered by category, volume, title, etc and hidden parameters.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cosmetics"
-                ],
-                "summary": "Get cosmetics by filters",
-                "parameters": [
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Max number of items",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "minimum": 0,
-                        "type": "integer",
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "example": "123e4567-e89b-12d3-a456-426614174000",
-                        "description": "Category UUID",
-                        "name": "category_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by title prefix",
-                        "name": "titlePrefix",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 10000,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Exact volume in ml",
-                        "name": "volume",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetAllByFilterCosmeticsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid query parameters",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/cosmetics/search": {
-            "get": {
-                "description": "Retrieves a list of cosmetics filtered by category, volume, title, etc.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cosmetics"
-                ],
-                "summary": "Get cosmetics by filters",
-                "parameters": [
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Max number of items",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "minimum": 0,
-                        "type": "integer",
-                        "description": "Offset for pagination",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "example": "123e4567-e89b-12d3-a456-426614174000",
-                        "description": "Category UUID",
-                        "name": "category_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by title prefix",
-                        "name": "titlePrefix",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 10000,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Exact volume in ml",
-                        "name": "volume",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetAllByFilterCosmeticsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid query parameters",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/cosmetics/{id}": {
-            "get": {
-                "description": "Retrieves a cosmetic product using its UUID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cosmetics"
-                ],
-                "summary": "Get cosmetic by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Cosmetic ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetByIdCosmeticsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Cosmetic not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Deletes the cosmetic product with the given UUID.",
-                "tags": [
-                    "cosmetics"
-                ],
-                "summary": "Delete cosmetic by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Cosmetic ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Successfully deleted"
-                    },
-                    "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Cosmetic not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Updates cosmetic product fields by given ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cosmetics"
-                ],
-                "summary": "Update cosmetic",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Cosmetic ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated cosmetic fields",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateCosmeticsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateCosmeticsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Validation or binding error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Cosmetic not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/image": {
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Uploads an image file and stores it in the system",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "image"
-                ],
-                "summary": "Upload a new image",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "Image file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateImageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request or file is missing",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/image/{image_id}": {
-            "get": {
-                "description": "Returns the image file stream by its UUID identifier",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/octet-stream"
-                ],
-                "tags": [
-                    "image"
-                ],
-                "summary": "Download image by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Image UUID",
-                        "name": "image_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Image file stream",
-                        "schema": {
-                            "type": "file"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Image not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/info/corporation": {
-            "get": {
-                "description": "Returns the current public corporation information: heading, description, fluid status, schedule, and links.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "info"
-                ],
-                "summary": "Get corporation info",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetInfoResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Updates the corporation info fields. Only accessible by authenticated moderators.\nRequires authentication via cookies (access_token, refresh_token)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "info"
-                ],
-                "summary": "UpdateCurrent corporation info",
-                "parameters": [
-                    {
-                        "description": "Updated corporation info",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateInfoRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateInfoResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Validation error",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -955,17 +270,14 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     }
                 }
-            }
-        },
-        "/api/v1/info/partner": {
-            "get": {
-                "description": "Retrieves a list of partners with pagination.",
+            },
+            "patch": {
                 "consumes": [
                     "application/json"
                 ],
@@ -973,22 +285,186 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "partner"
+                    "club"
                 ],
-                "summary": "Get partners with pagination",
+                "summary": "Update club by id",
                 "parameters": [
                     {
-                        "maximum": 100,
-                        "minimum": 1,
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateClubRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateClubResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/join": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Join club",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/leader/{member_id}": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Set club leader",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member Profile ID",
+                        "name": "member_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/members": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Get club members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
-                        "description": "Max number of items",
+                        "description": "limit",
                         "name": "limit",
                         "in": "query"
                     },
                     {
-                        "minimum": 0,
                         "type": "integer",
-                        "description": "Offset for pagination",
+                        "description": "offset",
                         "name": "offset",
                         "in": "query"
                     }
@@ -997,72 +473,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetAllPartnerResponse"
+                            "$ref": "#/definitions/dto.GetClubMembersResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid query parameters",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Creates a new cosmetic product with provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "partner"
-                ],
-                "summary": "Create a new cosmetic product",
-                "parameters": [
-                    {
-                        "description": "Partner product data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreatePartnerRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreatePartnerResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict: invalid partner format",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1070,191 +491,32 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/info/partner/{id}": {
+        "/api/v1/club/{id}/series": {
             "get": {
-                "description": "Retrieves a partner product using its UUID.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "partner"
+                    "series"
                 ],
-                "summary": "Get partner by ID",
+                "summary": "Get club series list",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "Partner ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetByIdPartnerResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Partner not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Deletes the partner with the given UUID.",
-                "tags": [
-                    "partner"
-                ],
-                "summary": "Delete partner by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Partner ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Successfully deleted"
-                    },
-                    "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Partner not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Updates partner product fields by given ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "partner"
-                ],
-                "summary": "Update partner",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Partner ID (UUID)",
+                        "description": "Club ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Updated partner fields",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdatePartnerRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdatePartnerResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Validation or binding error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "Partner not found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/main": {
-            "get": {
-                "description": "Retrieves a list of main page contents with limit and offset",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "main"
-                ],
-                "summary": "Get all contents",
-                "parameters": [
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
                         "type": "integer",
-                        "description": "Max number of items",
+                        "description": "limit",
                         "name": "limit",
                         "in": "query"
                     },
                     {
-                        "minimum": 0,
                         "type": "integer",
-                        "description": "Offset for pagination",
+                        "description": "offset",
                         "name": "offset",
                         "in": "query"
                     }
@@ -1263,72 +525,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetAllMainPageResponse"
+                            "$ref": "#/definitions/dto.GetClubSeriesResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid query parameters",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Creates a new page content with provided details",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "main"
-                ],
-                "summary": "Create a new main page content",
-                "parameters": [
-                    {
-                        "description": "Content data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateMainPageRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateMainPageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict: invalid content format",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1336,24 +543,19 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/main/{id}": {
+        "/api/v1/game/{id}": {
             "get": {
-                "description": "Retrieves a main page content using its UUID.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "main"
+                    "game"
                 ],
-                "summary": "Get content by ID",
+                "summary": "Get game by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "Content ID (UUID)",
+                        "description": "Game ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1363,23 +565,23 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetByIdMainPageResponse"
+                            "$ref": "#/definitions/dto.GetGameResponse"
                         }
                     },
                     "400": {
-                        "description": "Validation error",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
-                    "404": {
-                        "description": "Content not found",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1387,21 +589,17 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
+                "produces": [
+                    "application/json"
                 ],
-                "description": "Deletes the main page content with the given UUID.",
                 "tags": [
-                    "main"
+                    "game"
                 ],
-                "summary": "Delete content by ID",
+                "summary": "Delete game by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "Content ID (UUID)",
+                        "description": "Game ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1409,22 +607,28 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Successfully deleted"
+                        "description": "No Content"
                     },
                     "400": {
-                        "description": "Validation error",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
-                    "404": {
-                        "description": "Content not found",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1432,12 +636,6 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Updates main page content fields by given ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1445,25 +643,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "main"
+                    "game"
                 ],
-                "summary": "Update content",
+                "summary": "Update game by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "Content ID (UUID)",
+                        "description": "Game ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Updated content fields",
+                        "description": "Update data",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateMainPageRequest"
+                            "$ref": "#/definitions/dto.UpdateGameRequest"
                         }
                     }
                 ],
@@ -1471,23 +668,29 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateMainPageResponse"
+                            "$ref": "#/definitions/dto.UpdateGameResponse"
                         }
                     },
                     "400": {
-                        "description": "Validation or binding error",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
-                    "404": {
-                        "description": "Content not found",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1495,9 +698,54 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/news": {
+        "/api/v1/game/{id}/full": {
             "get": {
-                "description": "Retrieves a list of news with pagination and content preview length option.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Get full game object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetGameFullResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/game/{id}/participants": {
+            "post": {
                 "consumes": [
                     "application/json"
                 ],
@@ -1505,31 +753,288 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "game"
                 ],
-                "summary": "Get news by filters",
+                "summary": "Set game participants",
                 "parameters": [
                     {
-                        "maximum": 100,
-                        "minimum": 1,
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Participant IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SetGameParticipantsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/game/{id}/results": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Upsert game results",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Results",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpsertGameResultsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get current profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetProfileResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Create profile",
+                "parameters": [
+                    {
+                        "description": "Profile data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Delete current profile",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Update current profile",
+                "parameters": [
+                    {
+                        "description": "Update data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateCurrentProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateCurrentProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile/all": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get all profiles",
+                "parameters": [
+                    {
                         "type": "integer",
-                        "description": "Max number of items",
+                        "description": "limit",
                         "name": "limit",
                         "in": "query"
                     },
                     {
-                        "minimum": 0,
                         "type": "integer",
-                        "description": "Offset for pagination",
+                        "description": "offset",
                         "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 500,
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Number of characters for content preview",
-                        "name": "preview_length",
                         "in": "query"
                     }
                 ],
@@ -1537,72 +1042,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetAllByFilterNewsResponse"
+                            "$ref": "#/definitions/dto.GetAllProfilesResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid query parameters",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Creates a news article with provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "news"
-                ],
-                "summary": "Create a news article",
-                "parameters": [
-                    {
-                        "description": "News data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateNewsRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateNewsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict: invalid news format",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1610,24 +1060,19 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/news/{id}": {
+        "/api/v1/profile/{id}": {
             "get": {
-                "description": "Retrieves a news article using its UUID.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "profile"
                 ],
-                "summary": "Get news by ID",
+                "summary": "Get profile by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "News ID (UUID)",
+                        "description": "Profile ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1637,23 +1082,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GetByIdNewsResponse"
+                            "$ref": "#/definitions/dto.GetProfileResponse"
                         }
                     },
                     "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "News not found",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1661,21 +1100,17 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
+                "produces": [
+                    "application/json"
                 ],
-                "description": "Deletes the news article with the given UUID.",
                 "tags": [
-                    "news"
+                    "profile"
                 ],
-                "summary": "Delete news by ID",
+                "summary": "Delete profile by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "News ID (UUID)",
+                        "description": "Profile ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1683,22 +1118,16 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Successfully deleted"
+                        "description": "No Content"
                     },
                     "400": {
-                        "description": "Validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "News not found",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1706,12 +1135,6 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Updates news article fields by given ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1719,25 +1142,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "news"
+                    "profile"
                 ],
-                "summary": "Update news",
+                "summary": "Update profile by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "News ID (UUID)",
+                        "description": "Profile ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Updated news fields",
+                        "description": "Update data",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateNewsRequest"
+                            "$ref": "#/definitions/dto.UpdateEachProfileRequest"
                         }
                     }
                 ],
@@ -1745,23 +1167,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateNewsResponse"
+                            "$ref": "#/definitions/dto.UpdateEachProfileResponse"
                         }
                     },
                     "400": {
-                        "description": "Validation or binding error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "404": {
-                        "description": "News not found",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1769,9 +1185,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/order": {
+        "/api/v1/series": {
             "post": {
-                "description": "Creates a new leech order and send it to email.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1779,17 +1194,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "order"
+                    "series"
                 ],
-                "summary": "Create a new leech order",
+                "summary": "Create series",
                 "parameters": [
                     {
-                        "description": "Leech order data",
+                        "description": "Series data",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateOrderRequest"
+                            "$ref": "#/definitions/dto.CreateSeriesRequest"
                         }
                     }
                 ],
@@ -1797,17 +1212,512 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateOrderResponse"
+                            "$ref": "#/definitions/dto.CreateSeriesResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or validation error",
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Get series by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSeriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Delete series by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Update series by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateSeriesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateSeriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/games": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Get games in series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSeriesGamesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Create game in series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Game data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateGameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateGameResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/join": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Join series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/leaderboard": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Get series leaderboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSeriesLeaderboardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/leave": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Leave series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/participants": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Get series participants",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSeriesParticipantsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -2196,7 +2106,7 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "Get current user info",
+                "summary": "Get user by id",
                 "parameters": [
                     {
                         "type": "string",
@@ -2233,7 +2143,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Information updating the current user under which the input is executed",
+                "description": "Update user by id. Only for admins",
                 "consumes": [
                     "application/json"
                 ],
@@ -2315,30 +2225,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.Category": {
-            "type": "object",
-            "required": [
-                "id",
-                "image_id",
-                "name"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 150,
-                    "minLength": 1,
-                    "example": "Shampoo"
-                }
-            }
-        },
         "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -2362,522 +2248,395 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Cosmetics": {
-            "description": "Contains product information such as category, title, description, and volume.",
+        "dto.Club": {
             "type": "object",
             "properties": {
-                "application_method": {
+                "creator_id": {
                     "type": "string",
-                    "example": "Apply to wet hair, lather, rinse."
-                },
-                "category": {
-                    "$ref": "#/definitions/dto.Category"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "description": {
                     "type": "string",
-                    "example": "Suitable for daily use."
+                    "example": "Best club"
                 },
                 "id": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "links": {
-                    "$ref": "#/definitions/dto.Links"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Hair Shampoo"
-                },
-                "volume": {
-                    "type": "integer",
-                    "example": 250
-                }
-            }
-        },
-        "dto.CreateCategoryRequest": {
-            "type": "object",
-            "required": [
-                "image_id",
-                "name"
-            ],
-            "properties": {
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "name": {
                     "type": "string",
-                    "maxLength": 150,
-                    "minLength": 1,
-                    "example": "Shampoo"
+                    "example": "Smart League"
                 }
             }
         },
-        "dto.CreateCategoryResponse": {
+        "dto.CreateClubRequest": {
             "type": "object",
             "required": [
-                "id",
-                "image_id",
                 "name"
             ],
             "properties": {
-                "id": {
+                "description": {
                     "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
+                    "maxLength": 2000,
+                    "example": "Best club"
                 },
                 "name": {
                     "type": "string",
-                    "maxLength": 150,
+                    "maxLength": 200,
                     "minLength": 1,
-                    "example": "Shampoo"
+                    "example": "Smart League"
                 }
             }
         },
-        "dto.CreateCosmeticsRequest": {
+        "dto.CreateClubResponse": {
             "type": "object",
-            "required": [
-                "category_id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
             "properties": {
-                "application_method": {
+                "creator_id": {
                     "type": "string",
-                    "maxLength": 500,
-                    "minLength": 3,
-                    "example": "Apply to wet hair, lather, rinse."
-                },
-                "category_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "description": {
                     "type": "string",
-                    "maxLength": 3000,
-                    "minLength": 3,
-                    "example": "Suitable for daily use."
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "links": {
-                    "$ref": "#/definitions/dto.Links"
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3,
-                    "example": "Hair Shampoo"
-                },
-                "volume": {
-                    "type": "integer",
-                    "maximum": 10000,
-                    "minimum": 1,
-                    "example": 250
-                }
-            }
-        },
-        "dto.CreateCosmeticsResponse": {
-            "description": "Contains product information such as category, title, description, and volume.",
-            "type": "object",
-            "properties": {
-                "application_method": {
-                    "type": "string",
-                    "example": "Apply to wet hair, lather, rinse."
-                },
-                "category": {
-                    "$ref": "#/definitions/dto.Category"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Suitable for daily use."
+                    "example": "Best club"
                 },
                 "id": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "image_id": {
+                "name": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "links": {
-                    "$ref": "#/definitions/dto.Links"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Hair Shampoo"
-                },
-                "volume": {
-                    "type": "integer",
-                    "example": 250
+                    "example": "Smart League"
                 }
             }
         },
-        "dto.CreateImageResponse": {
+        "dto.CreateGameRequest": {
+            "type": "object",
+            "required": [
+                "number"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 5000
+                },
+                "host_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                },
+                "number": {
+                    "type": "integer",
+                    "maximum": 100000,
+                    "minimum": 1
+                },
+                "status": {
+                    "maximum": 2,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.GameStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.CreateGameResponse": {
             "type": "object",
             "properties": {
-                "file": {
-                    "$ref": "#/definitions/dto.FilePackage"
+                "description": {
+                    "type": "string"
+                },
+                "host_id": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
-                }
-            }
-        },
-        "dto.CreateMainPageRequest": {
-            "type": "object",
-            "required": [
-                "content",
-                "fluid",
-                "href",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 2,
-                    "example": "Main banner description text goes here..."
-                },
-                "fluid": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com/page"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Main banner title"
-                }
-            }
-        },
-        "dto.CreateMainPageResponse": {
-            "type": "object",
-            "required": [
-                "content",
-                "fluid",
-                "href",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 2,
-                    "example": "Main banner description text goes here..."
-                },
-                "fluid": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com/page"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Main banner title"
-                }
-            }
-        },
-        "dto.CreateNewsRequest": {
-            "type": "object",
-            "required": [
-                "content",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 5000,
-                    "example": "This is the full news content..."
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Breaking News"
-                }
-            }
-        },
-        "dto.CreateNewsResponse": {
-            "type": "object",
-            "required": [
-                "content",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 5000,
-                    "example": "This is the full news content..."
-                },
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Breaking News"
-                }
-            }
-        },
-        "dto.CreateOrderRequest": {
-            "type": "object",
-            "required": [
-                "customer_info",
-                "order_details"
-            ],
-            "properties": {
-                "customer_info": {
-                    "$ref": "#/definitions/dto.CustomerInfo"
-                },
-                "order_details": {
-                    "$ref": "#/definitions/dto.OrderDetails"
-                }
-            }
-        },
-        "dto.CreateOrderResponse": {
-            "type": "object",
-            "properties": {
-                "customer_info": {
-                    "$ref": "#/definitions/dto.CustomerInfo"
-                },
-                "order_details": {
-                    "$ref": "#/definitions/dto.OrderDetails"
-                },
-                "total_price": {
-                    "type": "number",
-                    "example": 3499.5
-                }
-            }
-        },
-        "dto.CreatePartnerRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "example": "Leading supplier of industrial equipment"
-                },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PartnersLink"
-                    }
                 },
                 "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1,
-                    "example": "Backend's department"
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "series_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
                 }
             }
         },
-        "dto.CreatePartnerResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Leading supplier of industrial equipment"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PartnersLink"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Backend's department"
-                }
-            }
-        },
-        "dto.CustomerInfo": {
+        "dto.CreateProfileRequest": {
             "type": "object",
             "required": [
-                "address",
                 "email",
-                "fio",
-                "phone_number"
+                "name",
+                "password"
             ],
             "properties": {
-                "address": {
+                "club_id": {
                     "type": "string",
-                    "maxLength": 200,
-                    "minLength": 5,
-                    "example": "г. Москва, ул. Ленина, д. 1, кв. 10"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "comment": {
+                "description": {
                     "type": "string",
-                    "maxLength": 500,
-                    "example": "Позвоните за час до доставки"
+                    "maxLength": 2000,
+                    "example": "About me"
                 },
                 "email": {
                     "type": "string",
                     "maxLength": 254,
                     "minLength": 6,
-                    "example": "ivanov@example.com"
+                    "example": "user@example.com"
                 },
-                "fio": {
+                "name": {
                     "type": "string",
                     "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Иванов Иван Иванович"
+                    "minLength": 1,
+                    "example": "Ivan"
                 },
-                "phone_number": {
+                "nickname": {
                     "type": "string",
-                    "example": "+79991234567"
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "example": "mishmish"
+                },
+                "password": {
+                    "type": "string",
+                    "format": "password",
+                    "maxLength": 100,
+                    "minLength": 8,
+                    "example": "SecurePass123!"
+                },
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
-        "dto.FilePackage": {
+        "dto.CreateProfileResponse": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": 0
+                },
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "dto.CreateSeriesRequest": {
             "type": "object",
             "required": [
-                "content_type",
-                "filename",
-                "size"
+                "end_at",
+                "name",
+                "scoring_rules",
+                "start_at"
             ],
             "properties": {
-                "content_type": {
-                    "type": "string"
-                },
-                "filename": {
+                "description": {
                     "type": "string",
-                    "maxLength": 250
+                    "maxLength": 5000
                 },
-                "last_modified": {
+                "end_at": {
                     "type": "string"
                 },
-                "size": {
+                "game_type": {
+                    "maximum": 3,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.GameType"
+                        }
+                    ]
+                },
+                "is_closed": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
+                },
+                "price_rub": {
+                    "type": "integer",
+                    "maximum": 100000000,
+                    "minimum": 0
+                },
+                "scoring_rules": {
+                    "type": "string",
+                    "maxLength": 10000,
+                    "minLength": 1
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "maximum": 3,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.SeriesStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.CreateSeriesResponse": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string"
+                },
+                "creator_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "game_type": {
+                    "$ref": "#/definitions/types.GameType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_closed": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price_rub": {
                     "type": "integer"
+                },
+                "scoring_rules": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
-        "dto.GetAllByFilterCosmeticsResponse": {
+        "dto.Game": {
             "type": "object",
             "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.Cosmetics"
-                    }
+                "description": {
+                    "type": "string"
                 },
-                "pagination": {
-                    "$ref": "#/definitions/dto.PaginationInfo"
+                "host_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "series_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
                 }
             }
         },
-        "dto.GetAllByFilterForAdminsNewsResponse": {
+        "dto.GameResultRow": {
             "type": "object",
+            "required": [
+                "profile_id"
+            ],
             "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.NewsListItem"
-                    }
+                "best_move": {
+                    "type": "boolean"
                 },
-                "pagination": {
-                    "$ref": "#/definitions/dto.PaginationInfo"
-                }
-            }
-        },
-        "dto.GetAllByFilterNewsResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.NewsListItem"
-                    }
+                "compensation": {
+                    "type": "integer",
+                    "maximum": 1000000,
+                    "minimum": 0
                 },
-                "pagination": {
-                    "$ref": "#/definitions/dto.PaginationInfo"
+                "extra_points": {
+                    "type": "integer",
+                    "maximum": 1000000,
+                    "minimum": -1000000
+                },
+                "first_killed": {
+                    "type": "boolean"
+                },
+                "place": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 1
+                },
+                "profile_id": {
+                    "type": "string"
+                },
+                "removed": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "total_points": {
+                    "type": "integer",
+                    "maximum": 1000000,
+                    "minimum": -1000000
+                },
+                "yellow_cards": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
                 }
             }
         },
@@ -2895,13 +2654,13 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetAllCategoriesResponse": {
+        "dto.GetAllClubsResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Category"
+                        "$ref": "#/definitions/dto.Club"
                     }
                 },
                 "pagination": {
@@ -2909,13 +2668,13 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetAllMainPageResponse": {
+        "dto.GetAllProfilesResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.MainPage"
+                        "$ref": "#/definitions/dto.Profile"
                     }
                 },
                 "pagination": {
@@ -2923,13 +2682,13 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetAllPartnerResponse": {
+        "dto.GetClubMembersResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Partner"
+                        "$ref": "#/definitions/dto.Profile"
                     }
                 },
                 "pagination": {
@@ -2937,209 +2696,234 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetByIdCategoryResponse": {
-            "type": "object",
-            "required": [
-                "id",
-                "image_id",
-                "name"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 150,
-                    "minLength": 1,
-                    "example": "Shampoo"
-                }
-            }
-        },
-        "dto.GetByIdCosmeticsResponse": {
-            "description": "Contains product information such as category, title, description, and volume.",
+        "dto.GetClubResponse": {
             "type": "object",
             "properties": {
-                "application_method": {
+                "creator_id": {
                     "type": "string",
-                    "example": "Apply to wet hair, lather, rinse."
-                },
-                "category": {
-                    "$ref": "#/definitions/dto.Category"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "description": {
                     "type": "string",
-                    "example": "Suitable for daily use."
+                    "example": "Best club"
                 },
                 "id": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "image_id": {
+                "name": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "links": {
-                    "$ref": "#/definitions/dto.Links"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Hair Shampoo"
-                },
-                "volume": {
-                    "type": "integer",
-                    "example": 250
+                    "example": "Smart League"
                 }
             }
         },
-        "dto.GetByIdMainPageResponse": {
+        "dto.GetClubSeriesResponse": {
             "type": "object",
-            "required": [
-                "content",
-                "fluid",
-                "href",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
             "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 2,
-                    "example": "Main banner description text goes here..."
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Series"
+                    }
                 },
-                "fluid": {
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetGameFullResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "host_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "participant_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GameResultRow"
+                    }
+                },
+                "series_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
+                }
+            }
+        },
+        "dto.GetGameResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "host_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "series_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
+                }
+            }
+        },
+        "dto.GetProfileResponse": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": 0
+                },
+                "show_name": {
                     "type": "boolean",
                     "example": true
-                },
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com/page"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Main banner title"
                 }
             }
         },
-        "dto.GetByIdNewsResponse": {
-            "type": "object",
-            "required": [
-                "content",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 5000,
-                    "example": "This is the full news content..."
-                },
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Breaking News"
-                }
-            }
-        },
-        "dto.GetByIdPartnerResponse": {
+        "dto.GetSeriesGamesResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Leading supplier of industrial equipment"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "links": {
+                "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.PartnersLink"
+                        "$ref": "#/definitions/dto.Game"
                     }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetSeriesLeaderboardResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.LeaderboardRow"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetSeriesParticipantsResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Profile"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetSeriesResponse": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string"
+                },
+                "creator_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "game_type": {
+                    "$ref": "#/definitions/types.GameType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_closed": {
+                    "type": "boolean"
                 },
                 "name": {
-                    "type": "string",
-                    "example": "Backend's department"
-                }
-            }
-        },
-        "dto.GetInfoResponse": {
-            "type": "object",
-            "required": [
-                "description",
-                "heading"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "minLength": 10,
-                    "example": "We are a global leader in innovation and technology."
+                    "type": "string"
                 },
-                "heading": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3,
-                    "example": "Welcome to our company"
+                "price_rub": {
+                    "type": "integer"
                 },
-                "links": {
-                    "type": "array",
-                    "maxItems": 10,
-                    "minItems": 0,
-                    "items": {
-                        "$ref": "#/definitions/dto.InfoLinks"
-                    }
+                "scoring_rules": {
+                    "type": "string"
                 },
-                "schedule": {
-                    "type": "array",
-                    "maxItems": 7,
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/dto.ScheduleEntry"
-                    }
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
@@ -3183,55 +2967,14 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Hours": {
-            "type": "object",
-            "required": [
-                "close",
-                "open"
-            ],
-            "properties": {
-                "close": {
-                    "type": "string",
-                    "example": "18:00"
-                },
-                "open": {
-                    "type": "string",
-                    "example": "09:00"
-                }
-            }
-        },
-        "dto.InfoLinks": {
-            "type": "object",
-            "required": [
-                "href",
-                "label"
-            ],
-            "properties": {
-                "href": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "example": "https://instagram.com/company"
-                },
-                "label": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 2,
-                    "example": "Instagram"
-                }
-            }
-        },
-        "dto.Links": {
+        "dto.LeaderboardRow": {
             "type": "object",
             "properties": {
-                "ozon": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "example": "https://www.ozon.ru/product/gel-girudo-dr-nikonov-dlya-tela-100-ml-1907286044/?at=OgtEDAg59hR8AYgGimrnA9YIqYo9mocJYEzPjHR666Gm"
+                "points": {
+                    "type": "integer"
                 },
-                "wildberries": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "example": "https://www.wildberries.ru/catalog/344283033/detail.aspx"
+                "profile_id": {
+                    "type": "string"
                 }
             }
         },
@@ -3286,122 +3029,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.MainPage": {
-            "type": "object",
-            "required": [
-                "content",
-                "fluid",
-                "href",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 2,
-                    "example": "Main banner description text goes here..."
-                },
-                "fluid": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com/page"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Main banner title"
-                }
-            }
-        },
-        "dto.NewsListItem": {
-            "type": "object",
-            "required": [
-                "content_preview",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content_preview": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "This is a short preview..."
-                },
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Breaking News"
-                }
-            }
-        },
-        "dto.OrderDetails": {
-            "type": "object",
-            "required": [
-                "package_type"
-            ],
-            "properties": {
-                "leech_size_1": {
-                    "type": "integer",
-                    "maximum": 500,
-                    "minimum": 0,
-                    "example": 100
-                },
-                "leech_size_2": {
-                    "type": "integer",
-                    "maximum": 500,
-                    "minimum": 0,
-                    "example": 200
-                },
-                "leech_size_3": {
-                    "type": "integer",
-                    "maximum": 500,
-                    "minimum": 0,
-                    "example": 150
-                },
-                "package_type": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Package"
-                        }
-                    ],
-                    "example": 1
-                }
-            }
-        },
         "dto.PaginationInfo": {
             "type": "object",
             "properties": {
@@ -3427,56 +3054,61 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Partner": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Leading supplier of industrial equipment"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PartnersLink"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Backend's department"
-                }
-            }
-        },
-        "dto.PartnersLink": {
-            "type": "object",
-            "required": [
-                "href",
-                "label"
-            ],
-            "properties": {
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com"
-                },
-                "label": {
-                    "type": "string",
-                    "maxLength": 150,
-                    "minLength": 1,
-                    "example": "Official Website"
-                }
-            }
-        },
         "dto.PingResponse": {
             "type": "object",
             "properties": {
                 "message": {
                     "type": "string",
                     "example": "ok"
+                }
+            }
+        },
+        "dto.Profile": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": 0
+                },
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -3545,153 +3177,176 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ScheduleEntry": {
+        "dto.Series": {
             "type": "object",
-            "required": [
-                "hours",
-                "weekday"
-            ],
             "properties": {
-                "hours": {
-                    "$ref": "#/definitions/dto.Hours"
+                "club_id": {
+                    "type": "string"
                 },
-                "weekday": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Weekday"
-                        }
-                    ],
-                    "example": 1
+                "creator_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "game_type": {
+                    "$ref": "#/definitions/types.GameType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_closed": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price_rub": {
+                    "type": "integer"
+                },
+                "scoring_rules": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
-        "dto.UpdateCategoryRequest": {
+        "dto.SetGameParticipantsRequest": {
             "type": "object",
             "required": [
-                "id"
+                "participant_ids"
             ],
             "properties": {
-                "id": {
+                "participant_ids": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.UpdateClubRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
                     "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
+                    "maxLength": 2000,
+                    "example": "Best club"
                 },
                 "name": {
                     "type": "string",
-                    "maxLength": 150,
+                    "maxLength": 200,
                     "minLength": 1,
-                    "example": "Hair conditioner"
+                    "example": "Smart League"
                 }
             }
         },
-        "dto.UpdateCategoryResponse": {
-            "type": "object",
-            "required": [
-                "id",
-                "image_id",
-                "name"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 150,
-                    "minLength": 1,
-                    "example": "Shampoo"
-                }
-            }
-        },
-        "dto.UpdateCosmeticsRequest": {
+        "dto.UpdateClubResponse": {
             "type": "object",
             "properties": {
-                "application_method": {
+                "creator_id": {
                     "type": "string",
-                    "maxLength": 500,
-                    "minLength": 3,
-                    "example": "Apply evenly and rinse well."
-                },
-                "category_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "description": {
                     "type": "string",
-                    "maxLength": 3000,
-                    "minLength": 3,
-                    "example": "Updated product description."
+                    "example": "Best club"
                 },
-                "image_id": {
+                "id": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
+                "name": {
+                    "type": "string",
+                    "example": "Smart League"
+                }
+            }
+        },
+        "dto.UpdateCurrentProfileRequest": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "links": {
-                    "$ref": "#/definitions/dto.Links"
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "example": "About me"
                 },
-                "title": {
+                "name": {
                     "type": "string",
                     "maxLength": 100,
-                    "minLength": 3,
-                    "example": "New Hair Shampoo"
+                    "minLength": 1,
+                    "example": "Ivan"
                 },
-                "volume": {
-                    "type": "integer",
-                    "maximum": 10000,
-                    "minimum": 1,
-                    "example": 500
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "example": "mishmish"
+                },
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
-        "dto.UpdateCosmeticsResponse": {
-            "description": "Contains product information such as category, title, description, and volume.",
+        "dto.UpdateCurrentProfileResponse": {
             "type": "object",
             "properties": {
-                "application_method": {
+                "club_id": {
                     "type": "string",
-                    "example": "Apply to wet hair, lather, rinse."
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "category": {
-                    "$ref": "#/definitions/dto.Category"
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
                 },
                 "description": {
                     "type": "string",
-                    "example": "Suitable for daily use."
+                    "example": "About me"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
                 },
                 "id": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "image_id": {
+                "name": {
                     "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
+                    "example": "Ivan"
                 },
-                "is_hidden": {
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": 0
+                },
+                "show_name": {
                     "type": "boolean",
-                    "example": false
-                },
-                "links": {
-                    "$ref": "#/definitions/dto.Links"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Hair Shampoo"
-                },
-                "volume": {
-                    "type": "integer",
-                    "example": 250
+                    "example": true
                 }
             }
         },
@@ -3738,6 +3393,101 @@ const docTemplate = `{
                 "surname": {
                     "type": "string",
                     "example": "Ivanov"
+                }
+            }
+        },
+        "dto.UpdateEachProfileRequest": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "example": "About me"
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "minLength": 6,
+                    "example": "user@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "example": "mishmish"
+                },
+                "password": {
+                    "type": "string",
+                    "format": "password",
+                    "maxLength": 100,
+                    "minLength": 8,
+                    "example": "SecurePass123!"
+                },
+                "role": {
+                    "$ref": "#/definitions/types.Role"
+                },
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "dto.UpdateEachProfileResponse": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
+                "role": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": 0
+                },
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -3803,265 +3553,163 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UpdateInfoRequest": {
+        "dto.UpdateGameRequest": {
             "type": "object",
             "properties": {
                 "description": {
                     "type": "string",
-                    "maxLength": 500,
-                    "minLength": 10,
-                    "example": "Updated long description about the company."
+                    "maxLength": 5000
                 },
-                "heading": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3,
-                    "example": "Updated Heading"
-                },
-                "links": {
-                    "type": "array",
-                    "maxItems": 10,
-                    "minItems": 0,
-                    "items": {
-                        "$ref": "#/definitions/dto.InfoLinks"
-                    }
-                },
-                "schedule": {
-                    "type": "array",
-                    "maxItems": 7,
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/dto.ScheduleEntry"
-                    }
-                }
-            }
-        },
-        "dto.UpdateInfoResponse": {
-            "type": "object",
-            "required": [
-                "description",
-                "heading"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "minLength": 10,
-                    "example": "We are a global leader in innovation and technology."
-                },
-                "heading": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3,
-                    "example": "Welcome to our company"
-                },
-                "links": {
-                    "type": "array",
-                    "maxItems": 10,
-                    "minItems": 0,
-                    "items": {
-                        "$ref": "#/definitions/dto.InfoLinks"
-                    }
-                },
-                "schedule": {
-                    "type": "array",
-                    "maxItems": 7,
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/dto.ScheduleEntry"
-                    }
-                }
-            }
-        },
-        "dto.UpdateMainPageRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 2,
-                    "example": "Updated main banner description text..."
-                },
-                "fluid": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com/updated"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Updated main banner title"
-                }
-            }
-        },
-        "dto.UpdateMainPageResponse": {
-            "type": "object",
-            "required": [
-                "content",
-                "fluid",
-                "href",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 2,
-                    "example": "Main banner description text goes here..."
-                },
-                "fluid": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "href": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "minLength": 1,
-                    "example": "https://example.com/page"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174100"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Main banner title"
-                }
-            }
-        },
-        "dto.UpdateNewsRequest": {
-            "type": "object",
-            "required": [
-                "id"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 5000,
-                    "example": "Updated full news content..."
-                },
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Updated News Title"
-                }
-            }
-        },
-        "dto.UpdateNewsResponse": {
-            "type": "object",
-            "required": [
-                "content",
-                "id",
-                "image_id",
-                "is_hidden",
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "maxLength": 5000,
-                    "example": "This is the full news content..."
-                },
-                "id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "image_id": {
-                    "type": "string",
-                    "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                },
-                "is_hidden": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Breaking News"
-                }
-            }
-        },
-        "dto.UpdatePartnerRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "example": "Updated description of the partner"
-                },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PartnersLink"
-                    }
+                "host_id": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1,
-                    "example": "New Name"
+                    "maxLength": 200,
+                    "minLength": 1
+                },
+                "status": {
+                    "maximum": 2,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.GameStatus"
+                        }
+                    ]
                 }
             }
         },
-        "dto.UpdatePartnerResponse": {
+        "dto.UpdateGameResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "host_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "series_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
+                }
+            }
+        },
+        "dto.UpdateSeriesRequest": {
             "type": "object",
             "properties": {
                 "description": {
                     "type": "string",
-                    "example": "Leading supplier of industrial equipment"
+                    "maxLength": 5000
                 },
-                "id": {
-                    "type": "string",
-                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                "end_at": {
+                    "type": "string"
                 },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PartnersLink"
-                    }
+                "game_type": {
+                    "maximum": 3,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.GameType"
+                        }
+                    ]
+                },
+                "is_closed": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string",
-                    "example": "Backend's department"
+                    "maxLength": 200,
+                    "minLength": 1
+                },
+                "price_rub": {
+                    "type": "integer",
+                    "maximum": 100000000,
+                    "minimum": 0
+                },
+                "scoring_rules": {
+                    "type": "string",
+                    "maxLength": 10000,
+                    "minLength": 1
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "maximum": 3,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.SeriesStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.UpdateSeriesResponse": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string"
+                },
+                "creator_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "game_type": {
+                    "$ref": "#/definitions/types.GameType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_closed": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price_rub": {
+                    "type": "integer"
+                },
+                "scoring_rules": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.SeriesStatus"
+                }
+            }
+        },
+        "dto.UpsertGameResultsRequest": {
+            "type": "object",
+            "required": [
+                "rows"
+            ],
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/dto.GameResultRow"
+                    }
                 }
             }
         },
@@ -4094,25 +3742,47 @@ const docTemplate = `{
                 }
             }
         },
-        "types.Package": {
+        "types.ClubState": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "ClubStateNone",
+                "ClubStateMember",
+                "ClubStateLeader",
+                "ClubStatePresident"
+            ]
+        },
+        "types.GameStatus": {
             "type": "integer",
             "enum": [
                 0,
                 1,
                 2
             ],
-            "x-enum-comments": {
-                "PackagePeat": "Торф"
-            },
-            "x-enum-descriptions": [
-                "",
-                "",
-                "Торф"
+            "x-enum-varnames": [
+                "GameStatusDraft",
+                "GameStatusInProgress",
+                "GameStatusFinished"
+            ]
+        },
+        "types.GameType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
             ],
             "x-enum-varnames": [
-                "PackageWater",
-                "PackageGel",
-                "PackagePeat"
+                "GameTypeSportMafia",
+                "GameTypeCity",
+                "GameTypeExperimental",
+                "GameTypeOther"
             ]
         },
         "types.Role": {
@@ -4130,31 +3800,25 @@ const docTemplate = `{
                 "RoleSuperAdmin"
             ]
         },
-        "types.Weekday": {
+        "types.SeriesStatus": {
             "type": "integer",
             "enum": [
                 0,
                 1,
                 2,
-                3,
-                4,
-                5,
-                6
+                3
             ],
             "x-enum-varnames": [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday"
+                "SeriesStatusClosed",
+                "SeriesStatusRegistration",
+                "SeriesStatusClosedRegistration",
+                "SeriesStatusGames"
             ]
         }
     },
     "securityDefinitions": {
         "CookieAuth": {
-            "description": "Authentication via HttpOnly cookies. System uses two cookies:\\n- ` + "`" + `user_auth_access_token` + "`" + ` (short-lived)\\n- ` + "`" + `user_auth_refresh_token` + "`" + ` (long-lived)\\n\\nAll protected endpoints require valid cookies to be automatically sent by browser.",
+            "description": "Authentication via HttpOnly cookies:\\n- ` + "`" + `user_auth_access_token` + "`" + ` (short-lived)\\n- ` + "`" + `user_auth_refresh_token` + "`" + ` (long-lived)\\n\\nProtected endpoints require valid cookies to be sent by the client.",
             "type": "apiKey",
             "name": "user_auth_access_token",
             "in": "cookie"
@@ -4162,48 +3826,32 @@ const docTemplate = `{
     },
     "tags": [
         {
-            "description": "The main check of server performance",
+            "description": "Healthcheck",
             "name": "ping"
         },
         {
-            "description": "Leech order operations",
-            "name": "order"
-        },
-        {
-            "description": "User authentication and management",
+            "description": "Users and auth actions",
             "name": "user"
         },
         {
-            "description": "Work with authorization",
-            "name": "auth"
+            "description": "Access/refresh tokens",
+            "name": "token"
         },
         {
-            "description": "Cosmetics view and management",
-            "name": "cosmetics"
+            "description": "Profiles CRUD",
+            "name": "profile"
         },
         {
-            "description": "Image view and management",
-            "name": "image"
+            "description": "Clubs and membership",
+            "name": "club"
         },
         {
-            "description": "Category view and management",
-            "name": "category"
+            "description": "Series created by clubs",
+            "name": "series"
         },
         {
-            "description": "Information about the center",
-            "name": "info"
-        },
-        {
-            "description": "Information about center's partners",
-            "name": "partner"
-        },
-        {
-            "description": "News view and management",
-            "name": "news"
-        },
-        {
-            "description": "information about main page",
-            "name": "main"
+            "description": "Games inside series",
+            "name": "game"
         }
     ]
 }`
@@ -4211,11 +3859,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "пиявкипобеда.рф",
+	Host:             "localhost:8000",
 	BasePath:         "",
-	Schemes:          []string{"https"},
-	Title:            "Leech API",
-	Description:      "Backend service for Leech-ru platform. Uses cookie-based authentication with HttpOnly tokens.",
+	Schemes:          []string{"http"},
+	Title:            "SmartLeague API",
+	Description:      "Backend service for SmartLeague. Cookie-based auth (HttpOnly access/refresh cookies).",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

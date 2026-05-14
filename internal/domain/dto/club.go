@@ -28,8 +28,8 @@ type GetAllClubsRequest struct {
 }
 
 type GetAllClubsResponse struct {
-	Items      []*Club         `json:"items"`
-	Pagination PaginationInfo  `json:"pagination"`
+	Items      []*Club        `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type UpdateClubRequest struct {
@@ -51,8 +51,8 @@ type GetClubMembersRequest struct {
 }
 
 type GetClubMembersResponse struct {
-	Items      []*Profile       `json:"items"`
-	Pagination PaginationInfo   `json:"pagination"`
+	Items      []*Profile     `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type JoinClubRequest struct {
@@ -63,4 +63,3 @@ type JoinClubRequest struct {
 type LeaveClubRequest struct {
 	ProfileID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 }
-

@@ -6,15 +6,15 @@ import (
 )
 
 type Profile struct {
-	ID          uuid.UUID  `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
-	Nickname    string     `json:"nickname" example:"mishmish"`
-	Name        string     `json:"name" example:"Ivan"`
-	ShowName    bool       `json:"show_name" example:"true"`
-	Description *string    `json:"description,omitempty" example:"About me"`
-	Email       string     `json:"email" example:"user@example.com"`
-	ClubID      *uuid.UUID `json:"club_id,omitempty" example:"550e8400-e29b-41d4-a716-446655440000"`
+	ID          uuid.UUID       `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Nickname    string          `json:"nickname" example:"mishmish"`
+	Name        string          `json:"name" example:"Ivan"`
+	ShowName    bool            `json:"show_name" example:"true"`
+	Description *string         `json:"description,omitempty" example:"About me"`
+	Email       string          `json:"email" example:"user@example.com"`
+	ClubID      *uuid.UUID      `json:"club_id,omitempty" example:"550e8400-e29b-41d4-a716-446655440000"`
 	ClubState   types.ClubState `json:"club_state" example:"0"`
-	Role        types.Role `json:"role" example:"0"`
+	Role        types.Role      `json:"role" example:"0"`
 }
 
 type CreateProfileRequest struct {
@@ -42,16 +42,16 @@ type GetAllProfilesRequest struct {
 }
 
 type GetAllProfilesResponse struct {
-	Items      []*Profile       `json:"items"`
-	Pagination PaginationInfo   `json:"pagination"`
+	Items      []*Profile     `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type UpdateCurrentProfileRequest struct {
-	ID          uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Nickname    *string   `json:"nickname,omitempty" validate:"omitempty,min=1,max=100" example:"mishmish"`
-	Name        *string   `json:"name,omitempty" validate:"omitempty,min=1,max=100" example:"Ivan"`
-	ShowName    *bool     `json:"show_name,omitempty" validate:"omitempty" example:"true"`
-	Description *string   `json:"description,omitempty" validate:"omitempty,max=2000" example:"About me"`
+	ID          uuid.UUID  `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Nickname    *string    `json:"nickname,omitempty" validate:"omitempty,min=1,max=100" example:"mishmish"`
+	Name        *string    `json:"name,omitempty" validate:"omitempty,min=1,max=100" example:"Ivan"`
+	ShowName    *bool      `json:"show_name,omitempty" validate:"omitempty" example:"true"`
+	Description *string    `json:"description,omitempty" validate:"omitempty,max=2000" example:"About me"`
 	ClubID      *uuid.UUID `json:"club_id,omitempty" validate:"omitempty,uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 

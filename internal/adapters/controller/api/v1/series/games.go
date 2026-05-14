@@ -8,21 +8,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// CreateGame Create game in series
+//
+// @Summary Create game in series
+// @Tags game
+// @Accept json
+// @Produce json
+// @Param id path string true "Series ID"
+// @Param request body dto.CreateGameRequest true "Game data"
+// @Success 201 {object} dto.CreateGameResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series/{id}/games [post]
 func (h *handler) CreateGame(c echo.Context) error {
-	// Create game in series
-	//
-	// @Summary Create game in series
-	// @Tags game
-	// @Accept json
-	// @Produce json
-	// @Param id path string true "Series ID"
-	// @Param request body dto.CreateGameRequest true "Game data"
-	// @Success 201 {object} dto.CreateGameResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/series/{id}/games [post]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
@@ -49,20 +49,20 @@ func (h *handler) CreateGame(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resp)
 }
 
+// GetSeriesGames Get games in series (paginated)
+//
+// @Summary Get games in series
+// @Tags game
+// @Produce json
+// @Param id path string true "Series ID"
+// @Param limit query int false "limit"
+// @Param offset query int false "offset"
+// @Success 200 {object} dto.GetSeriesGamesResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series/{id}/games [get]
 func (h *handler) GetSeriesGames(c echo.Context) error {
-	// Get games in series (paginated)
-	//
-	// @Summary Get games in series
-	// @Tags game
-	// @Produce json
-	// @Param id path string true "Series ID"
-	// @Param limit query int false "limit"
-	// @Param offset query int false "offset"
-	// @Success 200 {object} dto.GetSeriesGamesResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/series/{id}/games [get]
 	seriesID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
@@ -84,21 +84,21 @@ func (h *handler) GetSeriesGames(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// UpdateGame Update game by id
+//
+// @Summary Update game by id
+// @Tags game
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID"
+// @Param request body dto.UpdateGameRequest true "Update data"
+// @Success 200 {object} dto.UpdateGameResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id} [patch]
 func (h *handler) UpdateGame(c echo.Context) error {
-	// Update game by id
-	//
-	// @Summary Update game by id
-	// @Tags game
-	// @Accept json
-	// @Produce json
-	// @Param id path string true "Game ID"
-	// @Param request body dto.UpdateGameRequest true "Update data"
-	// @Success 200 {object} dto.UpdateGameResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/game/{id} [patch]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
@@ -124,21 +124,21 @@ func (h *handler) UpdateGame(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// SetParticipants Set game participants
+//
+// @Summary Set game participants
+// @Tags game
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID"
+// @Param request body dto.SetGameParticipantsRequest true "Participant IDs"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id}/participants [post]
 func (h *handler) SetParticipants(c echo.Context) error {
-	// Set game participants
-	//
-	// @Summary Set game participants
-	// @Tags game
-	// @Accept json
-	// @Produce json
-	// @Param id path string true "Game ID"
-	// @Param request body dto.SetGameParticipantsRequest true "Participant IDs"
-	// @Success 204
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/game/{id}/participants [post]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
@@ -163,21 +163,21 @@ func (h *handler) SetParticipants(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// UpsertResults Upsert game results
+//
+// @Summary Upsert game results
+// @Tags game
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID"
+// @Param request body dto.UpsertGameResultsRequest true "Results"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id}/results [post]
 func (h *handler) UpsertResults(c echo.Context) error {
-	// Upsert game results
-	//
-	// @Summary Upsert game results
-	// @Tags game
-	// @Accept json
-	// @Produce json
-	// @Param id path string true "Game ID"
-	// @Param request body dto.UpsertGameResultsRequest true "Results"
-	// @Success 204
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/game/{id}/results [post]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
@@ -202,20 +202,20 @@ func (h *handler) UpsertResults(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// GetLeaderboard Get series leaderboard (paginated)
+//
+// @Summary Get series leaderboard
+// @Tags series
+// @Produce json
+// @Param id path string true "Series ID"
+// @Param limit query int false "limit"
+// @Param offset query int false "offset"
+// @Success 200 {object} dto.GetSeriesLeaderboardResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series/{id}/leaderboard [get]
 func (h *handler) GetLeaderboard(c echo.Context) error {
-	// Get series leaderboard (paginated)
-	//
-	// @Summary Get series leaderboard
-	// @Tags series
-	// @Produce json
-	// @Param id path string true "Series ID"
-	// @Param limit query int false "limit"
-	// @Param offset query int false "offset"
-	// @Success 200 {object} dto.GetSeriesLeaderboardResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/series/{id}/leaderboard [get]
 	seriesID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})

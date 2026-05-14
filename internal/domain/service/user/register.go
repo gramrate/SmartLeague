@@ -3,9 +3,9 @@ package user
 import (
 	"SmartLeague/internal/domain/common/errorz"
 	"SmartLeague/internal/domain/dto"
+	"SmartLeague/internal/domain/model"
 	"SmartLeague/internal/domain/types"
 	"SmartLeague/internal/domain/utils/password"
-	"SmartLeague/pkg/ent"
 	"context"
 	"errors"
 )
@@ -16,12 +16,12 @@ func (s *userService) Register(ctx context.Context, req *dto.RegisterUserRequest
 	if err != nil {
 		return nil, err
 	}
-	user := ent.User{
-		Email:    req.Email,
-		Password: passwordHash,
-		Name:     req.Name,
-		Surname:  req.Surname,
-		Role:     types.RoleUser,
+	user := model.User{
+		Email:        req.Email,
+		PasswordHash: passwordHash,
+		Name:         req.Name,
+		Surname:      req.Surname,
+		Role:         types.RoleUser,
 	}
 	if s.serverConfig.DevMode() && req.Role != nil {
 		user.Role = *req.Role

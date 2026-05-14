@@ -13,4 +13,3 @@ func (s *service) GetByID(ctx context.Context, req *dto.GetProfileRequest) (*dto
 	resp := dto.GetProfileResponse(*toDTO(p))
 	return &resp, nil
 }
-

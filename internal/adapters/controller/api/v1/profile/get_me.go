@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Get current profile
+// GetMe Get current profile
 //
 // @Summary Get current profile
 // @Tags profile
@@ -30,4 +30,3 @@ func (h *handler) GetMe(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
-

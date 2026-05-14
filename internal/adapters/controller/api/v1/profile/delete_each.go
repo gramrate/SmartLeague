@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Delete profile by id (admin)
+// DeleteEach Delete profile by id (admin)
 //
 // @Summary Delete profile by id
 // @Tags profile
@@ -29,4 +29,3 @@ func (h *handler) DeleteEach(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
-

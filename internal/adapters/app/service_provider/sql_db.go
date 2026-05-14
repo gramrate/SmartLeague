@@ -1,10 +1,10 @@
 package service_provider
 
 import (
+	"SmartLeague/internal/adapters/repository/sql/migrate"
 	"SmartLeague/pkg/closer"
 	"context"
 	"database/sql"
-	"SmartLeague/internal/adapters/repository/sql/migrate"
 	"time"
 
 	_ "github.com/lib/pq"

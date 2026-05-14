@@ -10,10 +10,10 @@ import (
 	"net/http"
 )
 
-// UpdateEach user
+// UpdateEach Update user by id (admin)
 //
 // @Summary Update each user information
-// @Description Information updating the current user under which the input is executed
+// @Description Update user by id. Only for admins
 // @Tags user
 // @Accept json
 // @Produce json

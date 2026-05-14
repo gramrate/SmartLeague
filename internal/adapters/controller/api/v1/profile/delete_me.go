@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Delete current profile
+// DeleteMe Delete current profile
 //
 // @Summary Delete current profile
 // @Tags profile
@@ -28,4 +28,3 @@ func (h *handler) DeleteMe(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
-

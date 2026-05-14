@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Logout User logout
+// Logout Logout user
 //
 // @Summary Logout user
 // @Tags user

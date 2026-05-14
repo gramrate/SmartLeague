@@ -22,10 +22,10 @@ func (s *userService) ChangePassword(ctx context.Context, req *dto.ChangePasswor
 		return nil, errorz.PasswordsCoincidence
 	}
 
-	if !password.VerifyPassword(userToUpdate.Password, req.OldPassword) {
+	if !password.VerifyPassword(userToUpdate.PasswordHash, req.OldPassword) {
 		return nil, errorz.PasswordMismatch
 	}
-	userToUpdate.Password, err = password.PasswordHash(req.NewPassword)
+	userToUpdate.PasswordHash, err = password.PasswordHash(req.NewPassword)
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetAll Get clubs list (paginated)
+//
+// @Summary Get clubs list
+// @Tags club
+// @Produce json
+// @Param limit query int false "limit"
+// @Param offset query int false "offset"
+// @Success 200 {object} dto.GetAllClubsResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/all [get]
 func (h *handler) GetAll(c echo.Context) error {
 	var req dto.GetAllClubsRequest
 	if err := h.formDecoder.Decode(&req, c.QueryParams()); err != nil {
@@ -22,4 +33,3 @@ func (h *handler) GetAll(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

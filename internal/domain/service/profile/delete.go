@@ -8,4 +8,3 @@ import (
 func (s *service) Delete(ctx context.Context, req *dto.DeleteProfileRequest) error {
 	return s.repo.Delete(ctx, req.ID)
 }
-

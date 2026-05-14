@@ -26,4 +26,3 @@ func (s *ServiceProvider) ProfileService() profileService {
 	}
 	return s.profileService
 }
-

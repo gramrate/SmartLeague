@@ -104,4 +104,3 @@ LIMIT $2 OFFSET $3
 
 	return out, total, nil
 }
-

@@ -1,7 +1,7 @@
 package token
 
 import (
-	"SmartLeague/pkg/ent"
+	"SmartLeague/internal/domain/model"
 	"context"
 	"github.com/google/uuid"
 )
@@ -13,11 +13,9 @@ func (s *tokenService) GenerateRefreshToken(ctx context.Context, userID uuid.UUI
 		return "", err
 	}
 
-	_, err = s.refreshTokenRepo.Upsert(ctx, ent.RefreshToken{
-		Jti: jti,
-		Edges: ent.RefreshTokenEdges{
-			User: &ent.User{ID: userID},
-		},
+	_, err = s.refreshTokenRepo.Upsert(ctx, model.RefreshToken{
+		UserID: userID,
+		Jti:    jti,
 	})
 	if err != nil {
 		return "", err

@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Get all profiles
+// GetAll Get all profiles
 //
 // @Summary Get all profiles
 // @Tags profile
@@ -33,4 +33,3 @@ func (h *handler) GetAll(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

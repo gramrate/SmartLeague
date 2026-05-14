@@ -8,6 +8,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// SetLeader Set club leader for member
+//
+// @Summary Set club leader
+// @Tags club
+// @Produce json
+// @Param id path string true "Club ID"
+// @Param member_id path string true "Member Profile ID"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/club/{id}/leader/{member_id} [post]
 func (h *handler) SetLeader(c echo.Context) error {
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
@@ -29,4 +42,3 @@ func (h *handler) SetLeader(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
-

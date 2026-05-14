@@ -28,21 +28,7 @@ type ErrorResponse struct {
 func New() *Validator {
 	newValidator := validator.New()
 
-	_ = newValidator.RegisterValidation("minleechsum", validateMinLeechSum)
-	_ = newValidator.RegisterValidation("maxleechsum", validateMaxLeechSum)
-
-	_ = newValidator.RegisterValidation("maxfilesize", validateMaxFileSize)
-
-	_ = newValidator.RegisterValidation("filetype", validateFileType)
-
 	_ = newValidator.RegisterValidation("role", validateRole)
-
-	_ = newValidator.RegisterValidation("category", validateCategory)
-
-	_ = newValidator.RegisterValidation("package", validatePackage)
-
-	_ = newValidator.RegisterValidation("ozonlink", validateOzonLink)
-	_ = newValidator.RegisterValidation("wildberrieslink", validateWildberriesLink)
 
 	return &Validator{
 		newValidator,

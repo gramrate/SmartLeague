@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Update current profile
+// UpdateMe Update current profile
 //
 // @Summary Update current profile
 // @Tags profile
@@ -42,4 +42,3 @@ func (h *handler) UpdateMe(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
-

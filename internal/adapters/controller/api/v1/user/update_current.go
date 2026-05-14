@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// UpdateCurrent user
+// UpdateCurrent Update current user
 //
 // @Summary Update current user information
 // @Description Information updating the current user under which the input is executed

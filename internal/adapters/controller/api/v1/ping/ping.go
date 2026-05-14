@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Ping check server for working.
+// Ping Healthcheck
 //
 // @Summary      Checking the server performance
 // @Description  Checking the server performance.

@@ -8,21 +8,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// UpdateSeries Update series by id
+//
+// @Summary Update series by id
+// @Tags series
+// @Accept json
+// @Produce json
+// @Param id path string true "Series ID"
+// @Param request body dto.UpdateSeriesRequest true "Update data"
+// @Success 200 {object} dto.UpdateSeriesResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series/{id} [patch]
 func (h *handler) UpdateSeries(c echo.Context) error {
-	// Update series by id
-	//
-	// @Summary Update series by id
-	// @Tags series
-	// @Accept json
-	// @Produce json
-	// @Param id path string true "Series ID"
-	// @Param request body dto.UpdateSeriesRequest true "Update data"
-	// @Success 200 {object} dto.UpdateSeriesResponse
-	// @Failure 400 {object} dto.HTTPStatus
-	// @Failure 401 {object} dto.HTTPStatus
-	// @Failure 403 {object} dto.HTTPStatus
-	// @Failure 500 {object} dto.HTTPStatus
-	// @Router /api/v1/series/{id} [patch]
 	requesterID, ok := c.Get("user_id").(uuid.UUID)
 	if !ok || requesterID == uuid.Nil {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})

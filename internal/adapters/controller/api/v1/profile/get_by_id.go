@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Get profile by id
+// GetByID Get profile by id
 //
 // @Summary Get profile by id
 // @Tags profile
@@ -31,4 +31,3 @@ func (h *handler) GetByID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
-
