@@ -851,325 +851,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/profile": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Get current profile",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetProfileResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Create profile",
-                "parameters": [
-                    {
-                        "description": "Profile data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateProfileRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CreateProfileResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Delete current profile",
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Update current profile",
-                "parameters": [
-                    {
-                        "description": "Update data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateCurrentProfileRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateCurrentProfileResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/profile/all": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Get all profiles",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "limit",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "offset",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetAllProfilesResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/profile/{id}": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Get profile by id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Profile ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.GetProfileResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Delete profile by id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Profile ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "profile"
-                ],
-                "summary": "Update profile by id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Profile ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateEachProfileRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UpdateEachProfileResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/series": {
             "post": {
                 "consumes": [
@@ -1849,7 +1530,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "example": "\"Иван Дима\"",
-                        "description": "One-line search by full name and email tokens (name/surname/email)",
+                        "description": "One-line search by name, nickname and email tokens",
                         "name": "q",
                         "in": "query"
                     },
@@ -2354,103 +2035,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CreateProfileRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "name",
-                "password"
-            ],
-            "properties": {
-                "club_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "description": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "example": "About me"
-                },
-                "email": {
-                    "type": "string",
-                    "maxLength": 254,
-                    "minLength": 6,
-                    "example": "user@example.com"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1,
-                    "example": "Ivan"
-                },
-                "nickname": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1,
-                    "example": "mishmish"
-                },
-                "password": {
-                    "type": "string",
-                    "format": "password",
-                    "maxLength": 100,
-                    "minLength": 8,
-                    "example": "SecurePass123!"
-                },
-                "show_name": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "dto.CreateProfileResponse": {
-            "type": "object",
-            "properties": {
-                "club_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "club_state": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.ClubState"
-                        }
-                    ],
-                    "example": 0
-                },
-                "description": {
-                    "type": "string",
-                    "example": "About me"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ivan"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "mishmish"
-                },
-                "role": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Role"
-                        }
-                    ],
-                    "example": 0
-                },
-                "show_name": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
         "dto.CreateSeriesRequest": {
             "type": "object",
             "required": [
@@ -2468,13 +2052,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "game_type": {
-                    "maximum": 3,
-                    "minimum": 0,
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.GameType"
-                        }
-                    ]
+                    "$ref": "#/definitions/types.GameType"
                 },
                 "is_closed": {
                     "type": "boolean"
@@ -2582,15 +2160,16 @@ const docTemplate = `{
             ],
             "properties": {
                 "best_move": {
-                    "type": "boolean"
+                    "type": "string",
+                    "maxLength": 50
                 },
                 "compensation": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 1000000,
                     "minimum": 0
                 },
                 "extra_points": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 1000000,
                     "minimum": -1000000
                 },
@@ -2606,15 +2185,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "removed": {
-                    "type": "boolean"
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
                 },
                 "role": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1
+                    "$ref": "#/definitions/types.MafiaRole"
                 },
                 "total_points": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 1000000,
                     "minimum": -1000000
                 },
@@ -2653,27 +2232,13 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetAllProfilesResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.Profile"
-                    }
-                },
-                "pagination": {
-                    "$ref": "#/definitions/dto.PaginationInfo"
-                }
-            }
-        },
         "dto.GetClubMembersResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Profile"
+                        "$ref": "#/definitions/dto.User"
                     }
                 },
                 "pagination": {
@@ -2780,55 +2345,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GetProfileResponse": {
-            "type": "object",
-            "properties": {
-                "club_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "club_state": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.ClubState"
-                        }
-                    ],
-                    "example": 0
-                },
-                "description": {
-                    "type": "string",
-                    "example": "About me"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ivan"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "mishmish"
-                },
-                "role": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Role"
-                        }
-                    ],
-                    "example": 0
-                },
-                "show_name": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
         "dto.GetSeriesGamesResponse": {
             "type": "object",
             "properties": {
@@ -2863,7 +2379,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Profile"
+                        "$ref": "#/definitions/dto.User"
                     }
                 },
                 "pagination": {
@@ -2915,6 +2431,22 @@ const docTemplate = `{
         "dto.GetUserResponse": {
             "type": "object",
             "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
@@ -2927,6 +2459,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Ivan"
                 },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
                 "role": {
                     "allOf": [
                         {
@@ -2935,9 +2471,9 @@ const docTemplate = `{
                     ],
                     "example": 0
                 },
-                "surname": {
-                    "type": "string",
-                    "example": "Ivanov"
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -2956,7 +2492,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "points": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "profile_id": {
                     "type": "string"
@@ -2986,69 +2522,6 @@ const docTemplate = `{
             }
         },
         "dto.LoginUserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ivan"
-                },
-                "role": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Role"
-                        }
-                    ],
-                    "example": 0
-                },
-                "surname": {
-                    "type": "string",
-                    "example": "Ivanov"
-                }
-            }
-        },
-        "dto.PaginationInfo": {
-            "type": "object",
-            "properties": {
-                "current_page": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "has_next": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "has_previous": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "total_items": {
-                    "type": "integer",
-                    "example": 1250
-                },
-                "total_pages": {
-                    "type": "integer",
-                    "example": 13
-                }
-            }
-        },
-        "dto.PingResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "ok"
-                }
-            }
-        },
-        "dto.Profile": {
             "type": "object",
             "properties": {
                 "club_id": {
@@ -3097,15 +2570,57 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PaginationInfo": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "has_next": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "has_previous": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "total_items": {
+                    "type": "integer",
+                    "example": 1250
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "example": 13
+                }
+            }
+        },
+        "dto.PingResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ok"
+                }
+            }
+        },
         "dto.RegisterUserRequest": {
             "type": "object",
             "required": [
                 "email",
                 "name",
-                "password",
-                "surname"
+                "password"
             ],
             "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "example": "About me"
+                },
                 "email": {
                     "type": "string",
                     "maxLength": 254,
@@ -3115,8 +2630,14 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 100,
-                    "minLength": 2,
+                    "minLength": 1,
                     "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "example": "mishmish"
                 },
                 "password": {
                     "type": "string",
@@ -3125,17 +2646,31 @@ const docTemplate = `{
                     "minLength": 8,
                     "example": "SecurePass123!"
                 },
-                "surname": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Ivanov"
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
         "dto.RegisterUserResponse": {
             "type": "object",
             "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
@@ -3148,6 +2683,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Ivan"
                 },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
                 "role": {
                     "allOf": [
                         {
@@ -3156,9 +2695,9 @@ const docTemplate = `{
                     ],
                     "example": 0
                 },
-                "surname": {
-                    "type": "string",
-                    "example": "Ivanov"
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -3256,7 +2795,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UpdateCurrentProfileRequest": {
+        "dto.UpdateCurrentUserRequest": {
             "type": "object",
             "properties": {
                 "club_id": {
@@ -3283,151 +2822,10 @@ const docTemplate = `{
                 "show_name": {
                     "type": "boolean",
                     "example": true
-                }
-            }
-        },
-        "dto.UpdateCurrentProfileResponse": {
-            "type": "object",
-            "properties": {
-                "club_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "club_state": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.ClubState"
-                        }
-                    ],
-                    "example": 0
-                },
-                "description": {
-                    "type": "string",
-                    "example": "About me"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ivan"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "mishmish"
-                },
-                "role": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Role"
-                        }
-                    ],
-                    "example": 0
-                },
-                "show_name": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "dto.UpdateCurrentUserRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Ivan"
-                },
-                "surname": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Petrov"
                 }
             }
         },
         "dto.UpdateCurrentUserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ivan"
-                },
-                "role": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.Role"
-                        }
-                    ],
-                    "example": 0
-                },
-                "surname": {
-                    "type": "string",
-                    "example": "Ivanov"
-                }
-            }
-        },
-        "dto.UpdateEachProfileRequest": {
-            "type": "object",
-            "properties": {
-                "club_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "description": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "example": "About me"
-                },
-                "email": {
-                    "type": "string",
-                    "maxLength": 254,
-                    "minLength": 6,
-                    "example": "user@example.com"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1,
-                    "example": "Ivan"
-                },
-                "nickname": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1,
-                    "example": "mishmish"
-                },
-                "password": {
-                    "type": "string",
-                    "format": "password",
-                    "maxLength": 100,
-                    "minLength": 8,
-                    "example": "SecurePass123!"
-                },
-                "role": {
-                    "$ref": "#/definitions/types.Role"
-                },
-                "show_name": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "dto.UpdateEachProfileResponse": {
             "type": "object",
             "properties": {
                 "club_id": {
@@ -3479,6 +2877,24 @@ const docTemplate = `{
         "dto.UpdateEachUserRequest": {
             "type": "object",
             "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "maximum": 3,
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ]
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "example": "About me"
+                },
                 "email": {
                     "type": "string",
                     "maxLength": 254,
@@ -3488,8 +2904,14 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 100,
-                    "minLength": 2,
+                    "minLength": 1,
                     "example": "Ivan"
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "example": "mishmish"
                 },
                 "password": {
                     "type": "string",
@@ -3501,17 +2923,31 @@ const docTemplate = `{
                 "role": {
                     "$ref": "#/definitions/types.Role"
                 },
-                "surname": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2,
-                    "example": "Ivanov"
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
         "dto.UpdateEachUserResponse": {
             "type": "object",
             "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
@@ -3524,6 +2960,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Ivan"
                 },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
                 "role": {
                     "allOf": [
                         {
@@ -3532,9 +2972,9 @@ const docTemplate = `{
                     ],
                     "example": 0
                 },
-                "surname": {
-                    "type": "string",
-                    "example": "Ivanov"
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -3601,13 +3041,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "game_type": {
-                    "maximum": 3,
-                    "minimum": 0,
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.GameType"
-                        }
-                    ]
+                    "$ref": "#/definitions/types.GameType"
                 },
                 "is_closed": {
                     "type": "boolean"
@@ -3701,6 +3135,22 @@ const docTemplate = `{
         "dto.User": {
             "type": "object",
             "properties": {
+                "club_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "club_state": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.ClubState"
+                        }
+                    ],
+                    "example": 0
+                },
+                "description": {
+                    "type": "string",
+                    "example": "About me"
+                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
@@ -3713,6 +3163,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Ivan"
                 },
+                "nickname": {
+                    "type": "string",
+                    "example": "mishmish"
+                },
                 "role": {
                     "allOf": [
                         {
@@ -3721,9 +3175,9 @@ const docTemplate = `{
                     ],
                     "example": 0
                 },
-                "surname": {
-                    "type": "string",
-                    "example": "Ivanov"
+                "show_name": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -3758,16 +3212,25 @@ const docTemplate = `{
         "types.GameType": {
             "type": "integer",
             "enum": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
             "x-enum-varnames": [
-                "GameTypeSportMafia",
-                "GameTypeCity",
-                "GameTypeExperimental",
-                "GameTypeOther"
+                "GameTypeSportMafia"
+            ]
+        },
+        "types.MafiaRole": {
+            "type": "string",
+            "enum": [
+                "civilian",
+                "mafia",
+                "don",
+                "sheriff"
+            ],
+            "x-enum-varnames": [
+                "MafiaRoleCivilian",
+                "MafiaRoleMafia",
+                "MafiaRoleDon",
+                "MafiaRoleSheriff"
             ]
         },
         "types.Role": {

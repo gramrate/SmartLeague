@@ -37,8 +37,20 @@ func (s *userService) UpdateEach(ctx context.Context, req *dto.UpdateEachUserReq
 	if req.Name != nil {
 		userToUpdate.Name = *req.Name
 	}
-	if req.Surname != nil {
-		userToUpdate.Surname = *req.Surname
+	if req.Nickname != nil {
+		userToUpdate.Nickname = *req.Nickname
+	}
+	if req.ShowName != nil {
+		userToUpdate.ShowName = *req.ShowName
+	}
+	if req.Description != nil {
+		userToUpdate.Description = req.Description
+	}
+	if req.ClubID != nil {
+		userToUpdate.ClubID = req.ClubID
+	}
+	if req.ClubState != nil {
+		userToUpdate.ClubState = *req.ClubState
 	}
 	if req.Email != nil {
 		userToUpdate.Email = *req.Email
@@ -62,11 +74,6 @@ func (s *userService) UpdateEach(ctx context.Context, req *dto.UpdateEachUserReq
 		return nil, err
 	}
 
-	return &dto.UpdateEachUserResponse{
-		ID:      updatedUser.ID,
-		Email:   updatedUser.Email,
-		Name:    updatedUser.Name,
-		Surname: updatedUser.Surname,
-		Role:    updatedUser.Role,
-	}, nil
+	resp := dto.UpdateEachUserResponse(toDTO(updatedUser))
+	return &resp, nil
 }

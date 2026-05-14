@@ -1,4 +1,4 @@
-FROM golang:1.24.0-alpine AS builder
+FROM golang:1.25.0-alpine AS builder
 
 RUN apk update && apk add ca-certificates git gcc g++ libc-dev binutils tzdata
 
@@ -15,7 +15,7 @@ COPY . .
 RUN /go/bin/swag init -g cmd/main.go
 
 ENV GOCACHE=/root/.cache/go-build
-RUN --mount=type=cache,target="/root/.cache/go-build" go build -o bin/application ./cmd/
+RUN mkdir -p /root/.cache/go-build && go build -o bin/application ./cmd/
 
 FROM alpine:3.19 AS runner
 

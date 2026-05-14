@@ -7,7 +7,6 @@ import (
 	"SmartLeague/internal/adapters/controller/api/middleware/role"
 	"SmartLeague/internal/adapters/controller/api/v1/club"
 	"SmartLeague/internal/adapters/controller/api/v1/ping"
-	"SmartLeague/internal/adapters/controller/api/v1/profile"
 	"SmartLeague/internal/adapters/controller/api/v1/series"
 	"SmartLeague/internal/adapters/controller/api/v1/token"
 	"SmartLeague/internal/adapters/controller/api/v1/user"
@@ -27,7 +26,7 @@ func Setup(app *app.App) {
 	//app.Server.Use(middleware.Recover())
 
 	app.Server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"https://t-leech.vercel.app", "http://localhost:4200", "http://localhost:4000"},
+		AllowOrigins:     []string{"https://t-leech.vercel.app", "http://localhost:5173"},
 		AllowCredentials: true,
 		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
@@ -86,9 +85,6 @@ func addRouters(app *app.App) {
 
 	userHandler := user.NewHandler(serviceProvider.UserService(), serviceProvider.CookieService(), serviceProvider.JWTConfig(), serviceProvider.ServerConfig(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
 	userHandler.Setup(apiV1)
-
-	profileHandler := profile.NewHandler(serviceProvider.ProfileService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
-	profileHandler.Setup(apiV1)
 
 	clubHandler := club.NewHandler(serviceProvider.ClubService(), authMiddleware, roleMiddleware, serviceProvider.Validator(), serviceProvider.Decoder())
 	clubHandler.Setup(apiV1)

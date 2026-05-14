@@ -19,8 +19,17 @@ func (s *userService) UpdateCurrent(ctx context.Context, req *dto.UpdateCurrentU
 	if req.Name != nil {
 		userToUpdate.Name = *req.Name
 	}
-	if req.Surname != nil {
-		userToUpdate.Surname = *req.Surname
+	if req.Nickname != nil {
+		userToUpdate.Nickname = *req.Nickname
+	}
+	if req.ShowName != nil {
+		userToUpdate.ShowName = *req.ShowName
+	}
+	if req.Description != nil {
+		userToUpdate.Description = req.Description
+	}
+	if req.ClubID != nil {
+		userToUpdate.ClubID = req.ClubID
 	}
 
 	updatedUser, err := s.userRepo.Update(ctx, *userToUpdate)
@@ -31,11 +40,6 @@ func (s *userService) UpdateCurrent(ctx context.Context, req *dto.UpdateCurrentU
 		return nil, err
 	}
 
-	return &dto.UpdateCurrentUserResponse{
-		ID:      updatedUser.ID,
-		Email:   updatedUser.Email,
-		Name:    updatedUser.Name,
-		Surname: updatedUser.Surname,
-		Role:    updatedUser.Role,
-	}, nil
+	resp := dto.UpdateCurrentUserResponse(toDTO(updatedUser))
+	return &resp, nil
 }

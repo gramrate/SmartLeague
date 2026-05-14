@@ -30,13 +30,8 @@ func (s *userService) GetAllByFilter(ctx context.Context, req *dto.GetAllByFilte
 
 	respItems := make([]*dto.User, 0, len(users))
 	for _, user := range users {
-		respItems = append(respItems, &dto.User{
-			ID:      user.ID,
-			Email:   user.Email,
-			Name:    user.Name,
-			Surname: user.Surname,
-			Role:    user.Role,
-		})
+		mapped := toDTO(user)
+		respItems = append(respItems, &mapped)
 	}
 
 	totalPages := 0

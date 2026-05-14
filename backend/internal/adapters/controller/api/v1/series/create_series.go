@@ -2,6 +2,7 @@ package series
 
 import (
 	"SmartLeague/internal/domain/dto"
+	"SmartLeague/internal/domain/types"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -27,9 +28,38 @@ func (h *handler) CreateSeries(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
 	}
 
-	var req dto.CreateSeriesRequest
-	if err := c.Bind(&req); err != nil {
+	var raw struct {
+		Name         string  `json:"name"`
+		ScoringRules string  `json:"scoring_rules"`
+		StartAt      string  `json:"start_at"`
+		EndAt        string  `json:"end_at"`
+		Description  *string `json:"description"`
+		PriceRub     int     `json:"price_rub"`
+		IsClosed     bool    `json:"is_closed"`
+		Status       int16   `json:"status"`
+	}
+	if err := c.Bind(&raw); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+	startAt, err := parseDateTimeInput(raw.StartAt)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid start_at format"})
+	}
+	endAt, err := parseDateTimeInput(raw.EndAt)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid end_at format"})
+	}
+
+	req := dto.CreateSeriesRequest{
+		Name:         raw.Name,
+		ScoringRules: raw.ScoringRules,
+		StartAt:      startAt,
+		EndAt:        endAt,
+		Description:  raw.Description,
+		PriceRub:     raw.PriceRub,
+		IsClosed:     raw.IsClosed,
+		GameType:     types.GameTypeSportMafia,
+		Status:       types.SeriesStatus(raw.Status),
 	}
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})

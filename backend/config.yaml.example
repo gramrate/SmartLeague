@@ -22,12 +22,6 @@ service:
     ssl: false
     timeout: 10
 
-  mail:
-    host: ''
-    port: 0
-    mail: ''
-    password: ''
-
   jwt:
     path-to-private-key: "keys/private.pem"
     refresh-token-expires: "720h"

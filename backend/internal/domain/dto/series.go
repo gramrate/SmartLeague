@@ -30,7 +30,7 @@ type CreateSeriesRequest struct {
 	Description  *string            `json:"description,omitempty" validate:"omitempty,max=5000"`
 	PriceRub     int                `json:"price_rub" validate:"min=0,max=100000000"`
 	IsClosed     bool               `json:"is_closed"`
-	GameType     types.GameType     `json:"game_type" validate:"min=0,max=3"`
+	GameType     types.GameType     `json:"game_type" validate:"eq=0"`
 	Status       types.SeriesStatus `json:"status" validate:"min=0,max=3"`
 }
 
@@ -62,7 +62,7 @@ type UpdateSeriesRequest struct {
 	Description  *string             `json:"description,omitempty" validate:"omitempty,max=5000"`
 	PriceRub     *int                `json:"price_rub,omitempty" validate:"omitempty,min=0,max=100000000"`
 	IsClosed     *bool               `json:"is_closed,omitempty"`
-	GameType     *types.GameType     `json:"game_type,omitempty" validate:"omitempty,min=0,max=3"`
+	GameType     *types.GameType     `json:"game_type,omitempty" validate:"omitempty,eq=0"`
 	Status       *types.SeriesStatus `json:"status,omitempty" validate:"omitempty,min=0,max=3"`
 }
 
@@ -79,7 +79,7 @@ type GetSeriesParticipantsRequest struct {
 }
 
 type GetSeriesParticipantsResponse struct {
-	Items      []*Profile     `json:"items"`
+	Items      []*User        `json:"items"`
 	Pagination PaginationInfo `json:"pagination"`
 }
 

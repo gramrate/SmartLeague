@@ -2,6 +2,7 @@ package series
 
 import (
 	"SmartLeague/internal/domain/dto"
+	"SmartLeague/internal/domain/types"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -33,11 +34,46 @@ func (h *handler) UpdateSeries(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
 	}
 
-	var req dto.UpdateSeriesRequest
-	if err := c.Bind(&req); err != nil {
+	var raw struct {
+		Name         *string `json:"name"`
+		ScoringRules *string `json:"scoring_rules"`
+		StartAt      *string `json:"start_at"`
+		EndAt        *string `json:"end_at"`
+		Description  *string `json:"description"`
+		PriceRub     *int    `json:"price_rub"`
+		IsClosed     *bool   `json:"is_closed"`
+		Status       *int16  `json:"status"`
+	}
+	if err := c.Bind(&raw); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
-	req.ID = id
+
+	req := dto.UpdateSeriesRequest{
+		ID:           id,
+		Name:         raw.Name,
+		ScoringRules: raw.ScoringRules,
+		Description:  raw.Description,
+		PriceRub:     raw.PriceRub,
+		IsClosed:     raw.IsClosed,
+	}
+	if raw.Status != nil {
+		status := types.SeriesStatus(*raw.Status)
+		req.Status = &status
+	}
+	if raw.StartAt != nil && *raw.StartAt != "" {
+		startAt, parseErr := parseDateTimeInput(*raw.StartAt)
+		if parseErr != nil {
+			return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid start_at format"})
+		}
+		req.StartAt = &startAt
+	}
+	if raw.EndAt != nil && *raw.EndAt != "" {
+		endAt, parseErr := parseDateTimeInput(*raw.EndAt)
+		if parseErr != nil {
+			return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid end_at format"})
+		}
+		req.EndAt = &endAt
+	}
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}

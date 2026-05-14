@@ -19,7 +19,7 @@ type clubRepo interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *uuid.UUID, state types.ClubState) error
-	ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Profile, int, error)
+	ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.User, int, error)
 
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
 	SetMemberState(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID, state types.ClubState) error
@@ -54,7 +54,9 @@ func (s *service) Create(ctx context.Context, creatorID uuid.UUID, req *dto.Crea
 	}
 
 	// creator becomes a member
-	_ = s.repo.SetProfileClub(ctx, creatorID, &created.ID, types.ClubStatePresident)
+	if err := s.repo.SetProfileClub(ctx, creatorID, &created.ID, types.ClubStatePresident); err != nil {
+		return nil, err
+	}
 
 	resp := dto.CreateClubResponse(*toDTO(created))
 	return &resp, nil
@@ -139,9 +141,9 @@ func (s *service) GetMembers(ctx context.Context, req *dto.GetClubMembersRequest
 		return nil, err
 	}
 
-	outItems := make([]*dto.Profile, 0, len(items))
+	outItems := make([]*dto.User, 0, len(items))
 	for _, it := range items {
-		outItems = append(outItems, &dto.Profile{
+		outItems = append(outItems, &dto.User{
 			ID:          it.ID,
 			Nickname:    it.Nickname,
 			Name:        it.Name,
@@ -149,6 +151,7 @@ func (s *service) GetMembers(ctx context.Context, req *dto.GetClubMembersRequest
 			Description: it.Description,
 			Email:       it.Email,
 			ClubID:      it.ClubID,
+			ClubState:   it.ClubState,
 			Role:        it.Role,
 		})
 	}

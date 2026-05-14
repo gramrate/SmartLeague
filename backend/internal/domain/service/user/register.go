@@ -17,10 +17,14 @@ func (s *userService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		return nil, err
 	}
 	user := model.User{
+		Nickname:     stringOrDefault(req.Nickname, ""),
 		Email:        req.Email,
 		PasswordHash: passwordHash,
 		Name:         req.Name,
-		Surname:      req.Surname,
+		ShowName:     boolOrDefault(req.ShowName, true),
+		Description:  req.Description,
+		ClubID:       req.ClubID,
+		ClubState:    types.ClubStateNone,
 		Role:         types.RoleUser,
 	}
 	if s.serverConfig.DevMode() && req.Role != nil {
@@ -45,12 +49,20 @@ func (s *userService) Register(ctx context.Context, req *dto.RegisterUserRequest
 
 	return &dto.RegisterUserResponse{
 		RefreshToken: token,
-		User: dto.User{
-			ID:      u.ID,
-			Email:   u.Email,
-			Name:    u.Name,
-			Surname: u.Surname,
-			Role:    u.Role,
-		},
+		User:         toDTO(u),
 	}, nil
+}
+
+func stringOrDefault(s *string, fallback string) string {
+	if s == nil {
+		return fallback
+	}
+	return *s
+}
+
+func boolOrDefault(v *bool, fallback bool) bool {
+	if v == nil {
+		return fallback
+	}
+	return *v
 }

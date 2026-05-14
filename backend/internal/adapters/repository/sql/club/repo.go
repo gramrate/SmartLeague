@@ -151,11 +151,21 @@ func (r *Repo) SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *
 	if clubID == nil || *clubID == uuid.Nil {
 		state = types.ClubStateNone
 	}
-	_, err := r.db.ExecContext(ctx, `UPDATE profiles SET club_id=$2, club_state=$3, updated_at=now() WHERE id=$1`, profileID, ptrToNullUUID(clubID), int16(state))
-	return err
+	res, err := r.db.ExecContext(ctx, `UPDATE profiles SET club_id=$2, club_state=$3, updated_at=now() WHERE id=$1`, profileID, ptrToNullUUID(clubID), int16(state))
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errorz.UserNotFound
+	}
+	return nil
 }
 
-func (r *Repo) ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Profile, int, error) {
+func (r *Repo) ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.User, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -169,7 +179,7 @@ func (r *Repo) ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset 
 	}
 
 	rows, err := r.db.QueryContext(ctx, `
-SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, created_at, updated_at
+SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role
 FROM profiles
 WHERE club_id=$1
 ORDER BY created_at DESC
@@ -180,9 +190,9 @@ LIMIT $2 OFFSET $3
 	}
 	defer rows.Close()
 
-	var out []*model.Profile
+	var out []*model.User
 	for rows.Next() {
-		var p model.Profile
+		var p model.User
 		var desc sql.NullString
 		var clubIDRaw sql.NullString
 		var clubState int16
@@ -198,8 +208,6 @@ LIMIT $2 OFFSET $3
 			&clubIDRaw,
 			&clubState,
 			&role,
-			&p.CreatedAt,
-			&p.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -226,12 +234,22 @@ func (r *Repo) GetProfileClubState(ctx context.Context, profileID uuid.UUID) (cl
 }
 
 func (r *Repo) SetMemberState(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID, state types.ClubState) error {
-	_, err := r.db.ExecContext(ctx, `
+	res, err := r.db.ExecContext(ctx, `
 UPDATE profiles
 SET club_state=$3, updated_at=now()
 WHERE id=$1 AND club_id=$2
 `, profileID, clubID, int16(state))
-	return err
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errorz.UserNotFound
+	}
+	return nil
 }
 
 func ptrToNullString(p *string) any {

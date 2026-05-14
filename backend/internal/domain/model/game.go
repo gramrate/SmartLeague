@@ -30,12 +30,12 @@ type GameResultRow struct {
 	GameID       uuid.UUID
 	ProfileID    uuid.UUID
 	Place        *int
-	Role         *string
-	BestMove     bool
+	Role         *types.MafiaRole
+	BestMove     *string
 	FirstKilled  bool
-	Compensation int
+	Compensation float64
 	YellowCards  int
-	Removed      bool
-	ExtraPoints  int
-	TotalPoints  int
+	Removed      int
+	ExtraPoints  float64
+	TotalPoints  float64
 }

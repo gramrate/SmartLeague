@@ -43,7 +43,7 @@ SELECT exists(
 	return exists, nil
 }
 
-func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.Profile, int, error) {
+func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.User, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -57,7 +57,7 @@ func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, l
 	}
 
 	rows, err := r.db.QueryContext(ctx, `
-SELECT p.id, p.nickname, p.name, p.show_name, p.description, p.email, p.password_hash, p.club_id, p.club_state, p.role, p.created_at, p.updated_at
+SELECT p.id, p.nickname, p.name, p.show_name, p.description, p.email, p.password_hash, p.club_id, p.club_state, p.role
 FROM series_participants sp
 JOIN profiles p ON p.id = sp.profile_id
 WHERE sp.series_id=$1
@@ -69,9 +69,9 @@ LIMIT $2 OFFSET $3
 	}
 	defer rows.Close()
 
-	var out []*model.Profile
+	var out []*model.User
 	for rows.Next() {
-		var p model.Profile
+		var p model.User
 		var desc sql.NullString
 		var clubIDRaw sql.NullString
 		var clubState int16
@@ -87,8 +87,6 @@ LIMIT $2 OFFSET $3
 			&clubIDRaw,
 			&clubState,
 			&role,
-			&p.CreatedAt,
-			&p.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}

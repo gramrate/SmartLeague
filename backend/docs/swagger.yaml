@@ -101,76 +101,6 @@ definitions:
       status:
         $ref: '#/definitions/types.GameStatus'
     type: object
-  dto.CreateProfileRequest:
-    properties:
-      club_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      description:
-        example: About me
-        maxLength: 2000
-        type: string
-      email:
-        example: user@example.com
-        maxLength: 254
-        minLength: 6
-        type: string
-      name:
-        example: Ivan
-        maxLength: 100
-        minLength: 1
-        type: string
-      nickname:
-        example: mishmish
-        maxLength: 100
-        minLength: 1
-        type: string
-      password:
-        example: SecurePass123!
-        format: password
-        maxLength: 100
-        minLength: 8
-        type: string
-      show_name:
-        example: true
-        type: boolean
-    required:
-    - email
-    - name
-    - password
-    type: object
-  dto.CreateProfileResponse:
-    properties:
-      club_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      club_state:
-        allOf:
-        - $ref: '#/definitions/types.ClubState'
-        example: 0
-      description:
-        example: About me
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      name:
-        example: Ivan
-        type: string
-      nickname:
-        example: mishmish
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/types.Role'
-        example: 0
-      show_name:
-        example: true
-        type: boolean
-    type: object
   dto.CreateSeriesRequest:
     properties:
       description:
@@ -179,10 +109,7 @@ definitions:
       end_at:
         type: string
       game_type:
-        allOf:
-        - $ref: '#/definitions/types.GameType'
-        maximum: 3
-        minimum: 0
+        $ref: '#/definitions/types.GameType'
       is_closed:
         type: boolean
       name:
@@ -257,15 +184,16 @@ definitions:
   dto.GameResultRow:
     properties:
       best_move:
-        type: boolean
+        maxLength: 50
+        type: string
       compensation:
         maximum: 1000000
         minimum: 0
-        type: integer
+        type: number
       extra_points:
         maximum: 1000000
         minimum: -1000000
-        type: integer
+        type: number
       first_killed:
         type: boolean
       place:
@@ -275,15 +203,15 @@ definitions:
       profile_id:
         type: string
       removed:
-        type: boolean
+        maximum: 10
+        minimum: 0
+        type: integer
       role:
-        maxLength: 100
-        minLength: 1
-        type: string
+        $ref: '#/definitions/types.MafiaRole'
       total_points:
         maximum: 1000000
         minimum: -1000000
-        type: integer
+        type: number
       yellow_cards:
         maximum: 10
         minimum: 0
@@ -309,20 +237,11 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
-  dto.GetAllProfilesResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/dto.Profile'
-        type: array
-      pagination:
-        $ref: '#/definitions/dto.PaginationInfo'
-    type: object
   dto.GetClubMembersResponse:
     properties:
       items:
         items:
-          $ref: '#/definitions/dto.Profile'
+          $ref: '#/definitions/dto.User'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
@@ -393,38 +312,6 @@ definitions:
       status:
         $ref: '#/definitions/types.GameStatus'
     type: object
-  dto.GetProfileResponse:
-    properties:
-      club_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      club_state:
-        allOf:
-        - $ref: '#/definitions/types.ClubState'
-        example: 0
-      description:
-        example: About me
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      name:
-        example: Ivan
-        type: string
-      nickname:
-        example: mishmish
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/types.Role'
-        example: 0
-      show_name:
-        example: true
-        type: boolean
-    type: object
   dto.GetSeriesGamesResponse:
     properties:
       items:
@@ -447,7 +334,7 @@ definitions:
     properties:
       items:
         items:
-          $ref: '#/definitions/dto.Profile'
+          $ref: '#/definitions/dto.User'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
@@ -481,6 +368,16 @@ definitions:
     type: object
   dto.GetUserResponse:
     properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
       email:
         example: user@example.com
         type: string
@@ -490,13 +387,16 @@ definitions:
       name:
         example: Ivan
         type: string
+      nickname:
+        example: mishmish
+        type: string
       role:
         allOf:
         - $ref: '#/definitions/types.Role'
         example: 0
-      surname:
-        example: Ivanov
-        type: string
+      show_name:
+        example: true
+        type: boolean
     type: object
   dto.HTTPStatus:
     properties:
@@ -508,7 +408,7 @@ definitions:
   dto.LeaderboardRow:
     properties:
       points:
-        type: integer
+        type: number
       profile_id:
         type: string
     type: object
@@ -530,49 +430,6 @@ definitions:
     - password
     type: object
   dto.LoginUserResponse:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      name:
-        example: Ivan
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/types.Role'
-        example: 0
-      surname:
-        example: Ivanov
-        type: string
-    type: object
-  dto.PaginationInfo:
-    properties:
-      current_page:
-        example: 1
-        type: integer
-      has_next:
-        example: true
-        type: boolean
-      has_previous:
-        example: false
-        type: boolean
-      total_items:
-        example: 1250
-        type: integer
-      total_pages:
-        example: 13
-        type: integer
-    type: object
-  dto.PingResponse:
-    properties:
-      message:
-        example: ok
-        type: string
-    type: object
-  dto.Profile:
     properties:
       club_id:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -604,8 +461,39 @@ definitions:
         example: true
         type: boolean
     type: object
+  dto.PaginationInfo:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      has_next:
+        example: true
+        type: boolean
+      has_previous:
+        example: false
+        type: boolean
+      total_items:
+        example: 1250
+        type: integer
+      total_pages:
+        example: 13
+        type: integer
+    type: object
+  dto.PingResponse:
+    properties:
+      message:
+        example: ok
+        type: string
+    type: object
   dto.RegisterUserRequest:
     properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      description:
+        example: About me
+        maxLength: 2000
+        type: string
       email:
         example: user@example.com
         maxLength: 254
@@ -614,7 +502,12 @@ definitions:
       name:
         example: Ivan
         maxLength: 100
-        minLength: 2
+        minLength: 1
+        type: string
+      nickname:
+        example: mishmish
+        maxLength: 100
+        minLength: 1
         type: string
       password:
         example: SecurePass123!
@@ -622,19 +515,26 @@ definitions:
         maxLength: 100
         minLength: 8
         type: string
-      surname:
-        example: Ivanov
-        maxLength: 100
-        minLength: 2
-        type: string
+      show_name:
+        example: true
+        type: boolean
     required:
     - email
     - name
     - password
-    - surname
     type: object
   dto.RegisterUserResponse:
     properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
       email:
         example: user@example.com
         type: string
@@ -644,13 +544,16 @@ definitions:
       name:
         example: Ivan
         type: string
+      nickname:
+        example: mishmish
+        type: string
       role:
         allOf:
         - $ref: '#/definitions/types.Role'
         example: 0
-      surname:
-        example: Ivanov
-        type: string
+      show_name:
+        example: true
+        type: boolean
     type: object
   dto.Series:
     properties:
@@ -717,106 +620,14 @@ definitions:
         example: Smart League
         type: string
     type: object
-  dto.UpdateCurrentProfileRequest:
-    properties:
-      club_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      description:
-        example: About me
-        maxLength: 2000
-        type: string
-      name:
-        example: Ivan
-        maxLength: 100
-        minLength: 1
-        type: string
-      nickname:
-        example: mishmish
-        maxLength: 100
-        minLength: 1
-        type: string
-      show_name:
-        example: true
-        type: boolean
-    type: object
-  dto.UpdateCurrentProfileResponse:
-    properties:
-      club_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      club_state:
-        allOf:
-        - $ref: '#/definitions/types.ClubState'
-        example: 0
-      description:
-        example: About me
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      name:
-        example: Ivan
-        type: string
-      nickname:
-        example: mishmish
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/types.Role'
-        example: 0
-      show_name:
-        example: true
-        type: boolean
-    type: object
   dto.UpdateCurrentUserRequest:
     properties:
-      name:
-        example: Ivan
-        maxLength: 100
-        minLength: 2
-        type: string
-      surname:
-        example: Petrov
-        maxLength: 100
-        minLength: 2
-        type: string
-    type: object
-  dto.UpdateCurrentUserResponse:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      name:
-        example: Ivan
-        type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/types.Role'
-        example: 0
-      surname:
-        example: Ivanov
-        type: string
-    type: object
-  dto.UpdateEachProfileRequest:
-    properties:
       club_id:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       description:
         example: About me
         maxLength: 2000
-        type: string
-      email:
-        example: user@example.com
-        maxLength: 254
-        minLength: 6
         type: string
       name:
         example: Ivan
@@ -828,19 +639,11 @@ definitions:
         maxLength: 100
         minLength: 1
         type: string
-      password:
-        example: SecurePass123!
-        format: password
-        maxLength: 100
-        minLength: 8
-        type: string
-      role:
-        $ref: '#/definitions/types.Role'
       show_name:
         example: true
         type: boolean
     type: object
-  dto.UpdateEachProfileResponse:
+  dto.UpdateCurrentUserResponse:
     properties:
       club_id:
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -874,6 +677,18 @@ definitions:
     type: object
   dto.UpdateEachUserRequest:
     properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        maximum: 3
+        minimum: 0
+      description:
+        example: About me
+        maxLength: 2000
+        type: string
       email:
         example: user@example.com
         maxLength: 254
@@ -882,7 +697,12 @@ definitions:
       name:
         example: Ivan
         maxLength: 100
-        minLength: 2
+        minLength: 1
+        type: string
+      nickname:
+        example: mishmish
+        maxLength: 100
+        minLength: 1
         type: string
       password:
         example: SecurePass123!
@@ -892,14 +712,22 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/types.Role'
-      surname:
-        example: Ivanov
-        maxLength: 100
-        minLength: 2
-        type: string
+      show_name:
+        example: true
+        type: boolean
     type: object
   dto.UpdateEachUserResponse:
     properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
       email:
         example: user@example.com
         type: string
@@ -909,13 +737,16 @@ definitions:
       name:
         example: Ivan
         type: string
+      nickname:
+        example: mishmish
+        type: string
       role:
         allOf:
         - $ref: '#/definitions/types.Role'
         example: 0
-      surname:
-        example: Ivanov
-        type: string
+      show_name:
+        example: true
+        type: boolean
     type: object
   dto.UpdateGameRequest:
     properties:
@@ -959,10 +790,7 @@ definitions:
       end_at:
         type: string
       game_type:
-        allOf:
-        - $ref: '#/definitions/types.GameType'
-        maximum: 3
-        minimum: 0
+        $ref: '#/definitions/types.GameType'
       is_closed:
         type: boolean
       name:
@@ -1025,6 +853,16 @@ definitions:
     type: object
   dto.User:
     properties:
+      club_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      club_state:
+        allOf:
+        - $ref: '#/definitions/types.ClubState'
+        example: 0
+      description:
+        example: About me
+        type: string
       email:
         example: user@example.com
         type: string
@@ -1034,13 +872,16 @@ definitions:
       name:
         example: Ivan
         type: string
+      nickname:
+        example: mishmish
+        type: string
       role:
         allOf:
         - $ref: '#/definitions/types.Role'
         example: 0
-      surname:
-        example: Ivanov
-        type: string
+      show_name:
+        example: true
+        type: boolean
     type: object
   types.ClubState:
     enum:
@@ -1067,15 +908,21 @@ definitions:
   types.GameType:
     enum:
     - 0
-    - 1
-    - 2
-    - 3
     type: integer
     x-enum-varnames:
     - GameTypeSportMafia
-    - GameTypeCity
-    - GameTypeExperimental
-    - GameTypeOther
+  types.MafiaRole:
+    enum:
+    - civilian
+    - mafia
+    - don
+    - sheriff
+    type: string
+    x-enum-varnames:
+    - MafiaRoleCivilian
+    - MafiaRoleMafia
+    - MafiaRoleDon
+    - MafiaRoleSheriff
   types.Role:
     enum:
     - 0
@@ -1656,214 +1503,6 @@ paths:
       summary: Upsert game results
       tags:
       - game
-  /api/v1/profile:
-    delete:
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Delete current profile
-      tags:
-      - profile
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetProfileResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get current profile
-      tags:
-      - profile
-    patch:
-      consumes:
-      - application/json
-      parameters:
-      - description: Update data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateCurrentProfileRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdateCurrentProfileResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Update current profile
-      tags:
-      - profile
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Profile data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CreateProfileRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.CreateProfileResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Create profile
-      tags:
-      - profile
-  /api/v1/profile/{id}:
-    delete:
-      parameters:
-      - description: Profile ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Delete profile by id
-      tags:
-      - profile
-    get:
-      parameters:
-      - description: Profile ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetProfileResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get profile by id
-      tags:
-      - profile
-    patch:
-      consumes:
-      - application/json
-      parameters:
-      - description: Profile ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Update data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateEachProfileRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UpdateEachProfileResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Update profile by id
-      tags:
-      - profile
-  /api/v1/profile/all:
-    get:
-      parameters:
-      - description: limit
-        in: query
-        name: limit
-        type: integer
-      - description: offset
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.GetAllProfilesResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-      summary: Get all profiles
-      tags:
-      - profile
   /api/v1/series:
     post:
       consumes:
@@ -2370,7 +2009,7 @@ paths:
         in: query
         name: role
         type: integer
-      - description: One-line search by full name and email tokens (name/surname/email)
+      - description: One-line search by name, nickname and email tokens
         example: '"Иван Дима"'
         in: query
         name: q

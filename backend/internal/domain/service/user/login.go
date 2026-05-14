@@ -32,12 +32,6 @@ func (s *userService) Login(ctx context.Context, req *dto.LoginUserRequest) (*dt
 
 	return &dto.LoginUserResponse{
 		RefreshToken: token,
-		User: dto.User{
-			ID:      u.ID,
-			Email:   u.Email,
-			Name:    u.Name,
-			Surname: u.Surname,
-			Role:    u.Role,
-		},
+		User:         toDTO(u),
 	}, nil
 }

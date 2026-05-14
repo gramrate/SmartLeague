@@ -11,10 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	maxParticipantsDefault    = 20
-	maxParticipantsSportMafia = 10
-)
+const maxParticipantsSportMafia = 10
 
 type repo interface {
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
@@ -28,7 +25,7 @@ type repo interface {
 	AddSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) error
 	RemoveSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) error
 	CountSeriesParticipants(ctx context.Context, seriesID uuid.UUID) (int, error)
-	ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.Profile, int, error)
+	ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.User, int, error)
 	IsSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) (bool, error)
 
 	ListSeriesLeaderboard(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.LeaderboardRow, int, error)
@@ -47,10 +44,7 @@ func canManageClub(state types.ClubState) bool {
 }
 
 func maxParticipantsForGameType(gameType types.GameType) int {
-	if gameType == types.GameTypeSportMafia {
-		return maxParticipantsSportMafia
-	}
-	return maxParticipantsDefault
+	return maxParticipantsSportMafia
 }
 
 func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
@@ -70,8 +64,8 @@ func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 	}
 }
 
-func profileToDTO(p *model.Profile) *dto.Profile {
-	return &dto.Profile{
+func profileToDTO(p *model.User) *dto.User {
+	return &dto.User{
 		ID:          p.ID,
 		Nickname:    p.Nickname,
 		Name:        p.Name,
@@ -104,7 +98,7 @@ func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		Description:  req.Description,
 		PriceRub:     req.PriceRub,
 		IsClosed:     req.IsClosed,
-		GameType:     req.GameType,
+		GameType:     types.GameTypeSportMafia,
 		Status:       req.Status,
 	})
 	if err != nil {
@@ -224,7 +218,6 @@ func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		Description:  req.Description,
 		PriceRub:     req.PriceRub,
 		IsClosed:     req.IsClosed,
-		GameType:     req.GameType,
 		Status:       req.Status,
 	}
 
@@ -284,7 +277,7 @@ func (s *Service) GetParticipants(ctx context.Context, requesterID *uuid.UUID, r
 		return nil, err
 	}
 
-	outItems := make([]*dto.Profile, 0, len(items))
+	outItems := make([]*dto.User, 0, len(items))
 	for _, it := range items {
 		outItems = append(outItems, profileToDTO(it))
 	}

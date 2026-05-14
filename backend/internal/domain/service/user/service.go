@@ -4,6 +4,7 @@ import (
 	"SmartLeague/internal/domain/model"
 	"SmartLeague/internal/domain/types"
 	"context"
+
 	"github.com/google/uuid"
 )
 
@@ -31,7 +32,6 @@ type serverConfig interface {
 	DevMode() bool
 }
 
-// TODO forgot password
 type userService struct {
 	userRepo     userRepo
 	tokenService tokenService

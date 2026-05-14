@@ -211,8 +211,8 @@ ON CONFLICT (game_id, profile_id) DO UPDATE SET
 			gameID,
 			rrow.ProfileID,
 			ptrToNullInt(rrow.Place),
-			ptrToNullString(rrow.Role),
-			rrow.BestMove,
+			mafiaRoleToNullString(rrow.Role),
+			ptrToNullString(rrow.BestMove),
 			rrow.FirstKilled,
 			rrow.Compensation,
 			rrow.YellowCards,
@@ -311,12 +311,13 @@ ORDER BY profile_id ASC
 		var row model.GameResultRow
 		var place sql.NullInt64
 		var role sql.NullString
+		var bestMove sql.NullString
 		if err := rows.Scan(
 			&row.GameID,
 			&row.ProfileID,
 			&place,
 			&role,
-			&row.BestMove,
+			&bestMove,
 			&row.FirstKilled,
 			&row.Compensation,
 			&row.YellowCards,
@@ -331,8 +332,12 @@ ORDER BY profile_id ASC
 			row.Place = &p
 		}
 		if role.Valid {
-			rv := role.String
+			rv := types.MafiaRole(role.String)
 			row.Role = &rv
+		}
+		if bestMove.Valid {
+			bm := bestMove.String
+			row.BestMove = &bm
 		}
 		out = append(out, row)
 	}
@@ -340,6 +345,13 @@ ORDER BY profile_id ASC
 		return nil, err
 	}
 	return out, nil
+}
+
+func mafiaRoleToNullString(role *types.MafiaRole) sql.NullString {
+	if role == nil {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: string(*role), Valid: true}
 }
 
 func (r *Repo) DeleteGame(ctx context.Context, id uuid.UUID) error {

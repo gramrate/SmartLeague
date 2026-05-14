@@ -27,14 +27,13 @@ type ServiceProvider struct {
 	validator   *validator.Validator
 	formDecoder *form.Decoder
 
-	jwtService     jwtService
-	tokenService   tokenService
-	cookieService  cookieService
-	userService    userService
-	profileService profileService
-	clubService    clubService
-	seriesService  seriesService
-	gameService    gameService
+	jwtService    jwtService
+	tokenService  tokenService
+	cookieService cookieService
+	userService   userService
+	clubService   clubService
+	seriesService seriesService
+	gameService   gameService
 }
 
 func New() *ServiceProvider {

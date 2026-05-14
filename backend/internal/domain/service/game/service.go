@@ -7,6 +7,8 @@ import (
 	"SmartLeague/internal/domain/types"
 	"context"
 	"math"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -31,6 +33,8 @@ type repo interface {
 type Service struct {
 	repo repo
 }
+
+const sportMafiaParticipantsCount = 10
 
 func NewService(repo repo) *Service {
 	return &Service{repo: repo}
@@ -64,7 +68,6 @@ func (s *Service) Create(ctx context.Context, requesterID uuid.UUID, req *dto.Cr
 	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
 		return nil, errorz.Unauthorized
 	}
-
 	name := ""
 	if req.Name != nil {
 		name = *req.Name
@@ -215,7 +218,7 @@ func (s *Service) SetParticipants(ctx context.Context, requesterID uuid.UUID, re
 		return errorz.Unauthorized
 	}
 
-	if ser.GameType == types.GameTypeSportMafia && len(req.ParticipantIDs) != 10 {
+	if len(req.ParticipantIDs) != sportMafiaParticipantsCount {
 		return errorz.InvalidRequest
 	}
 
@@ -249,9 +252,18 @@ func (s *Service) UpsertResults(ctx context.Context, requesterID uuid.UUID, req 
 	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
 		return errorz.Unauthorized
 	}
+	if len(req.Rows) != sportMafiaParticipantsCount {
+		return errorz.InvalidRequest
+	}
 
 	rows := make([]model.GameResultRow, 0, len(req.Rows))
 	for _, rrow := range req.Rows {
+		if rrow.BestMove != nil && !isValidBestMove(*rrow.BestMove) {
+			return errorz.InvalidRequest
+		}
+		if rrow.Role != nil && !isValidMafiaRole(*rrow.Role) {
+			return errorz.InvalidRequest
+		}
 		rows = append(rows, model.GameResultRow{
 			GameID:       req.GameID,
 			ProfileID:    rrow.ProfileID,
@@ -267,6 +279,30 @@ func (s *Service) UpsertResults(ctx context.Context, requesterID uuid.UUID, req 
 		})
 	}
 	return s.repo.UpsertGameResults(ctx, req.GameID, rows)
+}
+
+func isValidBestMove(raw string) bool {
+	parts := strings.FieldsFunc(raw, func(r rune) bool {
+		return r == ',' || r == ';' || r == ' '
+	})
+	if len(parts) == 0 || len(parts) > 3 {
+		return false
+	}
+	for _, part := range parts {
+		if _, err := strconv.Atoi(part); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func isValidMafiaRole(role types.MafiaRole) bool {
+	switch role {
+	case types.MafiaRoleCivilian, types.MafiaRoleMafia, types.MafiaRoleDon, types.MafiaRoleSheriff:
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *Service) GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.GetGameRequest) (*dto.GetGameFullResponse, error) {

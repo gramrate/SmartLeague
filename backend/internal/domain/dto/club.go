@@ -51,7 +51,7 @@ type GetClubMembersRequest struct {
 }
 
 type GetClubMembersResponse struct {
-	Items      []*Profile     `json:"items"`
+	Items      []*User        `json:"items"`
 	Pagination PaginationInfo `json:"pagination"`
 }
 

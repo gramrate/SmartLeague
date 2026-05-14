@@ -31,21 +31,25 @@ func (r *Repo) Create(ctx context.Context, u model.User) (*model.User, error) {
 	}
 
 	row := r.db.QueryRowContext(ctx, `
-INSERT INTO profiles (id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role, surname)
-VALUES ($1,'',$2,true,NULL,$3,$4,NULL,0,$5,$6)
-RETURNING id, email, password_hash, name, surname, role
+INSERT INTO profiles (id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+RETURNING id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role
 `,
 		u.ID,
+		u.Nickname,
 		u.Name,
+		u.ShowName,
+		u.Description,
 		normalizeEmail(u.Email),
 		u.PasswordHash,
+		u.ClubID,
+		int16(u.ClubState),
 		int16(u.Role),
-		u.Surname,
 	)
 
 	var out model.User
-	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
+	var role, clubState int16
+	if err := row.Scan(&out.ID, &out.Nickname, &out.Name, &out.ShowName, &out.Description, &out.Email, &out.PasswordHash, &out.ClubID, &clubState, &role); err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return nil, errorz.EmailAlreadyExist
@@ -53,36 +57,39 @@ RETURNING id, email, password_hash, name, surname, role
 		return nil, err
 	}
 	out.Role = types.Role(role)
+	out.ClubState = types.ClubState(clubState)
 	return &out, nil
 }
 
 func (r *Repo) GetById(ctx context.Context, id uuid.UUID) (*model.User, error) {
-	row := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, name, surname, role FROM profiles WHERE id=$1`, id)
+	row := r.db.QueryRowContext(ctx, `SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role FROM profiles WHERE id=$1`, id)
 
 	var out model.User
-	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
+	var role, clubState int16
+	if err := row.Scan(&out.ID, &out.Nickname, &out.Name, &out.ShowName, &out.Description, &out.Email, &out.PasswordHash, &out.ClubID, &clubState, &role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errorz.UserNotFound
 		}
 		return nil, err
 	}
 	out.Role = types.Role(role)
+	out.ClubState = types.ClubState(clubState)
 	return &out, nil
 }
 
 func (r *Repo) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	row := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, name, surname, role FROM profiles WHERE lower(email)=lower($1)`, normalizeEmail(email))
+	row := r.db.QueryRowContext(ctx, `SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role FROM profiles WHERE lower(email)=lower($1)`, normalizeEmail(email))
 
 	var out model.User
-	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
+	var role, clubState int16
+	if err := row.Scan(&out.ID, &out.Nickname, &out.Name, &out.ShowName, &out.Description, &out.Email, &out.PasswordHash, &out.ClubID, &clubState, &role); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errorz.UserNotFound
 		}
 		return nil, err
 	}
 	out.Role = types.Role(role)
+	out.ClubState = types.ClubState(clubState)
 	return &out, nil
 }
 
@@ -115,7 +122,7 @@ func (r *Repo) GetAllByFilter(
 	}
 	if query != nil {
 		q := strings.TrimSpace(*query)
-		where += " AND (lower(email) LIKE lower($" + itoa(argN) + ") OR lower(name) LIKE lower($" + itoa(argN) + ") OR lower(surname) LIKE lower($" + itoa(argN) + "))"
+		where += " AND (lower(email) LIKE lower($" + itoa(argN) + ") OR lower(name) LIKE lower($" + itoa(argN) + ") OR lower(nickname) LIKE lower($" + itoa(argN) + "))"
 		args = append(args, "%"+strings.ToLower(q)+"%")
 		argN++
 	}
@@ -126,7 +133,7 @@ func (r *Repo) GetAllByFilter(
 		return nil, 0, err
 	}
 
-	listSQL := "SELECT id, email, password_hash, name, surname, role FROM profiles WHERE " + where + " ORDER BY created_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
+	listSQL := "SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role FROM profiles WHERE " + where + " ORDER BY created_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
 	args = append(args, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, listSQL, args...)
@@ -138,11 +145,12 @@ func (r *Repo) GetAllByFilter(
 	var out []*model.User
 	for rows.Next() {
 		var u model.User
-		var rrole int16
-		if err := rows.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.Surname, &rrole); err != nil {
+		var rrole, clubState int16
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.Name, &u.ShowName, &u.Description, &u.Email, &u.PasswordHash, &u.ClubID, &clubState, &rrole); err != nil {
 			return nil, 0, err
 		}
 		u.Role = types.Role(rrole)
+		u.ClubState = types.ClubState(clubState)
 		out = append(out, &u)
 	}
 	if err := rows.Err(); err != nil {
@@ -154,26 +162,34 @@ func (r *Repo) GetAllByFilter(
 func (r *Repo) Update(ctx context.Context, u model.User) (*model.User, error) {
 	row := r.db.QueryRowContext(ctx, `
 UPDATE profiles
-SET email=$2,
-    password_hash=$3,
-    name=$4,
-    surname=$5,
-    role=$6,
+SET nickname=$2,
+    name=$3,
+    show_name=$4,
+    description=$5,
+    email=$6,
+    password_hash=$7,
+    club_id=$8,
+    club_state=$9,
+    role=$10,
     updated_at=now()
 WHERE id=$1
-RETURNING id, email, password_hash, name, surname, role
+RETURNING id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role
 `,
 		u.ID,
+		u.Nickname,
+		u.Name,
+		u.ShowName,
+		u.Description,
 		normalizeEmail(u.Email),
 		u.PasswordHash,
-		u.Name,
-		u.Surname,
+		u.ClubID,
+		int16(u.ClubState),
 		int16(u.Role),
 	)
 
 	var out model.User
-	var role int16
-	if err := row.Scan(&out.ID, &out.Email, &out.PasswordHash, &out.Name, &out.Surname, &role); err != nil {
+	var role, clubState int16
+	if err := row.Scan(&out.ID, &out.Nickname, &out.Name, &out.ShowName, &out.Description, &out.Email, &out.PasswordHash, &out.ClubID, &clubState, &role); err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return nil, errorz.EmailAlreadyExist
@@ -184,6 +200,7 @@ RETURNING id, email, password_hash, name, surname, role
 		return nil, err
 	}
 	out.Role = types.Role(role)
+	out.ClubState = types.ClubState(clubState)
 	return &out, nil
 }
 

@@ -17,11 +17,6 @@ func (s *userService) GetByID(ctx context.Context, req *dto.GetUserRequest) (*dt
 		return nil, err
 	}
 
-	return &dto.GetUserResponse{
-		ID:      u.ID,
-		Email:   u.Email,
-		Name:    u.Name,
-		Surname: u.Surname,
-		Role:    u.Role,
-	}, nil
+	resp := dto.GetUserResponse(toDTO(u))
+	return &resp, nil
 }
