@@ -1111,23 +1111,13 @@ info:
 paths:
   /api/v1/auth/refresh:
     post:
-      consumes:
-      - application/json
       description: Refreshes access and refresh tokens using valid refresh token from
         cookies
-      parameters:
-      - description: Must be 'true'
-        enum:
-        - "true"
-        in: query
-        name: goyda
-        required: true
-        type: string
       produces:
       - application/json
       responses:
         "204":
-          description: Successful updated
+          description: OK
         "400":
           description: Invalid request or validation error
           schema:

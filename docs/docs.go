@@ -20,9 +20,6 @@ const docTemplate = `{
         "/api/v1/auth/refresh": {
             "post": {
                 "description": "Refreshes access and refresh tokens using valid refresh token from cookies",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -30,21 +27,9 @@ const docTemplate = `{
                     "token"
                 ],
                 "summary": "Refresh tokens",
-                "parameters": [
-                    {
-                        "enum": [
-                            "true"
-                        ],
-                        "type": "string",
-                        "description": "Must be 'true'",
-                        "name": "goyda",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "204": {
-                        "description": "Successful updated"
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Invalid request or validation error",

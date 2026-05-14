@@ -1,5 +1,4 @@
 package dto
 
-type RefreshRequest struct {
-	Goyda string `json:"goyda" form:"goyda" validate:"required,eq=true" example:"true"`
-}
+// RefreshRequest left intentionally empty: refresh uses HttpOnly refresh cookie.
+type RefreshRequest struct{}

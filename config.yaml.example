@@ -1,6 +1,6 @@
 service:
   database:
-    host: 'localhost'
+    host: 'postgres'
     user: 'user'
     password: 'password'
     port: 5432
@@ -8,13 +8,13 @@ service:
     ssl-mode: 'disable'
 
   redis:
-    host: "localhost"
+    host: "valkey"
     port: 6379
     password: "valkeypass"
     db: 0
 
   minio:
-    host: "localhost"
+    host: "minio"
     port: 9000
     access-key: "minioadmin"
     secret-key: "minioadmin"
@@ -33,7 +33,7 @@ service:
     refresh-token-expires: "720h"
     access-token-expires: "15m"
 
-   info: # информация о корпорации
+  info: # информация о проекте
     path-to-json-file: "files/info/info.json"
 
 backend:

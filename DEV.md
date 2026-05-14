@@ -1,6 +1,6 @@
 # DEV Guide
 
-Техническая документация для разработки и расширения Leech-ru backend.
+Техническая документация для разработки и расширения SmartLeague backend.
 
 ## Архитектура проекта
 
@@ -18,14 +18,28 @@
 - `internal/domain/dto`  
   Контракты запросов/ответов API.
 
- 
-
 Поток запроса:
 1. Handler принимает запрос.
 2. Service выполняет бизнес-логику.
 3. Repository читает/пишет данные.
 4. Service собирает DTO-ответ.
 5. Handler возвращает HTTP-ответ.
+
+## Авторизация и refresh
+
+Модель — cookie-based:
+- `user_auth_access_token` (короткий)
+- `user_auth_refresh_token` (длинный, HttpOnly)
+
+Важно:
+- refresh-токен **один на пользователя** (на все устройства), хранится в БД. Новый логин/refresh перезаписывает токен.
+
+Обновление:
+- клиент дергает `POST /api/v1/auth/refresh` (без body/query)
+- сервер валидирует refresh cookie и выставляет новые cookies (access+refresh)
+
+Поведение клиента:
+- если защищенная ручка вернула `401` (нет/просрочен access cookie) — сначала дернуть refresh, затем повторить запрос.
 
 ## Service Provider: что это и зачем
 
@@ -54,7 +68,7 @@
    Добавь миграцию в `internal/adapters/repository/sql/migrate/migrations`.
 
 3. Repository  
-   Реализуй интерфейс доступа к данным в `internal/adapters/repository/postgres/<module>`.
+   Реализуй доступ к данным в `internal/adapters/repository/sql/<module>`.
 
 4. Service  
    Добавь бизнес-логику в `internal/domain/service/<module>`.
@@ -106,6 +120,20 @@
 swag init -g cmd/main.go -o docs
 ```
 
+Правило для комментариев над хендлером:
+- первая строка должна начинаться с имени функции: `HandlerName Description`
+
+## Миграции
+
+Миграции — обычный SQL, применяются автоматически при старте приложения (см. `internal/adapters/app/service_provider/sql_db.go`).
+
+Где лежат:
+- `internal/adapters/repository/sql/migrate/migrations/*.sql`
+
+Правила:
+- имя файла: `0003_some_change.sql` (лексикографический порядок = порядок применения);
+- миграция должна быть идемпотентной (`IF NOT EXISTS`, `DO $$ ... EXCEPTION WHEN duplicate_object ...`), потому что мигратор простейший.
+
 ## Ключи JWT (RSA)
 
 Если ключей нет, сгенерируй:
@@ -113,4 +141,12 @@ swag init -g cmd/main.go -o docs
 ```bash
 openssl genpkey -algorithm RSA -out keys/private.pem -pkeyopt rsa_keygen_bits:2048
 openssl rsa -pubout -in keys/private.pem -out keys/public.pem
+```
+
+## Тесты/сборка
+
+Если окружение read-only для go build cache, используй:
+
+```bash
+GOCACHE=/tmp/gocache go test ./...
 ```

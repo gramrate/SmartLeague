@@ -14,29 +14,13 @@ import (
 // @Summary      Refresh tokens
 // @Description  Refreshes access and refresh tokens using valid refresh token from cookies
 // @Tags         token
-// @Accept       json
 // @Produce      json
-// @Param        goyda    query     string                  true   "Must be 'true'"  Enums(true)
-// @Success      204      "Successful updated"
+// @Success      204 "OK"
 // @Failure      400      {object}  dto.HTTPStatus          "Invalid request or validation error"
 // @Failure      401      {object}  dto.HTTPStatus          "Unauthorized - invalid/missing refresh token"
 // @Failure      500      {object}  dto.HTTPStatus          "Internal server error"
 // @Router       /api/v1/auth/refresh [post]
 func (h *handler) Refresh(c echo.Context) error {
-	var req dto.RefreshRequest
-	if err := h.formDecoder.Decode(&req, c.QueryParams()); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		})
-	}
-	if err := h.validator.ValidateData(req); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{
-			Code:    http.StatusBadRequest,
-			Message: "GOOOOOOOOOOOOOOOYDA IS REQUIRED!",
-		})
-	}
-
 	token, err := h.cookieService.ReadRefreshTokenCookie(c.Request())
 	switch {
 	case errors.Is(err, errorz.NoCookie):
