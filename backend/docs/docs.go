@@ -3588,7 +3588,7 @@ const docTemplate = `{
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "club_state": {
-                    "maximum": 3,
+                    "maximum": 4,
                     "minimum": 0,
                     "allOf": [
                         {
@@ -3892,9 +3892,9 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "ClubStateNone",
                 "ClubStateMember",
+                "ClubStateResident",
                 "ClubStateLeader",
-                "ClubStatePresident",
-                "ClubStateResident"
+                "ClubStatePresident"
             ]
         },
         "types.GameStatus": {

@@ -757,7 +757,7 @@ definitions:
       club_state:
         allOf:
         - $ref: '#/definitions/types.ClubState'
-        maximum: 3
+        maximum: 4
         minimum: 0
       description:
         example: About me
@@ -963,9 +963,9 @@ definitions:
     x-enum-varnames:
     - ClubStateNone
     - ClubStateMember
+    - ClubStateResident
     - ClubStateLeader
     - ClubStatePresident
-    - ClubStateResident
   types.GameStatus:
     enum:
     - 0

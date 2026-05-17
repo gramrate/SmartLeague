@@ -136,7 +136,7 @@ type UpdateEachUserRequest struct {
 	ClubID        *uuid.UUID       `json:"club_id,omitempty" validate:"omitempty,uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Email         *string          `json:"email,omitempty" validate:"omitempty,email,min=6,max=254" example:"user@example.com"`
 	Password      *string          `json:"password,omitempty" validate:"omitempty,min=8,max=100" example:"SecurePass123!" format:"password"`
-	ClubState     *types.ClubState `json:"club_state,omitempty" validate:"omitempty,min=0,max=3"`
+	ClubState     *types.ClubState `json:"club_state,omitempty" validate:"omitempty,min=0,max=4"`
 	Role          *types.Role      `json:"role,omitempty" validate:"omitempty,role"`
 }
 

@@ -128,6 +128,10 @@ func canManageClub(state types.ClubState) bool {
 	return state == types.ClubStateLeader || state == types.ClubStatePresident
 }
 
+func canLeaderManageTarget(targetState types.ClubState) bool {
+	return targetState == types.ClubStateMember || targetState == types.ClubStateResident
+}
+
 func (s *service) UpdateByManager(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateClubRequest) (*dto.UpdateClubResponse, error) {
 	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
 	if err != nil {
@@ -214,6 +218,16 @@ func (s *service) Join(ctx context.Context, req *dto.JoinClubRequest) error {
 }
 
 func (s *service) Leave(ctx context.Context, req *dto.LeaveClubRequest) error {
+	currentClubID, currentState, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
+	if err != nil {
+		return err
+	}
+	if currentClubID == nil || currentState == types.ClubStateNone {
+		return errorz.InvalidRequest
+	}
+	if currentState == types.ClubStateLeader || currentState == types.ClubStatePresident {
+		return errorz.ClubSelfAction
+	}
 	return s.repo.SetProfileClub(ctx, req.ProfileID, nil, types.ClubStateNone)
 }
 
@@ -224,6 +238,16 @@ func (s *service) SetLeader(ctx context.Context, requesterID uuid.UUID, clubID u
 	}
 	if requesterClubID == nil || *requesterClubID != clubID || requesterState != types.ClubStatePresident {
 		return errorz.Unauthorized
+	}
+	if requesterID == memberID {
+		return errorz.ClubSelfAction
+	}
+	memberClubID, memberState, err := s.repo.GetProfileClubState(ctx, memberID)
+	if err != nil {
+		return err
+	}
+	if memberClubID == nil || *memberClubID != clubID || memberState == types.ClubStateNone {
+		return errorz.InvalidRequest
 	}
 	return s.repo.SetMemberState(ctx, memberID, clubID, types.ClubStateLeader)
 }
@@ -236,13 +260,31 @@ func (s *service) SetMemberRole(ctx context.Context, requesterID uuid.UUID, club
 	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
 		return errorz.Unauthorized
 	}
+	if requesterID == memberID {
+		return errorz.ClubSelfAction
+	}
 	if state != types.ClubStateMember && state != types.ClubStateLeader && state != types.ClubStateResident {
 		return errorz.InvalidRequest
+	}
+	memberClubID, memberState, err := s.repo.GetProfileClubState(ctx, memberID)
+	if err != nil {
+		return err
+	}
+	if memberClubID == nil || *memberClubID != clubID || memberState == types.ClubStateNone {
+		return errorz.InvalidRequest
+	}
+	if requesterState == types.ClubStateLeader {
+		if !canLeaderManageTarget(memberState) {
+			return errorz.ClubRoleRestricted
+		}
+		if state == types.ClubStateLeader {
+			return errorz.ClubRoleRestricted
+		}
 	}
 	return s.repo.SetMemberState(ctx, memberID, clubID, state)
 }
 
-func (s *service) KickMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
+func (s *service) KickFromClub(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
 	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
 	if err != nil {
 		return err
@@ -250,11 +292,28 @@ func (s *service) KickMember(ctx context.Context, requesterID uuid.UUID, clubID 
 	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
 		return errorz.Unauthorized
 	}
+	if requesterID == memberID {
+		return errorz.ClubSelfAction
+	}
+	memberClubID, memberState, err := s.repo.GetProfileClubState(ctx, memberID)
+	if err != nil {
+		return err
+	}
+	if memberClubID == nil || *memberClubID != clubID || memberState == types.ClubStateNone {
+		return errorz.InvalidRequest
+	}
+	if requesterState == types.ClubStateLeader && !canLeaderManageTarget(memberState) {
+		return errorz.ClubRoleRestricted
+	}
 	return s.repo.SetProfileClub(ctx, memberID, nil, types.ClubStateNone)
 }
 
+func (s *service) KickMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
+	return s.KickFromClub(ctx, requesterID, clubID, memberID)
+}
+
 func (s *service) BlockMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
-	if err := s.KickMember(ctx, requesterID, clubID, memberID); err != nil {
+	if err := s.KickFromClub(ctx, requesterID, clubID, memberID); err != nil {
 		return err
 	}
 	return s.repo.BanProfileInClub(ctx, memberID, clubID)
