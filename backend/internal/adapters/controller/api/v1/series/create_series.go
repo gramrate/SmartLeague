@@ -15,6 +15,7 @@ import (
 // @Tags series
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param request body dto.CreateSeriesRequest true "Series data"
 // @Success 201 {object} dto.CreateSeriesResponse
 // @Failure 400 {object} dto.HTTPStatus
@@ -29,14 +30,13 @@ func (h *handler) CreateSeries(c echo.Context) error {
 	}
 
 	var raw struct {
-		Name         string  `json:"name"`
-		ScoringRules string  `json:"scoring_rules"`
-		StartAt      string  `json:"start_at"`
-		EndAt        string  `json:"end_at"`
-		Description  *string `json:"description"`
-		PriceRub     int     `json:"price_rub"`
-		IsClosed     bool    `json:"is_closed"`
-		Status       int16   `json:"status"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		StartAt     string `json:"start_at"`
+		EndAt       string `json:"end_at"`
+		PriceRub    int    `json:"price_rub"`
+		IsClosed    bool   `json:"is_closed"`
+		Status      int16  `json:"status"`
 	}
 	if err := c.Bind(&raw); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
@@ -51,15 +51,14 @@ func (h *handler) CreateSeries(c echo.Context) error {
 	}
 
 	req := dto.CreateSeriesRequest{
-		Name:         raw.Name,
-		ScoringRules: raw.ScoringRules,
-		StartAt:      startAt,
-		EndAt:        endAt,
-		Description:  raw.Description,
-		PriceRub:     raw.PriceRub,
-		IsClosed:     raw.IsClosed,
-		GameType:     types.GameTypeSportMafia,
-		Status:       types.SeriesStatus(raw.Status),
+		Name:        raw.Name,
+		Description: raw.Description,
+		StartAt:     startAt,
+		EndAt:       endAt,
+		PriceRub:    raw.PriceRub,
+		IsClosed:    raw.IsClosed,
+		GameType:    types.GameTypeSportMafia,
+		Status:      types.SeriesStatus(raw.Status),
 	}
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})

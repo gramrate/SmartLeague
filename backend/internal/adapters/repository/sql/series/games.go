@@ -22,9 +22,9 @@ func (r *Repo) CreateGame(ctx context.Context, g model.Game) (*model.Game, error
 
 	row := r.db.QueryRowContext(ctx, `
 INSERT INTO games (id, series_id, name, number, description, host_id, status)
-VALUES ($1,$2,$3,$4,$5,$6,$7)
+VALUES ($1,$2,$3,(SELECT COALESCE(MAX(number), 0) + 1 FROM games WHERE series_id=$2),$5,$6,$7)
 RETURNING id, series_id, name, number, description, host_id, status, created_at, updated_at
-`, g.ID, g.SeriesID, g.Name, g.Number, ptrToNullString(g.Description), ptrToNullUUID(g.HostID), int16(g.Status))
+`, g.ID, g.SeriesID, g.Name, ptrToNullString(g.Description), ptrToNullUUID(g.HostID), int16(g.Status))
 
 	var out model.Game
 	var desc sql.NullString
@@ -42,7 +42,7 @@ RETURNING id, series_id, name, number, description, host_id, status, created_at,
 func (r *Repo) GetGameByID(ctx context.Context, id uuid.UUID) (*model.Game, error) {
 	row := r.db.QueryRowContext(ctx, `
 SELECT id, series_id, name, number, description, host_id, status, created_at, updated_at
-FROM games WHERE id=$1
+FROM games WHERE id=$1 AND deleted_at IS NULL
 `, id)
 
 	var out model.Game
@@ -70,14 +70,14 @@ func (r *Repo) ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit,
 	}
 
 	var total int
-	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM games WHERE series_id=$1`, seriesID).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM games WHERE series_id=$1 AND deleted_at IS NULL`, seriesID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
 	rows, err := r.db.QueryContext(ctx, `
 SELECT id, series_id, name, number, description, host_id, status, created_at, updated_at
 FROM games
-WHERE series_id=$1
+WHERE series_id=$1 AND deleted_at IS NULL
 ORDER BY number ASC
 LIMIT $2 OFFSET $3
 `, seriesID, limit, offset)
@@ -186,8 +186,8 @@ func (r *Repo) UpsertGameResults(ctx context.Context, gameID uuid.UUID, rows []m
 	defer func() { _ = tx.Rollback() }()
 
 	stmt, err := tx.PrepareContext(ctx, `
-INSERT INTO game_results (game_id, profile_id, place, role, best_move, first_killed, compensation, yellow_cards, removed, extra_points, total_points)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+INSERT INTO game_results (game_id, profile_id, place, role, best_move, first_killed, compensation, yellow_cards, removed, victory_points, extra_points, total_points)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 ON CONFLICT (game_id, profile_id) DO UPDATE SET
   place=excluded.place,
   role=excluded.role,
@@ -196,6 +196,7 @@ ON CONFLICT (game_id, profile_id) DO UPDATE SET
   compensation=excluded.compensation,
   yellow_cards=excluded.yellow_cards,
   removed=excluded.removed,
+  victory_points=excluded.victory_points,
   extra_points=excluded.extra_points,
   total_points=excluded.total_points,
   updated_at=now()
@@ -217,6 +218,7 @@ ON CONFLICT (game_id, profile_id) DO UPDATE SET
 			rrow.Compensation,
 			rrow.YellowCards,
 			rrow.Removed,
+			rrow.VictoryPoints,
 			rrow.ExtraPoints,
 			rrow.TotalPoints,
 		); err != nil {
@@ -296,7 +298,7 @@ func (r *Repo) ListGameParticipants(ctx context.Context, gameID uuid.UUID) ([]uu
 
 func (r *Repo) ListGameResults(ctx context.Context, gameID uuid.UUID) ([]model.GameResultRow, error) {
 	rows, err := r.db.QueryContext(ctx, `
-SELECT game_id, profile_id, place, role, best_move, first_killed, compensation, yellow_cards, removed, extra_points, total_points
+SELECT game_id, profile_id, place, role, best_move, first_killed, compensation, yellow_cards, removed, victory_points, extra_points, total_points
 FROM game_results
 WHERE game_id=$1
 ORDER BY profile_id ASC
@@ -322,6 +324,7 @@ ORDER BY profile_id ASC
 			&row.Compensation,
 			&row.YellowCards,
 			&row.Removed,
+			&row.VictoryPoints,
 			&row.ExtraPoints,
 			&row.TotalPoints,
 		); err != nil {
@@ -355,7 +358,7 @@ func mafiaRoleToNullString(role *types.MafiaRole) sql.NullString {
 }
 
 func (r *Repo) DeleteGame(ctx context.Context, id uuid.UUID) error {
-	res, err := r.db.ExecContext(ctx, `DELETE FROM games WHERE id=$1`, id)
+	res, err := r.db.ExecContext(ctx, `UPDATE games SET deleted_at=now(), updated_at=now() WHERE id=$1 AND deleted_at IS NULL`, id)
 	if err != nil {
 		return err
 	}

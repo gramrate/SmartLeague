@@ -21,6 +21,7 @@ import (
 // @Header 201 {string} Set-Cookie "user_auth_refresh_token=token; Path=/; HttpOnly; Secure; SameSite=Strict"
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 409 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user/register [post]
 func (h *handler) Register(c echo.Context) error {
 	var req dto.RegisterUserRequest

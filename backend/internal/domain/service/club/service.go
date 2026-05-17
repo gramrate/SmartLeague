@@ -23,6 +23,8 @@ type clubRepo interface {
 
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
 	SetMemberState(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID, state types.ClubState) error
+	IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error)
+	BanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) error
 }
 
 type service struct {
@@ -122,6 +124,21 @@ func (s *service) Update(ctx context.Context, req *dto.UpdateClubRequest) (*dto.
 	return &resp, nil
 }
 
+func canManageClub(state types.ClubState) bool {
+	return state == types.ClubStateLeader || state == types.ClubStatePresident
+}
+
+func (s *service) UpdateByManager(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateClubRequest) (*dto.UpdateClubResponse, error) {
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return nil, err
+	}
+	if clubID == nil || *clubID != req.ID || !canManageClub(clubState) {
+		return nil, errorz.Unauthorized
+	}
+	return s.Update(ctx, req)
+}
+
 func (s *service) Delete(ctx context.Context, req *dto.DeleteClubRequest) error {
 	return s.repo.Delete(ctx, req.ID)
 }
@@ -176,6 +193,23 @@ func (s *service) GetMembers(ctx context.Context, req *dto.GetClubMembersRequest
 }
 
 func (s *service) Join(ctx context.Context, req *dto.JoinClubRequest) error {
+	banned, err := s.repo.IsProfileBannedInClub(ctx, req.ProfileID, req.ClubID)
+	if err != nil {
+		return err
+	}
+	if banned {
+		return errorz.ClubBanned
+	}
+	currentClubID, currentState, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
+	if err != nil {
+		return err
+	}
+	if currentClubID != nil && *currentClubID == req.ClubID && currentState != types.ClubStateNone {
+		return errorz.AlreadyInThisClub
+	}
+	if currentClubID != nil && *currentClubID != req.ClubID && currentState != types.ClubStateNone {
+		return errorz.AlreadyInOtherClub
+	}
 	return s.repo.SetProfileClub(ctx, req.ProfileID, &req.ClubID, types.ClubStateMember)
 }
 
@@ -192,4 +226,36 @@ func (s *service) SetLeader(ctx context.Context, requesterID uuid.UUID, clubID u
 		return errorz.Unauthorized
 	}
 	return s.repo.SetMemberState(ctx, memberID, clubID, types.ClubStateLeader)
+}
+
+func (s *service) SetMemberRole(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID, state types.ClubState) error {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
+		return errorz.Unauthorized
+	}
+	if state != types.ClubStateMember && state != types.ClubStateLeader && state != types.ClubStateResident {
+		return errorz.InvalidRequest
+	}
+	return s.repo.SetMemberState(ctx, memberID, clubID, state)
+}
+
+func (s *service) KickMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
+		return errorz.Unauthorized
+	}
+	return s.repo.SetProfileClub(ctx, memberID, nil, types.ClubStateNone)
+}
+
+func (s *service) BlockMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
+	if err := s.KickMember(ctx, requesterID, clubID, memberID); err != nil {
+		return err
+	}
+	return s.repo.BanProfileInClub(ctx, memberID, clubID)
 }

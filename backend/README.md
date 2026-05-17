@@ -9,6 +9,26 @@
 - серии игр от клуба + игры + участники/результаты + лидерборд;
 - PostgreSQL (основные данные), Valkey (access token blacklist), MinIO (хранилище файлов/картинок — по мере надобности).
 
+## Публичный доступ (без регистрации/логина)
+
+Следующие ручки доступны без cookies:
+
+- `GET /api/v1/club/all`
+- `GET /api/v1/club/{id}`
+- `GET /api/v1/club/{id}/members`
+- `GET /api/v1/club/{id}/series`
+- `GET /api/v1/series/{id}`
+- `GET /api/v1/series/all`
+- `GET /api/v1/series/{id}/full`
+- `GET /api/v1/series/{id}/participants`
+- `GET /api/v1/series/{id}/games`
+- `GET /api/v1/series/{id}/leaderboard`
+- `GET /api/v1/game/{id}`
+- `GET /api/v1/game/{id}/full`
+- `GET /api/v1/user/{id}` (просмотр аккаунта/профиля)
+
+Остальные ручки на создание/изменение/удаление требуют авторизацию.
+
 Техническая документация: `DEV.md`.
 
 ## Быстрый запуск через Docker

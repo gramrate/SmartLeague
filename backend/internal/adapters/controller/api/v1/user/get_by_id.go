@@ -9,18 +9,18 @@ import (
 	"net/http"
 )
 
-// GetById Get user by id (admin)
+// GetById Get user by id
 //
-// @Description Get each user by id. Only for admins
+// @Description Public profile view by id
 // @Summary Get user by id
 // @Tags user
 // @Accept json
 // @Produce json
-// @Security CookieAuth
 // @Param id path string true "User ID (UUID)"
 // @Success 200 {object} dto.GetUserResponse
 // @Failure 400 {object} dto.HTTPStatus
-// @Failure 401 {object} dto.HTTPStatus
+// @Failure 404 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user/{id} [get]
 func (h *handler) GetById(c echo.Context) error {
 	id := c.Param("id")

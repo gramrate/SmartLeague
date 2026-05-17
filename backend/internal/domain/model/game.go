@@ -27,15 +27,16 @@ type GameUpdatePatch struct {
 }
 
 type GameResultRow struct {
-	GameID       uuid.UUID
-	ProfileID    uuid.UUID
-	Place        *int
-	Role         *types.MafiaRole
-	BestMove     *string
-	FirstKilled  bool
-	Compensation float64
-	YellowCards  int
-	Removed      int
-	ExtraPoints  float64
-	TotalPoints  float64
+	GameID        uuid.UUID
+	ProfileID     uuid.UUID
+	Place         *int
+	Role          *types.MafiaRole
+	BestMove      *string
+	FirstKilled   bool
+	Compensation  float64
+	YellowCards   int
+	Removed       int
+	VictoryPoints float64
+	ExtraPoints   float64
+	TotalPoints   float64
 }

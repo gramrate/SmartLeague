@@ -19,7 +19,6 @@ type Game struct {
 type CreateGameRequest struct {
 	SeriesID    uuid.UUID        `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Name        *string          `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	Number      int              `json:"number" validate:"required,min=1,max=100000"`
 	Description *string          `json:"description,omitempty" validate:"omitempty,max=5000"`
 	HostID      *uuid.UUID       `json:"host_id,omitempty" validate:"omitempty,uuid"`
 	Status      types.GameStatus `json:"status" validate:"min=0,max=2"`
@@ -77,16 +76,17 @@ type UpsertGameResultsRequest struct {
 }
 
 type GameResultRow struct {
-	ProfileID    uuid.UUID        `json:"profile_id" validate:"required,uuid"`
-	Place        *int             `json:"place,omitempty" validate:"omitempty,min=1,max=10"`
-	Role         *types.MafiaRole `json:"role,omitempty"`
-	BestMove     *string          `json:"best_move,omitempty" validate:"omitempty,max=50"`
-	FirstKilled  bool             `json:"first_killed"`
-	Compensation float64          `json:"compensation" validate:"min=0,max=1000000"`
-	YellowCards  int              `json:"yellow_cards" validate:"min=0,max=10"`
-	Removed      int              `json:"removed" validate:"min=0,max=10"`
-	ExtraPoints  float64          `json:"extra_points" validate:"min=-1000000,max=1000000"`
-	TotalPoints  float64          `json:"total_points" validate:"min=-1000000,max=1000000"`
+	ProfileID     uuid.UUID        `json:"profile_id" validate:"required,uuid"`
+	Place         *int             `json:"place,omitempty" validate:"omitempty,min=1,max=10"`
+	Role          *types.MafiaRole `json:"role,omitempty"`
+	BestMove      *string          `json:"best_move,omitempty" validate:"omitempty,max=50"`
+	FirstKilled   bool             `json:"first_killed"`
+	Compensation  float64          `json:"compensation" validate:"min=-1000000,max=1000000"`
+	YellowCards   int              `json:"yellow_cards" validate:"min=-1000000,max=1000000"`
+	Removed       int              `json:"removed" validate:"min=-1000000,max=1000000"`
+	VictoryPoints float64          `json:"victory_points" validate:"min=-1000000,max=1000000"`
+	ExtraPoints   float64          `json:"extra_points" validate:"min=-1000000,max=1000000"`
+	TotalPoints   float64          `json:"total_points" validate:"min=-1000000,max=1000000"`
 }
 
 type LeaderboardRow struct {

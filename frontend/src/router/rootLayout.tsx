@@ -20,6 +20,12 @@ export function RootLayout() {
             <NavLink to="/clubs" className={cn}>
               Clubs
             </NavLink>
+            <NavLink to="/series" className={cn}>
+              Series
+            </NavLink>
+            <NavLink to="/players" className={cn}>
+              Players
+            </NavLink>
             <NavLink to="/account" className={cn}>
               Account
             </NavLink>

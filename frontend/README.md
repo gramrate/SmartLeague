@@ -37,3 +37,22 @@ Swagger backend: `http://localhost:8000/api/v1/swagger/index.html`
 
 Auth — cookie-based, запросы ходят с `credentials: "include"`.
 Если защищенная ручка вернула `401`, клиент пытается вызвать `POST /api/v1/auth/refresh` и повторить запрос 1 раз.
+
+## Публичные страницы (без регистрации)
+
+Доступны без логина:
+
+- `/clubs`
+- `/clubs/:id`
+- `/clubs/:id/series`
+- `/series`
+- `/series/:id`
+- `/game/:id`
+- `/user/:id` (просмотр аккаунта)
+
+Требуют логин:
+
+- `/account`
+- `/clubs/create`
+- `/series/create`
+- `/game/:id/manage`

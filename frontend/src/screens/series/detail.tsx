@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
-import { getLeaderboard, getSeries, getSeriesParticipants, joinSeries, leaveSeries } from "../../api/series";
-import { createGame, listGames } from "../../api/games";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { getSeriesFull, joinSeries, leaveSeries } from "../../api/series";
+import { createGame } from "../../api/games";
 import { queryClient } from "../../shared/queryClient";
+import { BackButton } from "../../shared/backButton";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClubState, GameStatus } from "../../types/enums";
@@ -11,7 +12,6 @@ import { useAuthStore } from "../../store/authStore";
 
 const createGameSchema = z.object({
   name: z.string().max(200).optional(),
-  number: z.coerce.number().int().min(1),
   description: z.string().max(2000).optional(),
   host_id: z.string().uuid().optional().or(z.literal("")),
   status: z.coerce.number().int().min(0).max(2)
@@ -23,58 +23,63 @@ export function SeriesDetailPage() {
   const { id } = useParams();
   const seriesId = id!;
   const navigate = useNavigate();
-  const { clubId: myClubID, clubState } = useAuthStore();
+  const { clubId: myClubId, clubState } = useAuthStore();
 
-  const seriesQ = useQuery({ queryKey: ["series", seriesId], queryFn: () => getSeries(seriesId), staleTime: 60_000 });
-  const participantsQ = useQuery({ queryKey: ["series", seriesId, "participants", { limit: 20, offset: 0 }], queryFn: () => getSeriesParticipants(seriesId, { limit: 20, offset: 0 }) });
-  const gamesQ = useQuery({ queryKey: ["series", seriesId, "games", { limit: 20, offset: 0 }], queryFn: () => listGames(seriesId, { limit: 20, offset: 0 }) });
-  const leaderboardQ = useQuery({ queryKey: ["series", seriesId, "leaderboard", { limit: 20, offset: 0 }], queryFn: () => getLeaderboard(seriesId, { limit: 20, offset: 0 }) });
+  const seriesFullQ = useQuery({
+    queryKey: ["series", seriesId, "full", { participants_limit: 20, participants_offset: 0, games_limit: 20, games_offset: 0, leaderboard_limit: 20, leaderboard_offset: 0 }],
+    queryFn: () => getSeriesFull(seriesId, { participants_limit: 20, participants_offset: 0, games_limit: 20, games_offset: 0, leaderboard_limit: 20, leaderboard_offset: 0 }),
+    staleTime: 60_000
+  });
 
   const joinM = useMutation({
     mutationFn: () => joinSeries(seriesId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["series", seriesId, "participants"] });
+      await queryClient.invalidateQueries({ queryKey: ["series", seriesId, "full"] });
     }
   });
   const leaveM = useMutation({
     mutationFn: () => leaveSeries(seriesId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["series", seriesId, "participants"] });
+      await queryClient.invalidateQueries({ queryKey: ["series", seriesId, "full"] });
     }
   });
   const createForm = useForm<CreateGameForm>({
     resolver: zodResolver(createGameSchema),
     mode: "onChange",
-    defaultValues: { name: "", number: 1, description: "", host_id: "", status: GameStatus.Draft }
+    defaultValues: { name: "", description: "", host_id: "", status: GameStatus.Draft }
   });
   const createGameM = useMutation({
     mutationFn: (data: CreateGameForm) =>
       createGame(seriesId, {
         name: data.name?.trim() || undefined,
-        number: data.number,
         description: data.description?.trim() || undefined,
         host_id: data.host_id?.trim() ? data.host_id : undefined,
         status: data.status
       }),
     onSuccess: async () => {
-      createForm.reset({ name: "", number: 1, description: "", host_id: "", status: GameStatus.Draft });
-      await queryClient.invalidateQueries({ queryKey: ["series", seriesId, "games"] });
+      createForm.reset({ name: "", description: "", host_id: "", status: GameStatus.Draft });
+      await queryClient.invalidateQueries({ queryKey: ["series", seriesId, "full"] });
     }
   });
 
-  if (seriesQ.isLoading) return <div>Loading...</div>;
-  if (seriesQ.isError) return <div>Failed to load series</div>;
-  if (!seriesQ.data) return <div>No data</div>;
-  const canManageSeriesGames =
-    myClubID === seriesQ.data.club_id && (clubState === ClubState.Leader || clubState === ClubState.President);
+  if (seriesFullQ.isLoading) return <div>Loading...</div>;
+  if (seriesFullQ.isError) return <div>Failed to load series</div>;
+  if (!seriesFullQ.data) return <div>No data</div>;
+  const { series, participants, games, leaderboard } = seriesFullQ.data;
+  const canManageSeriesGames = myClubId === series.club_id && (clubState === ClubState.Leader || clubState === ClubState.President);
+  const nicknameByID = new Map((participants.items ?? []).map((p) => [p.id, p.nickname || p.name]));
 
   return (
     <div className="space-y-4">
+      <BackButton />
       <div className="rounded bg-white p-6 shadow">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold">{seriesQ.data.name}</h1>
-            <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{seriesQ.data.scoring_rules}</p>
+            <h1 className="text-xl font-semibold">{series.name}</h1>
+            <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{series.description}</p>
+            <Link className="mt-2 inline-block text-sm text-blue-700 hover:underline" to={`/clubs/${series.club_id}`}>
+              Open club
+            </Link>
           </div>
           <div className="flex gap-2">
             <button className="rounded bg-blue-600 px-3 py-2 text-sm text-white disabled:opacity-50" disabled={joinM.isPending} onClick={() => joinM.mutate()}>
@@ -90,9 +95,9 @@ export function SeriesDetailPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="rounded bg-white p-6 shadow">
           <h2 className="text-lg font-semibold">Participants</h2>
-          {participantsQ.data ? (
+          {participants ? (
             <div className="mt-3 space-y-2">
-              {participantsQ.data.items.map((p) => (
+              {participants.items.map((p) => (
                 <div key={p.id} className="rounded border px-3 py-2 text-sm">
                   <button className="text-blue-700 hover:underline" onClick={() => navigate(`/user/${p.id}`)}>
                     {p.name}
@@ -108,12 +113,12 @@ export function SeriesDetailPage() {
 
         <div className="rounded bg-white p-6 shadow">
           <h2 className="text-lg font-semibold">Leaderboard</h2>
-          {leaderboardQ.data ? (
+          {leaderboard ? (
             <div className="mt-3 space-y-2">
-              {leaderboardQ.data.items.map((r) => (
+              {leaderboard.items.map((r) => (
                 <div key={r.profile_id} className="flex items-center justify-between rounded border px-3 py-2 text-sm">
                   <button className="font-medium text-blue-700 hover:underline" onClick={() => navigate(`/user/${r.profile_id}`)}>
-                    {r.profile_id}
+                    {nicknameByID.get(r.profile_id) ?? "Unknown"}
                   </button>
                   <span>{r.points}</span>
                 </div>
@@ -132,9 +137,8 @@ export function SeriesDetailPage() {
             className="mt-3 grid gap-2 rounded border p-3"
             onSubmit={createForm.handleSubmit(async (data) => createGameM.mutateAsync(data))}
           >
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <input className="rounded border px-3 py-2 text-sm" placeholder="Game name (optional)" {...createForm.register("name")} />
-              <input className="rounded border px-3 py-2 text-sm" type="number" min={1} placeholder="Number" {...createForm.register("number")} />
               <select className="rounded border px-3 py-2 text-sm" {...createForm.register("status")}>
                 <option value={GameStatus.Draft}>Draft</option>
                 <option value={GameStatus.InProgress}>In progress</option>
@@ -144,13 +148,13 @@ export function SeriesDetailPage() {
             <input className="rounded border px-3 py-2 text-sm" placeholder="Host UUID (optional)" {...createForm.register("host_id")} />
             <textarea className="rounded border px-3 py-2 text-sm" rows={2} placeholder="Description (optional)" {...createForm.register("description")} />
             <button className="w-fit rounded bg-gray-900 px-3 py-2 text-sm text-white disabled:opacity-50" disabled={!createForm.formState.isValid || createGameM.isPending}>
-              Create game
+              Create games
             </button>
           </form>
         ) : null}
-        {gamesQ.data ? (
+        {games ? (
           <div className="mt-3 space-y-2">
-            {gamesQ.data.items.map((g) => (
+            {games.items.map((g) => (
               <div key={g.id} className="rounded border px-3 py-2 text-sm">
                 <div className="font-medium">
                   #{g.number} {g.name}

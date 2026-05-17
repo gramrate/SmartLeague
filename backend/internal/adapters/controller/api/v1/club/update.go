@@ -14,6 +14,7 @@ import (
 // @Tags club
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Club ID"
 // @Param request body dto.UpdateClubRequest true "Update data"
 // @Success 200 {object} dto.UpdateClubResponse
@@ -23,6 +24,11 @@ import (
 // @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/club/{id} [patch]
 func (h *handler) Update(c echo.Context) error {
+	requesterID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok || requesterID == uuid.Nil {
+		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
+	}
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
@@ -38,9 +44,9 @@ func (h *handler) Update(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	resp, err := h.clubService.Update(c.Request().Context(), &req)
+	resp, err := h.clubService.UpdateByManager(c.Request().Context(), requesterID, &req)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
+		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, resp)
 }

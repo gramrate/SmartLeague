@@ -18,11 +18,15 @@ type clubService interface {
 	GetByID(ctx context.Context, req *dto.GetClubRequest) (*dto.GetClubResponse, error)
 	GetAll(ctx context.Context, req *dto.GetAllClubsRequest) (*dto.GetAllClubsResponse, error)
 	Update(ctx context.Context, req *dto.UpdateClubRequest) (*dto.UpdateClubResponse, error)
+	UpdateByManager(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateClubRequest) (*dto.UpdateClubResponse, error)
 	Delete(ctx context.Context, req *dto.DeleteClubRequest) error
 	GetMembers(ctx context.Context, req *dto.GetClubMembersRequest) (*dto.GetClubMembersResponse, error)
 	Join(ctx context.Context, req *dto.JoinClubRequest) error
 	Leave(ctx context.Context, req *dto.LeaveClubRequest) error
 	SetLeader(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
+	SetMemberRole(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID, state types.ClubState) error
+	KickMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
+	BlockMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 }
 
 type handler struct {
@@ -54,11 +58,14 @@ func (h *handler) Setup(router *echo.Group) {
 	router.GET("/club/:id", h.GetByID)
 	router.GET("/club/all", h.GetAll)
 
-	router.PATCH("/club/:id", h.Update, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
+	router.PATCH("/club/:id", h.Update, h.authMiddleware.RequireAuth)
 	router.DELETE("/club/:id", h.Delete, h.authMiddleware.RequireAuth, h.roleMiddleware.RequireRole(types.RoleAdmin))
 
 	router.GET("/club/:id/members", h.GetMembers)
 	router.POST("/club/:id/join", h.Join, h.authMiddleware.RequireAuth)
 	router.POST("/club/leave", h.Leave, h.authMiddleware.RequireAuth)
 	router.POST("/club/:id/leader/:member_id", h.SetLeader, h.authMiddleware.RequireAuth)
+	router.POST("/club/:id/member/:member_id/role", h.SetMemberRole, h.authMiddleware.RequireAuth)
+	router.POST("/club/:id/member/:member_id/kick", h.KickMember, h.authMiddleware.RequireAuth)
+	router.POST("/club/:id/member/:member_id/block", h.BlockMember, h.authMiddleware.RequireAuth)
 }

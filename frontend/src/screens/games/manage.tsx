@@ -1,10 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getGameFull, setGameParticipants, upsertGameResults } from "../../api/games";
+import { useNavigate, useParams } from "react-router-dom";
+import { getGameFull, setGameParticipants, upsertGameResults, type UpsertGameResultsRow } from "../../api/games";
 import { getSeriesParticipants } from "../../api/series";
 import { queryClient } from "../../shared/queryClient";
 import { MafiaRole } from "../../types/enums";
+import { BackButton } from "../../shared/backButton";
 
 type Row = {
   profile_id: string;
@@ -13,11 +14,12 @@ type Row = {
   role?: MafiaRole;
   best_move?: string;
   first_killed: boolean;
-  compensation: number;
-  yellow_cards: number;
-  removed: number;
-  extra_points: number;
-  total_points: number;
+  compensation: string;
+  yellow_cards: string;
+  removed: string;
+  victory_points: string;
+  extra_points: string;
+  total_points: string;
 };
 
 const rowCount = 10;
@@ -25,11 +27,11 @@ const rowCount = 10;
 export function GameManagePage() {
   const { id } = useParams();
   const gameId = id!;
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [participantError, setParticipantError] = useState<string | null>(null);
   const [activePickerRow, setActivePickerRow] = useState<number | null>(null);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const q = useQuery({ queryKey: ["game", gameId, "full"], queryFn: () => getGameFull(gameId) });
   const seriesId = q.data?.series_id;
   const allParticipantsQ = useQuery({
@@ -79,11 +81,12 @@ export function GameManagePage() {
         role: current?.role ?? MafiaRole.Civilian,
         best_move: current?.best_move ?? "",
         first_killed: current?.first_killed ?? false,
-        compensation: current?.compensation ?? 0,
-        yellow_cards: current?.yellow_cards ?? 0,
-        removed: current?.removed ?? 0,
-        extra_points: current?.extra_points ?? 0,
-        total_points: current?.total_points ?? 0
+        compensation: String(current?.compensation ?? 0),
+        yellow_cards: String(current?.yellow_cards ?? 0),
+        removed: String(current?.removed ?? 0),
+        victory_points: String(current?.victory_points ?? 0),
+        extra_points: String(current?.extra_points ?? 0),
+        total_points: String(current?.total_points ?? 0)
       };
       })
     );
@@ -97,7 +100,7 @@ export function GameManagePage() {
   });
 
   const upsertResultsM = useMutation({
-    mutationFn: (data: Row[]) => upsertGameResults(gameId, data),
+    mutationFn: (data: UpsertGameResultsRow[]) => upsertGameResults(gameId, data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["game", gameId, "full"] });
     }
@@ -107,31 +110,52 @@ export function GameManagePage() {
     setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
-  function saveDraft() {
-    localStorage.setItem(`game_manage_draft_${gameId}`, JSON.stringify(rows));
-    setSaveNotice("Saved");
-    setTimeout(() => setSaveNotice(null), 1500);
-  }
-
   async function submitResults() {
-    const ids = rows.map((row) => row.profile_id.trim());
-    if (ids.some((idValue) => idValue === "")) {
-      setParticipantError("Fill participants before submitting results");
-      return;
+    try {
+      const ids = rows.map((row) => row.profile_id.trim());
+      if (ids.some((idValue) => idValue === "")) {
+        setParticipantError("Fill participants before submitting results");
+        return;
+      }
+      if (new Set(ids).size !== rowCount) {
+        setParticipantError("Participant UUIDs must be unique");
+        return;
+      }
+      const parsed: UpsertGameResultsRow[] = rows.map((row) => {
+        const compensation = Number(row.compensation);
+        const yellowCards = Number(row.yellow_cards);
+        const removed = Number(row.removed);
+        const victoryPoints = Number(row.victory_points);
+        const extraPoints = Number(row.extra_points);
+        const totalPoints = Number(row.total_points);
+        if (
+          [compensation, yellowCards, removed, victoryPoints, extraPoints, totalPoints].some((value) => Number.isNaN(value))
+        ) {
+          throw new Error("Invalid numeric value in table");
+        }
+        return {
+          ...row,
+          profile_id: row.profile_id.trim(),
+          best_move: row.best_move && row.best_move.trim() ? row.best_move.trim() : undefined,
+          compensation,
+          yellow_cards: Math.trunc(yellowCards),
+          removed: Math.trunc(removed),
+          victory_points: victoryPoints,
+          extra_points: extraPoints,
+          total_points: totalPoints
+        };
+      });
+      setParticipantError(null);
+      await setParticipantsM.mutateAsync(ids);
+      await upsertResultsM.mutateAsync(parsed);
+      if (seriesId) {
+        navigate(`/series/${seriesId}`);
+      } else {
+        navigate(-1);
+      }
+    } catch {
+      setParticipantError("Check numeric fields before submit");
     }
-    if (new Set(ids).size !== rowCount) {
-      setParticipantError("Participant UUIDs must be unique");
-      return;
-    }
-    setParticipantError(null);
-    await setParticipantsM.mutateAsync(ids);
-    await upsertResultsM.mutateAsync(
-      rows.map((row) => ({
-        ...row,
-        profile_id: row.profile_id.trim(),
-        best_move: row.best_move && row.best_move.trim() ? row.best_move.trim() : undefined
-      }))
-    );
   }
 
   if (q.isLoading) return <div>Loading...</div>;
@@ -142,6 +166,7 @@ export function GameManagePage() {
 
   return (
     <div className="space-y-4">
+      <BackButton />
       <div className="rounded bg-white p-6 shadow">
         <h1 className="text-xl font-semibold">Manage game</h1>
         <div className="mt-1 text-sm text-gray-600">{q.data.name}</div>
@@ -149,7 +174,6 @@ export function GameManagePage() {
 
       <div className="rounded bg-white p-6 shadow">
         <h2 className="text-lg font-semibold">Game table (10 players)</h2>
-        {saveNotice ? <p className="mt-2 text-xs text-green-700">{saveNotice}</p> : null}
         <div className="mt-3 overflow-auto">
           <table className="min-w-full text-left text-xs">
             <thead>
@@ -162,6 +186,7 @@ export function GameManagePage() {
                 <th className="px-2 py-2">Comp</th>
                 <th className="px-2 py-2">Yellow</th>
                 <th className="px-2 py-2">Removed</th>
+                <th className="px-2 py-2">Victory</th>
                 <th className="px-2 py-2">Extra</th>
                 <th className="px-2 py-2">Total</th>
               </tr>
@@ -233,47 +258,22 @@ export function GameManagePage() {
                     <input type="checkbox" checked={row.first_killed} onChange={(event) => updateRow(index, { first_killed: event.target.checked, place: index + 1 })} />
                   </td>
                   <td className="px-2 py-2">
-                    <input
-                      type="number"
-                      step="0.25"
-                      className="w-16 rounded border px-2 py-1"
-                      value={row.compensation}
-                      onChange={(event) => updateRow(index, { compensation: Number(event.target.value || 0), place: index + 1 })}
-                    />
+                    <input className="w-16 rounded border px-2 py-1" inputMode="decimal" value={row.compensation} onChange={(event) => updateRow(index, { compensation: event.target.value, place: index + 1 })} />
                   </td>
                   <td className="px-2 py-2">
-                    <input
-                      type="number"
-                      className="w-16 rounded border px-2 py-1"
-                      value={row.yellow_cards}
-                      onChange={(event) => updateRow(index, { yellow_cards: Number(event.target.value || 0), place: index + 1 })}
-                    />
+                    <input className="w-16 rounded border px-2 py-1" inputMode="numeric" value={row.yellow_cards} onChange={(event) => updateRow(index, { yellow_cards: event.target.value, place: index + 1 })} />
                   </td>
                   <td className="px-2 py-2">
-                    <input
-                      type="number"
-                      className="w-16 rounded border px-2 py-1"
-                      value={row.removed}
-                      onChange={(event) => updateRow(index, { removed: Number(event.target.value || 0), place: index + 1 })}
-                    />
+                    <input className="w-16 rounded border px-2 py-1" inputMode="numeric" value={row.removed} onChange={(event) => updateRow(index, { removed: event.target.value, place: index + 1 })} />
                   </td>
                   <td className="px-2 py-2">
-                    <input
-                      type="number"
-                      step="0.25"
-                      className="w-16 rounded border px-2 py-1"
-                      value={row.extra_points}
-                      onChange={(event) => updateRow(index, { extra_points: Number(event.target.value || 0), place: index + 1 })}
-                    />
+                    <input className="w-16 rounded border px-2 py-1" inputMode="decimal" value={row.victory_points} onChange={(event) => updateRow(index, { victory_points: event.target.value, place: index + 1 })} />
                   </td>
                   <td className="px-2 py-2">
-                    <input
-                      type="number"
-                      step="0.25"
-                      className="w-16 rounded border px-2 py-1"
-                      value={row.total_points}
-                      onChange={(event) => updateRow(index, { total_points: Number(event.target.value || 0), place: index + 1 })}
-                    />
+                    <input className="w-16 rounded border px-2 py-1" inputMode="decimal" value={row.extra_points} onChange={(event) => updateRow(index, { extra_points: event.target.value, place: index + 1 })} />
+                  </td>
+                  <td className="px-2 py-2">
+                    <input className="w-16 rounded border px-2 py-1" inputMode="decimal" value={row.total_points} onChange={(event) => updateRow(index, { total_points: event.target.value, place: index + 1 })} />
                   </td>
                 </tr>
               ))}
@@ -282,11 +282,8 @@ export function GameManagePage() {
         </div>
         {participantError ? <p className="mt-2 text-xs text-red-600">{participantError}</p> : null}
         <div className="mt-3 flex gap-2">
-          <button className="rounded bg-gray-900 px-4 py-2 text-sm text-white" onClick={saveDraft}>
-            Save
-          </button>
           <button className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50" disabled={upsertResultsM.isPending || setParticipantsM.isPending} onClick={submitResults}>
-            Submit results
+            Сохранить
           </button>
         </div>
       </div>

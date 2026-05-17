@@ -22,7 +22,11 @@ import (
 // @Header 204 {string} Set-Cookie "user_auth_access_token=token; Path=/; HttpOnly; Secure; SameSite=Strict"
 // @Header 204 {string} Set-Cookie "user_auth_refresh_token=token; Path=/; HttpOnly; Secure; SameSite=Strict"
 // @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
 // @Failure 403 {object} dto.HTTPStatus
+// @Failure 404 {object} dto.HTTPStatus
+// @Failure 409 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user/password [post]
 func (h *handler) ChangePassword(c echo.Context) error {
 	var req dto.ChangePasswordRequest

@@ -16,6 +16,8 @@ type userService interface {
 	GetByID(ctx context.Context, req *dto.GetUserRequest) (*dto.GetUserResponse, error)
 	GetRoleByID(ctx context.Context, userID uuid.UUID) (types.Role, error)
 	GetAllByFilter(ctx context.Context, req *dto.GetAllByFilterUsersRequest) (*dto.GetAllByFilterUsersResponse, error)
+	GetUserGames(ctx context.Context, req *dto.GetUserGamesRequest) (*dto.GetUserGamesResponse, error)
+	GetUserSeries(ctx context.Context, req *dto.GetUserSeriesRequest) (*dto.GetUserSeriesResponse, error)
 	UpdateCurrent(ctx context.Context, req *dto.UpdateCurrentUserRequest) (*dto.UpdateCurrentUserResponse, error)
 	UpdateEach(ctx context.Context, req *dto.UpdateEachUserRequest) (*dto.UpdateEachUserResponse, error)
 	Delete(ctx context.Context, req *dto.DeleteUserRequest) error

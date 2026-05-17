@@ -15,6 +15,7 @@ import (
 // @Tags series
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Series ID"
 // @Param request body dto.UpdateSeriesRequest true "Update data"
 // @Success 200 {object} dto.UpdateSeriesResponse
@@ -35,26 +36,24 @@ func (h *handler) UpdateSeries(c echo.Context) error {
 	}
 
 	var raw struct {
-		Name         *string `json:"name"`
-		ScoringRules *string `json:"scoring_rules"`
-		StartAt      *string `json:"start_at"`
-		EndAt        *string `json:"end_at"`
-		Description  *string `json:"description"`
-		PriceRub     *int    `json:"price_rub"`
-		IsClosed     *bool   `json:"is_closed"`
-		Status       *int16  `json:"status"`
+		Name        *string `json:"name"`
+		Description *string `json:"description"`
+		StartAt     *string `json:"start_at"`
+		EndAt       *string `json:"end_at"`
+		PriceRub    *int    `json:"price_rub"`
+		IsClosed    *bool   `json:"is_closed"`
+		Status      *int16  `json:"status"`
 	}
 	if err := c.Bind(&raw); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
 	req := dto.UpdateSeriesRequest{
-		ID:           id,
-		Name:         raw.Name,
-		ScoringRules: raw.ScoringRules,
-		Description:  raw.Description,
-		PriceRub:     raw.PriceRub,
-		IsClosed:     raw.IsClosed,
+		ID:          id,
+		Name:        raw.Name,
+		Description: raw.Description,
+		PriceRub:    raw.PriceRub,
+		IsClosed:    raw.IsClosed,
 	}
 	if raw.Status != nil {
 		status := types.SeriesStatus(*raw.Status)

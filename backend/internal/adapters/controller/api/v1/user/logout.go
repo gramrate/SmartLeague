@@ -21,6 +21,9 @@ import (
 // @Header 204 {string} Set-Cookie "user_auth_access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly"
 // @Header 204 {string} Set-Cookie "user_auth_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly"
 // @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user/logout [post]
 func (h *handler) Logout(c echo.Context) error {
 	var req dto.LogoutRequest

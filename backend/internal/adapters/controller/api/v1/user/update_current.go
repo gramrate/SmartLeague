@@ -21,6 +21,8 @@ import (
 // @Success 200 {object} dto.UpdateCurrentUserResponse
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 401 {object} dto.HTTPStatus
+// @Failure 404 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user [patch]
 func (h *handler) UpdateCurrent(c echo.Context) error {
 	var req dto.UpdateCurrentUserRequest

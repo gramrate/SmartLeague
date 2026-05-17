@@ -41,10 +41,9 @@ export interface Series {
   club_id: UUID;
   creator_id?: UUID | null;
   name: string;
-  scoring_rules: string;
+  description: string;
   start_at: string;
   end_at: string;
-  description?: string | null;
   price_rub: number;
   is_closed: boolean;
   game_type: GameType;
@@ -70,6 +69,7 @@ export interface GameResultRow {
   compensation: number;
   yellow_cards: number;
   removed: number;
+  victory_points: number;
   extra_points: number;
   total_points: number;
 }

@@ -5,7 +5,6 @@ import type { MafiaRole } from "../types/enums";
 export interface CreateGameRequest {
   series_id: UUID;
   name?: string | null;
-  number: number;
   description?: string | null;
   host_id?: UUID | null;
   status: number;
@@ -56,6 +55,7 @@ export type UpsertGameResultsRow = {
   compensation: number;
   yellow_cards: number;
   removed: number;
+  victory_points: number;
   extra_points: number;
   total_points: number;
 };

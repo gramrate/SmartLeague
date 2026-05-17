@@ -18,6 +18,8 @@ type userRepo interface {
 		role *types.Role,
 		query, emailPrefix *string,
 	) ([]*model.User, int, error)
+	GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error)
+	GetSeriesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Series, int, error)
 	Update(ctx context.Context, userEntity model.User) (*model.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }

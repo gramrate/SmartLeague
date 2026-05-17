@@ -16,7 +16,6 @@ import (
 // @Tags         token
 // @Produce      json
 // @Success      204 "OK"
-// @Failure      400      {object}  dto.HTTPStatus          "Invalid request or validation error"
 // @Failure      401      {object}  dto.HTTPStatus          "Unauthorized - invalid/missing refresh token"
 // @Failure      500      {object}  dto.HTTPStatus          "Internal server error"
 // @Router       /api/v1/auth/refresh [post]

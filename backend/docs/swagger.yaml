@@ -1,4 +1,23 @@
 definitions:
+  dto.AllSeriesItem:
+    properties:
+      club_id:
+        type: string
+      club_name:
+        type: string
+      description:
+        type: string
+      end_at:
+        type: string
+      games_count:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      start_at:
+        type: string
+    type: object
   dto.ChangePasswordRequest:
     properties:
       new_password:
@@ -72,17 +91,11 @@ definitions:
         maxLength: 200
         minLength: 1
         type: string
-      number:
-        maximum: 100000
-        minimum: 1
-        type: integer
       status:
         allOf:
         - $ref: '#/definitions/types.GameStatus'
         maximum: 2
         minimum: 0
-    required:
-    - number
     type: object
   dto.CreateGameResponse:
     properties:
@@ -104,7 +117,8 @@ definitions:
   dto.CreateSeriesRequest:
     properties:
       description:
-        maxLength: 5000
+        maxLength: 10000
+        minLength: 1
         type: string
       end_at:
         type: string
@@ -120,10 +134,6 @@ definitions:
         maximum: 100000000
         minimum: 0
         type: integer
-      scoring_rules:
-        maxLength: 10000
-        minLength: 1
-        type: string
       start_at:
         type: string
       status:
@@ -132,9 +142,9 @@ definitions:
         maximum: 3
         minimum: 0
     required:
+    - description
     - end_at
     - name
-    - scoring_rules
     - start_at
     type: object
   dto.CreateSeriesResponse:
@@ -157,8 +167,6 @@ definitions:
         type: string
       price_rub:
         type: integer
-      scoring_rules:
-        type: string
       start_at:
         type: string
       status:
@@ -188,7 +196,7 @@ definitions:
         type: string
       compensation:
         maximum: 1000000
-        minimum: 0
+        minimum: -1000000
         type: number
       extra_points:
         maximum: 1000000
@@ -203,8 +211,8 @@ definitions:
       profile_id:
         type: string
       removed:
-        maximum: 10
-        minimum: 0
+        maximum: 1000000
+        minimum: -1000000
         type: integer
       role:
         $ref: '#/definitions/types.MafiaRole'
@@ -212,9 +220,13 @@ definitions:
         maximum: 1000000
         minimum: -1000000
         type: number
+      victory_points:
+        maximum: 1000000
+        minimum: -1000000
+        type: number
       yellow_cards:
-        maximum: 10
-        minimum: 0
+        maximum: 1000000
+        minimum: -1000000
         type: integer
     required:
     - profile_id
@@ -233,6 +245,15 @@ definitions:
       items:
         items:
           $ref: '#/definitions/dto.Club'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetAllSeriesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.AllSeriesItem'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
@@ -312,6 +333,17 @@ definitions:
       status:
         $ref: '#/definitions/types.GameStatus'
     type: object
+  dto.GetSeriesFullResponse:
+    properties:
+      games:
+        $ref: '#/definitions/dto.GetSeriesGamesResponse'
+      leaderboard:
+        $ref: '#/definitions/dto.GetSeriesLeaderboardResponse'
+      participants:
+        $ref: '#/definitions/dto.GetSeriesParticipantsResponse'
+      series:
+        $ref: '#/definitions/dto.Series'
+    type: object
   dto.GetSeriesGamesResponse:
     properties:
       items:
@@ -359,12 +391,19 @@ definitions:
         type: string
       price_rub:
         type: integer
-      scoring_rules:
-        type: string
       start_at:
         type: string
       status:
         $ref: '#/definitions/types.SeriesStatus'
+    type: object
+  dto.GetUserGamesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.PlayerGame'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
     type: object
   dto.GetUserResponse:
     properties:
@@ -397,6 +436,15 @@ definitions:
       show_name:
         example: true
         type: boolean
+    type: object
+  dto.GetUserSeriesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.PlayerSeries'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
     type: object
   dto.HTTPStatus:
     properties:
@@ -483,6 +531,34 @@ definitions:
     properties:
       message:
         example: ok
+        type: string
+    type: object
+  dto.PlayerGame:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      number:
+        type: integer
+      series_id:
+        type: string
+      series_name:
+        type: string
+      status:
+        $ref: '#/definitions/types.GameStatus'
+    type: object
+  dto.PlayerSeries:
+    properties:
+      end_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_at:
         type: string
     type: object
   dto.RegisterUserRequest:
@@ -575,8 +651,6 @@ definitions:
         type: string
       price_rub:
         type: integer
-      scoring_rules:
-        type: string
       start_at:
         type: string
       status:
@@ -785,7 +859,8 @@ definitions:
   dto.UpdateSeriesRequest:
     properties:
       description:
-        maxLength: 5000
+        maxLength: 10000
+        minLength: 1
         type: string
       end_at:
         type: string
@@ -801,10 +876,6 @@ definitions:
         maximum: 100000000
         minimum: 0
         type: integer
-      scoring_rules:
-        maxLength: 10000
-        minLength: 1
-        type: string
       start_at:
         type: string
       status:
@@ -833,8 +904,6 @@ definitions:
         type: string
       price_rub:
         type: integer
-      scoring_rules:
-        type: string
       start_at:
         type: string
       status:
@@ -889,12 +958,14 @@ definitions:
     - 1
     - 2
     - 3
+    - 4
     type: integer
     x-enum-varnames:
     - ClubStateNone
     - ClubStateMember
     - ClubStateLeader
     - ClubStatePresident
+    - ClubStateResident
   types.GameStatus:
     enum:
     - 0
@@ -965,10 +1036,6 @@ paths:
       responses:
         "204":
           description: OK
-        "400":
-          description: Invalid request or validation error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
         "401":
           description: Unauthorized - invalid/missing refresh token
           schema:
@@ -1010,6 +1077,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Create club
       tags:
       - club
@@ -1042,6 +1111,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Delete club by id
       tags:
       - club
@@ -1108,6 +1179,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Update club by id
       tags:
       - club
@@ -1132,10 +1205,20 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Join club
       tags:
       - club
@@ -1173,7 +1256,137 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Set club leader
+      tags:
+      - club
+  /api/v1/club/{id}/member/{member_id}/block:
+    post:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member Profile ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Block member in club
+      tags:
+      - club
+  /api/v1/club/{id}/member/{member_id}/kick:
+    post:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member Profile ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Kick member from club
+      tags:
+      - club
+  /api/v1/club/{id}/member/{member_id}/role:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member Profile ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      - description: New club state (member/resident/leader)
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            state:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Set club member role
       tags:
       - club
   /api/v1/club/{id}/members:
@@ -1288,6 +1501,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Leave club
       tags:
       - club
@@ -1320,6 +1535,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Delete game by id
       tags:
       - game
@@ -1390,6 +1607,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Update game by id
       tags:
       - game
@@ -1460,6 +1679,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Set game participants
       tags:
       - game
@@ -1500,6 +1721,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Upsert game results
       tags:
       - game
@@ -1537,6 +1760,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Create series
       tags:
       - series
@@ -1569,6 +1794,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Delete series by id
       tags:
       - series
@@ -1592,10 +1819,6 @@ paths:
             $ref: '#/definitions/dto.HTTPStatus'
         "403":
           description: Forbidden
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
-        "500":
-          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
       summary: Get series by id
@@ -1639,7 +1862,59 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Update series by id
+      tags:
+      - series
+  /api/v1/series/{id}/full:
+    get:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: participants limit
+        in: query
+        name: participants_limit
+        type: integer
+      - description: participants offset
+        in: query
+        name: participants_offset
+        type: integer
+      - description: games limit
+        in: query
+        name: games_limit
+        type: integer
+      - description: games offset
+        in: query
+        name: games_offset
+        type: integer
+      - description: leaderboard limit
+        in: query
+        name: leaderboard_limit
+        type: integer
+      - description: leaderboard offset
+        in: query
+        name: leaderboard_offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetSeriesFullResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get series full data
       tags:
       - series
   /api/v1/series/{id}/games:
@@ -1718,6 +1993,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Create game in series
       tags:
       - game
@@ -1750,6 +2027,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Join series
       tags:
       - series
@@ -1816,6 +2095,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
       summary: Leave series
       tags:
       - series
@@ -1857,6 +2138,35 @@ paths:
       summary: Get series participants
       tags:
       - series
+  /api/v1/series/all:
+    get:
+      parameters:
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetAllSeriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get all series list
+      tags:
+      - series
   /api/v1/user:
     get:
       consumes:
@@ -1874,6 +2184,14 @@ paths:
             $ref: '#/definitions/dto.HTTPStatus'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
       security:
@@ -1908,6 +2226,14 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
       security:
       - CookieAuth: []
       summary: Update current user information
@@ -1917,7 +2243,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get each user by id. Only for admins
+      description: Public profile view by id
       parameters:
       - description: User ID (UUID)
         in: path
@@ -1935,12 +2261,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-        "401":
-          description: Unauthorized
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
       summary: Get user by id
       tags:
       - user
@@ -1975,9 +2303,89 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
       security:
       - CookieAuth: []
       summary: Update each user information
+      tags:
+      - user
+  /api/v1/user/{id}/games:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetUserGamesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get user games
+      tags:
+      - user
+  /api/v1/user/{id}/series:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetUserSeriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get user series
       tags:
       - user
   /api/v1/user/all:
@@ -1985,7 +2393,7 @@ paths:
       consumes:
       - application/json
       description: Retrieves a list of users filtered by role, one-line full name
-        query, and email prefix. Only for admins
+        query, and email prefix.
       parameters:
       - description: Max number of users to return
         example: 10
@@ -2034,8 +2442,6 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
-      security:
-      - CookieAuth: []
       summary: Get users by filters
       tags:
       - user
@@ -2070,6 +2476,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
       summary: Authenticate user
       tags:
       - user
@@ -2089,6 +2499,18 @@ paths:
               type: string
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
       security:
@@ -2121,8 +2543,24 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
       security:
@@ -2161,6 +2599,10 @@ paths:
           description: Conflict
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
       summary: Register new user
       tags:
       - user
@@ -2176,10 +2618,6 @@ paths:
           description: Successful check
           schema:
             $ref: '#/definitions/dto.PingResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.HTTPStatus'
       summary: Checking the server performance
       tags:
       - ping

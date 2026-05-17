@@ -13,6 +13,7 @@ import (
 // @Summary Set club leader
 // @Tags club
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Club ID"
 // @Param member_id path string true "Member Profile ID"
 // @Success 204

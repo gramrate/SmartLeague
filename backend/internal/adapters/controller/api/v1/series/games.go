@@ -14,6 +14,7 @@ import (
 // @Tags game
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Series ID"
 // @Param request body dto.CreateGameRequest true "Game data"
 // @Success 201 {object} dto.CreateGameResponse
@@ -90,6 +91,7 @@ func (h *handler) GetSeriesGames(c echo.Context) error {
 // @Tags game
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Game ID"
 // @Param request body dto.UpdateGameRequest true "Update data"
 // @Success 200 {object} dto.UpdateGameResponse
@@ -130,6 +132,7 @@ func (h *handler) UpdateGame(c echo.Context) error {
 // @Tags game
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Game ID"
 // @Param request body dto.SetGameParticipantsRequest true "Participant IDs"
 // @Success 204
@@ -169,6 +172,7 @@ func (h *handler) SetParticipants(c echo.Context) error {
 // @Tags game
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Game ID"
 // @Param request body dto.UpsertGameResultsRequest true "Results"
 // @Success 204

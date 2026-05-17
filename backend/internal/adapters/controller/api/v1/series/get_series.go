@@ -17,7 +17,6 @@ import (
 // @Success 200 {object} dto.GetSeriesResponse
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 403 {object} dto.HTTPStatus
-// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/series/{id} [get]
 func (h *handler) GetSeries(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))

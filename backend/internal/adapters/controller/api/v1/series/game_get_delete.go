@@ -59,6 +59,7 @@ func (h *handler) GetGameFull(c echo.Context) error {
 // @Summary Delete game by id
 // @Tags game
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Game ID"
 // @Success 204
 // @Failure 400 {object} dto.HTTPStatus

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { changePassword, updateMe } from "../../api/users";
 import { useAuthStore } from "../../store/authStore";
+import { BackButton } from "../../shared/backButton";
 
 const updateSchema = z.object({
   nickname: z.string().min(1).max(100).optional(),
@@ -54,6 +55,7 @@ export function AccountPage() {
 
   return (
     <div className="space-y-4">
+      <BackButton />
       <div className="max-w-xl rounded bg-white p-6 shadow">
         <h1 className="text-xl font-semibold">Account</h1>
         <form className="mt-4 space-y-3" onSubmit={updateForm.handleSubmit(async (d) => updateM.mutateAsync(d))}>

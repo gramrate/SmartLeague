@@ -19,6 +19,7 @@ type repo interface {
 	CreateSeries(ctx context.Context, s model.Series) (*model.Series, error)
 	GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error)
 	ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeClosed bool, limit, offset int) ([]*model.Series, int, error)
+	ListAllSeries(ctx context.Context, limit, offset int) ([]*model.SeriesListItem, int, error)
 	UpdateSeries(ctx context.Context, id uuid.UUID, patch model.SeriesUpdatePatch) (*model.Series, error)
 	DeleteSeries(ctx context.Context, id uuid.UUID) error
 
@@ -49,18 +50,17 @@ func maxParticipantsForGameType(gameType types.GameType) int {
 
 func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 	return &dto.Series{
-		ID:           s.ID,
-		ClubID:       s.ClubID,
-		CreatorID:    creatorID,
-		Name:         s.Name,
-		ScoringRules: s.ScoringRules,
-		StartAt:      s.StartAt,
-		EndAt:        s.EndAt,
-		Description:  s.Description,
-		PriceRub:     s.PriceRub,
-		IsClosed:     s.IsClosed,
-		GameType:     s.GameType,
-		Status:       s.Status,
+		ID:          s.ID,
+		ClubID:      s.ClubID,
+		CreatorID:   creatorID,
+		Name:        s.Name,
+		Description: s.Description,
+		StartAt:     s.StartAt,
+		EndAt:       s.EndAt,
+		PriceRub:    s.PriceRub,
+		IsClosed:    s.IsClosed,
+		GameType:    s.GameType,
+		Status:      s.Status,
 	}
 }
 
@@ -88,18 +88,17 @@ func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *
 	}
 
 	created, err := s.repo.CreateSeries(ctx, model.Series{
-		ID:           uuid.New(),
-		ClubID:       *clubID,
-		CreatorID:    requesterID,
-		Name:         req.Name,
-		ScoringRules: req.ScoringRules,
-		StartAt:      req.StartAt,
-		EndAt:        req.EndAt,
-		Description:  req.Description,
-		PriceRub:     req.PriceRub,
-		IsClosed:     req.IsClosed,
-		GameType:     types.GameTypeSportMafia,
-		Status:       req.Status,
+		ID:          uuid.New(),
+		ClubID:      *clubID,
+		CreatorID:   requesterID,
+		Name:        req.Name,
+		Description: req.Description,
+		StartAt:     req.StartAt,
+		EndAt:       req.EndAt,
+		PriceRub:    req.PriceRub,
+		IsClosed:    req.IsClosed,
+		GameType:    types.GameTypeSportMafia,
+		Status:      req.Status,
 	})
 	if err != nil {
 		return nil, err
@@ -197,6 +196,54 @@ func (s *Service) GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req
 	}, nil
 }
 
+func (s *Service) GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest) (*dto.GetAllSeriesResponse, error) {
+	limit := 10
+	offset := 0
+	if req.Limit != nil {
+		limit = *req.Limit
+	}
+	if req.Offset != nil {
+		offset = *req.Offset
+	}
+
+	items, total, err := s.repo.ListAllSeries(ctx, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	outItems := make([]*dto.AllSeriesItem, 0, len(items))
+	for _, it := range items {
+		outItems = append(outItems, &dto.AllSeriesItem{
+			ID:          it.ID,
+			ClubID:      it.ClubID,
+			ClubName:    it.ClubName,
+			Name:        it.Name,
+			Description: it.Description,
+			StartAt:     it.StartAt,
+			EndAt:       it.EndAt,
+			GamesCount:  it.GamesCount,
+		})
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+	currentPage := (offset / limit) + 1
+	if totalPages == 0 {
+		totalPages = 1
+		currentPage = 1
+	}
+
+	return &dto.GetAllSeriesResponse{
+		Items: outItems,
+		Pagination: dto.PaginationInfo{
+			TotalItems:  total,
+			TotalPages:  totalPages,
+			CurrentPage: currentPage,
+			HasNext:     offset+limit < total,
+			HasPrevious: offset > 0,
+		},
+	}, nil
+}
+
 func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateSeriesRequest) (*dto.UpdateSeriesResponse, error) {
 	ser, err := s.repo.GetSeriesByID(ctx, req.ID)
 	if err != nil {
@@ -211,14 +258,13 @@ func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *
 	}
 
 	patch := model.SeriesUpdatePatch{
-		Name:         req.Name,
-		ScoringRules: req.ScoringRules,
-		StartAt:      req.StartAt,
-		EndAt:        req.EndAt,
-		Description:  req.Description,
-		PriceRub:     req.PriceRub,
-		IsClosed:     req.IsClosed,
-		Status:       req.Status,
+		Name:        req.Name,
+		Description: req.Description,
+		StartAt:     req.StartAt,
+		EndAt:       req.EndAt,
+		PriceRub:    req.PriceRub,
+		IsClosed:    req.IsClosed,
+		Status:      req.Status,
 	}
 
 	updated, err := s.repo.UpdateSeries(ctx, req.ID, patch)

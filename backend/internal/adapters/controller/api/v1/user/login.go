@@ -20,6 +20,7 @@ import (
 // @Header 200 {string} Set-Cookie "user_auth_refresh_token=token; Path=/; HttpOnly; Secure; SameSite=Strict"
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 401 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user/login [post]
 func (h *handler) Login(c echo.Context) error {
 	var req dto.LoginUserRequest

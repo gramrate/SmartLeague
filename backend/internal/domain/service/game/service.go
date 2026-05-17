@@ -77,7 +77,7 @@ func (s *Service) Create(ctx context.Context, requesterID uuid.UUID, req *dto.Cr
 		ID:          uuid.New(),
 		SeriesID:    req.SeriesID,
 		Name:        name,
-		Number:      req.Number,
+		Number:      0,
 		Description: req.Description,
 		HostID:      req.HostID,
 		Status:      req.Status,
@@ -265,17 +265,18 @@ func (s *Service) UpsertResults(ctx context.Context, requesterID uuid.UUID, req 
 			return errorz.InvalidRequest
 		}
 		rows = append(rows, model.GameResultRow{
-			GameID:       req.GameID,
-			ProfileID:    rrow.ProfileID,
-			Place:        rrow.Place,
-			Role:         rrow.Role,
-			BestMove:     rrow.BestMove,
-			FirstKilled:  rrow.FirstKilled,
-			Compensation: rrow.Compensation,
-			YellowCards:  rrow.YellowCards,
-			Removed:      rrow.Removed,
-			ExtraPoints:  rrow.ExtraPoints,
-			TotalPoints:  rrow.TotalPoints,
+			GameID:        req.GameID,
+			ProfileID:     rrow.ProfileID,
+			Place:         rrow.Place,
+			Role:          rrow.Role,
+			BestMove:      rrow.BestMove,
+			FirstKilled:   rrow.FirstKilled,
+			Compensation:  rrow.Compensation,
+			YellowCards:   rrow.YellowCards,
+			Removed:       rrow.Removed,
+			VictoryPoints: rrow.VictoryPoints,
+			ExtraPoints:   rrow.ExtraPoints,
+			TotalPoints:   rrow.TotalPoints,
 		})
 	}
 	return s.repo.UpsertGameResults(ctx, req.GameID, rows)
@@ -339,16 +340,17 @@ func (s *Service) GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.
 	dtoResults := make([]dto.GameResultRow, 0, len(results))
 	for _, rr := range results {
 		dtoResults = append(dtoResults, dto.GameResultRow{
-			ProfileID:    rr.ProfileID,
-			Place:        rr.Place,
-			Role:         rr.Role,
-			BestMove:     rr.BestMove,
-			FirstKilled:  rr.FirstKilled,
-			Compensation: rr.Compensation,
-			YellowCards:  rr.YellowCards,
-			Removed:      rr.Removed,
-			ExtraPoints:  rr.ExtraPoints,
-			TotalPoints:  rr.TotalPoints,
+			ProfileID:     rr.ProfileID,
+			Place:         rr.Place,
+			Role:          rr.Role,
+			BestMove:      rr.BestMove,
+			FirstKilled:   rr.FirstKilled,
+			Compensation:  rr.Compensation,
+			YellowCards:   rr.YellowCards,
+			Removed:       rr.Removed,
+			VictoryPoints: rr.VictoryPoints,
+			ExtraPoints:   rr.ExtraPoints,
+			TotalPoints:   rr.TotalPoints,
 		})
 	}
 

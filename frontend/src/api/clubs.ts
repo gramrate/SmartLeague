@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 import type { Club, PaginationInfo, User, UUID } from "../types/dto";
+import { ClubState } from "../types/enums";
 
 export interface CreateClubRequest {
   name: string;
@@ -48,6 +49,18 @@ export function leaveClub() {
 
 export function setLeader(clubId: UUID, memberId: UUID) {
   return apiFetch<void>(`/api/v1/club/${clubId}/leader/${memberId}`, { method: "POST" });
+}
+
+export function setClubMemberRole(clubId: UUID, memberId: UUID, state: ClubState) {
+  return apiFetch<void>(`/api/v1/club/${clubId}/member/${memberId}/role`, { method: "POST", body: JSON.stringify({ state }) });
+}
+
+export function kickClubMember(clubId: UUID, memberId: UUID) {
+  return apiFetch<void>(`/api/v1/club/${clubId}/member/${memberId}/kick`, { method: "POST" });
+}
+
+export function blockClubMember(clubId: UUID, memberId: UUID) {
+  return apiFetch<void>(`/api/v1/club/${clubId}/member/${memberId}/block`, { method: "POST" });
 }
 
 export function updateClub(id: UUID, patch: Partial<CreateClubRequest>) {

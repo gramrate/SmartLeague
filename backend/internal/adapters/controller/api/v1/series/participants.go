@@ -48,6 +48,7 @@ func (h *handler) GetParticipants(c echo.Context) error {
 // @Summary Join series
 // @Tags series
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Series ID"
 // @Success 204
 // @Failure 400 {object} dto.HTTPStatus
@@ -78,6 +79,7 @@ func (h *handler) JoinSeries(c echo.Context) error {
 // @Summary Leave series
 // @Tags series
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Series ID"
 // @Success 204
 // @Failure 400 {object} dto.HTTPStatus

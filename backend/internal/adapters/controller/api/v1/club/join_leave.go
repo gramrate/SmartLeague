@@ -1,7 +1,9 @@
 package club
 
 import (
+	"SmartLeague/internal/domain/common/errorz"
 	"SmartLeague/internal/domain/dto"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -13,10 +15,13 @@ import (
 // @Summary Join club
 // @Tags club
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Club ID"
 // @Success 204
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 409 {object} dto.HTTPStatus
 // @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/club/{id}/join [post]
 func (h *handler) Join(c echo.Context) error {
@@ -31,6 +36,15 @@ func (h *handler) Join(c echo.Context) error {
 	}
 
 	if err := h.clubService.Join(c.Request().Context(), &dto.JoinClubRequest{ProfileID: userID, ClubID: clubID}); err != nil {
+		if errors.Is(err, errorz.AlreadyInThisClub) {
+			return c.JSON(http.StatusConflict, dto.HTTPStatus{Code: http.StatusConflict, Message: err.Error()})
+		}
+		if errors.Is(err, errorz.AlreadyInOtherClub) {
+			return c.JSON(http.StatusConflict, dto.HTTPStatus{Code: http.StatusConflict, Message: err.Error()})
+		}
+		if errors.Is(err, errorz.ClubBanned) {
+			return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
+		}
 		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -41,6 +55,7 @@ func (h *handler) Join(c echo.Context) error {
 // @Summary Leave club
 // @Tags club
 // @Produce json
+// @Security CookieAuth
 // @Success 204
 // @Failure 401 {object} dto.HTTPStatus
 // @Failure 500 {object} dto.HTTPStatus

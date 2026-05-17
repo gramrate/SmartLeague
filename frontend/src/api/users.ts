@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { PaginationInfo, User } from "../types/dto";
+import type { Game, PaginationInfo, Series, User } from "../types/dto";
 import type { Role } from "../types/enums";
 
 export interface GetMeResponse {
@@ -44,4 +44,32 @@ export function getUsers(params: { limit?: number; offset?: number; role?: numbe
   if (params.q) q.set("q", params.q);
   if (params.email_prefix) q.set("email_prefix", params.email_prefix);
   return apiFetch<GetAllUsersResponse>(`/api/v1/user/all?${q.toString()}`, { method: "GET" });
+}
+
+export interface PlayerGame extends Game {
+  series_name: string;
+}
+
+export interface GetUserGamesResponse {
+  items: PlayerGame[];
+  pagination: PaginationInfo;
+}
+
+export function getUserGames(userId: string, params: { limit?: number; offset?: number }) {
+  const q = new URLSearchParams();
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiFetch<GetUserGamesResponse>(`/api/v1/user/${userId}/games?${q.toString()}`, { method: "GET" });
+}
+
+export interface GetUserSeriesResponse {
+  items: Series[];
+  pagination: PaginationInfo;
+}
+
+export function getUserSeries(userId: string, params: { limit?: number; offset?: number }) {
+  const q = new URLSearchParams();
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiFetch<GetUserSeriesResponse>(`/api/v1/user/${userId}/series?${q.toString()}`, { method: "GET" });
 }

@@ -13,6 +13,7 @@ import (
 // @Summary Delete club by id
 // @Tags club
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Club ID"
 // @Success 204
 // @Failure 400 {object} dto.HTTPStatus

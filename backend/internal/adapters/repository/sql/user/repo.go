@@ -159,6 +159,110 @@ func (r *Repo) GetAllByFilter(
 	return out, total, nil
 }
 
+func (r *Repo) GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, `
+SELECT count(*)
+FROM game_participants gp
+WHERE gp.profile_id=$1
+`, profileID).Scan(&total); err != nil {
+		return nil, nil, 0, err
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+SELECT g.id, g.series_id, s.name, g.name, g.number, g.description, g.host_id, g.status, g.created_at, g.updated_at
+FROM game_participants gp
+JOIN games g ON g.id = gp.game_id
+JOIN series s ON s.id = g.series_id
+WHERE gp.profile_id=$1 AND g.deleted_at IS NULL AND s.deleted_at IS NULL
+ORDER BY g.created_at DESC
+LIMIT $2 OFFSET $3
+`, profileID, limit, offset)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	defer rows.Close()
+
+	var out []*model.Game
+	var seriesNames []string
+	for rows.Next() {
+		var g model.Game
+		var seriesName string
+		var hostID sql.NullString
+		var status int16
+		var description sql.NullString
+		if err := rows.Scan(&g.ID, &g.SeriesID, &seriesName, &g.Name, &g.Number, &description, &hostID, &status, &g.CreatedAt, &g.UpdatedAt); err != nil {
+			return nil, nil, 0, err
+		}
+		g.Description = nullStringToPtr(description)
+		g.HostID = nullStringToUUIDPtr(hostID)
+		g.Status = types.GameStatus(status)
+		out = append(out, &g)
+		seriesNames = append(seriesNames, seriesName)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, 0, err
+	}
+
+	return out, seriesNames, total, nil
+}
+
+func (r *Repo) GetSeriesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Series, int, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, `
+SELECT count(*)
+FROM series_participants sp
+WHERE sp.profile_id=$1
+`, profileID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+SELECT s.id, s.club_id, s.creator_id, s.name, s.scoring_rules, s.start_at, s.end_at, s.price_rub, s.is_closed, s.game_type, s.status, s.created_at, s.updated_at
+FROM series_participants sp
+JOIN series s ON s.id = sp.series_id
+WHERE sp.profile_id=$1 AND s.deleted_at IS NULL
+ORDER BY s.start_at DESC
+LIMIT $2 OFFSET $3
+`, profileID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var out []*model.Series
+	for rows.Next() {
+		var s model.Series
+		var gameType int16
+		var status int16
+		if err := rows.Scan(&s.ID, &s.ClubID, &s.CreatorID, &s.Name, &s.Description, &s.StartAt, &s.EndAt, &s.PriceRub, &s.IsClosed, &gameType, &status, &s.CreatedAt, &s.UpdatedAt); err != nil {
+			return nil, 0, err
+		}
+		s.GameType = types.GameType(gameType)
+		s.Status = types.SeriesStatus(status)
+		out = append(out, &s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return out, total, nil
+}
+
 func (r *Repo) Update(ctx context.Context, u model.User) (*model.User, error) {
 	row := r.db.QueryRowContext(ctx, `
 UPDATE profiles
@@ -232,4 +336,23 @@ func itoa(n int) string {
 		n /= 10
 	}
 	return string(buf[i:])
+}
+
+func nullStringToPtr(ns sql.NullString) *string {
+	if !ns.Valid {
+		return nil
+	}
+	s := ns.String
+	return &s
+}
+
+func nullStringToUUIDPtr(ns sql.NullString) *uuid.UUID {
+	if !ns.Valid {
+		return nil
+	}
+	id, err := uuid.Parse(ns.String)
+	if err != nil {
+		return nil
+	}
+	return &id
 }

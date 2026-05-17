@@ -1,8 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listClubs } from "../../api/clubs";
+import { useAuthStore } from "../../store/authStore";
 
 export function ClubsPage() {
+  const { clubId } = useAuthStore();
+  const canCreateClub = !clubId;
+
   const q = useQuery({
     queryKey: ["clubs", { limit: 20, offset: 0 }],
     queryFn: () => listClubs({ limit: 20, offset: 0 })
@@ -16,9 +20,11 @@ export function ClubsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Clubs</h1>
-        <Link className="rounded bg-gray-900 px-3 py-2 text-sm text-white" to="/clubs/create">
-          Create club
-        </Link>
+        {canCreateClub ? (
+          <Link className="rounded bg-gray-900 px-3 py-2 text-sm text-white" to="/clubs/create">
+            Create club
+          </Link>
+        ) : null}
       </div>
       <div className="grid gap-3">
         {q.data.items.map((c) => (

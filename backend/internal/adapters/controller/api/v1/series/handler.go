@@ -16,6 +16,7 @@ type seriesService interface {
 	CreateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.CreateSeriesRequest) (*dto.CreateSeriesResponse, error)
 	GetSeries(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesRequest) (*dto.GetSeriesResponse, error)
 	GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req *dto.GetClubSeriesRequest) (*dto.GetClubSeriesResponse, error)
+	GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest) (*dto.GetAllSeriesResponse, error)
 	UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateSeriesRequest) (*dto.UpdateSeriesResponse, error)
 	DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteSeriesRequest) error
 	GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error)
@@ -65,10 +66,12 @@ func NewHandler(
 func (h *handler) Setup(router *echo.Group) {
 	router.POST("/series", h.CreateSeries, h.authMiddleware.RequireAuth)
 	router.GET("/series/:id", h.GetSeries)
+	router.GET("/series/:id/full", h.GetSeriesFull)
 	router.PATCH("/series/:id", h.UpdateSeries, h.authMiddleware.RequireAuth)
 	router.DELETE("/series/:id", h.DeleteSeries, h.authMiddleware.RequireAuth)
 
 	router.GET("/club/:id/series", h.GetClubSeries)
+	router.GET("/series/all", h.GetAllSeries)
 
 	router.GET("/series/:id/participants", h.GetParticipants)
 	router.POST("/series/:id/join", h.JoinSeries, h.authMiddleware.RequireAuth)

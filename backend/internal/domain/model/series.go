@@ -8,30 +8,39 @@ import (
 )
 
 type Series struct {
-	ID           uuid.UUID
-	ClubID       uuid.UUID
-	CreatorID    uuid.UUID
-	Name         string
-	ScoringRules string
-	StartAt      time.Time
-	EndAt        time.Time
-	Description  *string
-	PriceRub     int
-	IsClosed     bool
-	GameType     types.GameType
-	Status       types.SeriesStatus
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID          uuid.UUID
+	ClubID      uuid.UUID
+	CreatorID   uuid.UUID
+	Name        string
+	Description string
+	StartAt     time.Time
+	EndAt       time.Time
+	PriceRub    int
+	IsClosed    bool
+	GameType    types.GameType
+	Status      types.SeriesStatus
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type SeriesUpdatePatch struct {
-	Name         *string
-	ScoringRules *string
-	StartAt      *time.Time
-	EndAt        *time.Time
-	Description  *string
-	PriceRub     *int
-	IsClosed     *bool
-	GameType     *types.GameType
-	Status       *types.SeriesStatus
+	Name        *string
+	Description *string
+	StartAt     *time.Time
+	EndAt       *time.Time
+	PriceRub    *int
+	IsClosed    *bool
+	GameType    *types.GameType
+	Status      *types.SeriesStatus
+}
+
+type SeriesListItem struct {
+	ID          uuid.UUID
+	ClubID      uuid.UUID
+	ClubName    string
+	Name        string
+	Description string
+	StartAt     time.Time
+	EndAt       time.Time
+	GamesCount  int
 }

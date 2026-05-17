@@ -9,7 +9,8 @@ export enum ClubState {
   None = 0,
   Member = 1,
   Leader = 2,
-  President = 3
+  President = 3,
+  Resident = 4
 }
 
 export enum GameType {

@@ -31,12 +31,6 @@ const docTemplate = `{
                     "204": {
                         "description": "OK"
                     },
-                    "400": {
-                        "description": "Invalid request or validation error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
-                    },
                     "401": {
                         "description": "Unauthorized - invalid/missing refresh token",
                         "schema": {
@@ -54,6 +48,11 @@ const docTemplate = `{
         },
         "/api/v1/club": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -150,6 +149,11 @@ const docTemplate = `{
         },
         "/api/v1/club/leave": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -216,6 +220,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -263,6 +272,11 @@ const docTemplate = `{
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -327,6 +341,11 @@ const docTemplate = `{
         },
         "/api/v1/club/{id}/join": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -359,6 +378,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -370,6 +401,11 @@ const docTemplate = `{
         },
         "/api/v1/club/{id}/leader/{member_id}": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -391,6 +427,206 @@ const docTemplate = `{
                         "name": "member_id",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/member/{member_id}/block": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Block member in club",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member Profile ID",
+                        "name": "member_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/member/{member_id}/kick": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Kick member from club",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member Profile ID",
+                        "name": "member_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/member/{member_id}/role": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Set club member role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member Profile ID",
+                        "name": "member_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New club state (member/resident/leader)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "state": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
                     }
                 ],
                 "responses": {
@@ -574,6 +810,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -621,6 +862,11 @@ const docTemplate = `{
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -731,6 +977,11 @@ const docTemplate = `{
         },
         "/api/v1/game/{id}/participants": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -792,6 +1043,11 @@ const docTemplate = `{
         },
         "/api/v1/game/{id}/results": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -853,6 +1109,11 @@ const docTemplate = `{
         },
         "/api/v1/series": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -908,6 +1169,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/series/all": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Get all series list",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetAllSeriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/series/{id}": {
             "get": {
                 "produces": [
@@ -944,16 +1250,15 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
                     }
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1001,6 +1306,11 @@ const docTemplate = `{
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -1056,6 +1366,82 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/full": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Get series full data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "participants limit",
+                        "name": "participants_limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "participants offset",
+                        "name": "participants_offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "games limit",
+                        "name": "games_limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "games offset",
+                        "name": "games_offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "leaderboard limit",
+                        "name": "leaderboard_limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "leaderboard offset",
+                        "name": "leaderboard_offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSeriesFullResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1121,6 +1507,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -1185,6 +1576,11 @@ const docTemplate = `{
         },
         "/api/v1/series/{id}/join": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1292,6 +1688,11 @@ const docTemplate = `{
         },
         "/api/v1/series/{id}/leave": {
             "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1426,6 +1827,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
                     }
                 }
             },
@@ -1475,18 +1888,25 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
                     }
                 }
             }
         },
         "/api/v1/user/all": {
             "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Retrieves a list of users filtered by role, one-line full name query, and email prefix. Only for admins",
+                "description": "Retrieves a list of users filtered by role, one-line full name query, and email prefix.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1611,6 +2031,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
                     }
                 }
             }
@@ -1644,6 +2070,24 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1695,8 +2139,32 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1751,18 +2219,19 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
                     }
                 }
             }
         },
         "/api/v1/user/{id}": {
             "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    }
-                ],
-                "description": "Get each user by id. Only for admins",
+                "description": "Public profile view by id",
                 "consumes": [
                     "application/json"
                 ],
@@ -1795,8 +2264,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -1856,6 +2331,128 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/{id}/games": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get user games",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetUserGamesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/{id}/series": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get user series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetUserSeriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
                     }
                 }
             }
@@ -1879,18 +2476,41 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.PingResponse"
                         }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.HTTPStatus"
-                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "dto.AllSeriesItem": {
+            "type": "object",
+            "properties": {
+                "club_id": {
+                    "type": "string"
+                },
+                "club_name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "games_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -1977,9 +2597,6 @@ const docTemplate = `{
         },
         "dto.CreateGameRequest": {
             "type": "object",
-            "required": [
-                "number"
-            ],
             "properties": {
                 "description": {
                     "type": "string",
@@ -1992,11 +2609,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 200,
                     "minLength": 1
-                },
-                "number": {
-                    "type": "integer",
-                    "maximum": 100000,
-                    "minimum": 1
                 },
                 "status": {
                     "maximum": 2,
@@ -2038,15 +2650,16 @@ const docTemplate = `{
         "dto.CreateSeriesRequest": {
             "type": "object",
             "required": [
+                "description",
                 "end_at",
                 "name",
-                "scoring_rules",
                 "start_at"
             ],
             "properties": {
                 "description": {
                     "type": "string",
-                    "maxLength": 5000
+                    "maxLength": 10000,
+                    "minLength": 1
                 },
                 "end_at": {
                     "type": "string"
@@ -2066,11 +2679,6 @@ const docTemplate = `{
                     "type": "integer",
                     "maximum": 100000000,
                     "minimum": 0
-                },
-                "scoring_rules": {
-                    "type": "string",
-                    "maxLength": 10000,
-                    "minLength": 1
                 },
                 "start_at": {
                     "type": "string"
@@ -2115,9 +2723,6 @@ const docTemplate = `{
                 },
                 "price_rub": {
                     "type": "integer"
-                },
-                "scoring_rules": {
-                    "type": "string"
                 },
                 "start_at": {
                     "type": "string"
@@ -2166,7 +2771,7 @@ const docTemplate = `{
                 "compensation": {
                     "type": "number",
                     "maximum": 1000000,
-                    "minimum": 0
+                    "minimum": -1000000
                 },
                 "extra_points": {
                     "type": "number",
@@ -2186,8 +2791,8 @@ const docTemplate = `{
                 },
                 "removed": {
                     "type": "integer",
-                    "maximum": 10,
-                    "minimum": 0
+                    "maximum": 1000000,
+                    "minimum": -1000000
                 },
                 "role": {
                     "$ref": "#/definitions/types.MafiaRole"
@@ -2197,10 +2802,15 @@ const docTemplate = `{
                     "maximum": 1000000,
                     "minimum": -1000000
                 },
+                "victory_points": {
+                    "type": "number",
+                    "maximum": 1000000,
+                    "minimum": -1000000
+                },
                 "yellow_cards": {
                     "type": "integer",
-                    "maximum": 10,
-                    "minimum": 0
+                    "maximum": 1000000,
+                    "minimum": -1000000
                 }
             }
         },
@@ -2225,6 +2835,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.Club"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetAllSeriesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AllSeriesItem"
                     }
                 },
                 "pagination": {
@@ -2345,6 +2969,23 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GetSeriesFullResponse": {
+            "type": "object",
+            "properties": {
+                "games": {
+                    "$ref": "#/definitions/dto.GetSeriesGamesResponse"
+                },
+                "leaderboard": {
+                    "$ref": "#/definitions/dto.GetSeriesLeaderboardResponse"
+                },
+                "participants": {
+                    "$ref": "#/definitions/dto.GetSeriesParticipantsResponse"
+                },
+                "series": {
+                    "$ref": "#/definitions/dto.Series"
+                }
+            }
+        },
         "dto.GetSeriesGamesResponse": {
             "type": "object",
             "properties": {
@@ -2417,14 +3058,25 @@ const docTemplate = `{
                 "price_rub": {
                     "type": "integer"
                 },
-                "scoring_rules": {
-                    "type": "string"
-                },
                 "start_at": {
                     "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/types.SeriesStatus"
+                }
+            }
+        },
+        "dto.GetUserGamesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlayerGame"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
                 }
             }
         },
@@ -2474,6 +3126,20 @@ const docTemplate = `{
                 "show_name": {
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "dto.GetUserSeriesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlayerSeries"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
                 }
             }
         },
@@ -2604,6 +3270,49 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PlayerGame": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "series_id": {
+                    "type": "string"
+                },
+                "series_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
+                }
+            }
+        },
+        "dto.PlayerSeries": {
+            "type": "object",
+            "properties": {
+                "end_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.RegisterUserRequest": {
             "type": "object",
             "required": [
@@ -2730,9 +3439,6 @@ const docTemplate = `{
                 },
                 "price_rub": {
                     "type": "integer"
-                },
-                "scoring_rules": {
-                    "type": "string"
                 },
                 "start_at": {
                     "type": "string"
@@ -3035,7 +3741,8 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "type": "string",
-                    "maxLength": 5000
+                    "maxLength": 10000,
+                    "minLength": 1
                 },
                 "end_at": {
                     "type": "string"
@@ -3055,11 +3762,6 @@ const docTemplate = `{
                     "type": "integer",
                     "maximum": 100000000,
                     "minimum": 0
-                },
-                "scoring_rules": {
-                    "type": "string",
-                    "maxLength": 10000,
-                    "minLength": 1
                 },
                 "start_at": {
                     "type": "string"
@@ -3104,9 +3806,6 @@ const docTemplate = `{
                 },
                 "price_rub": {
                     "type": "integer"
-                },
-                "scoring_rules": {
-                    "type": "string"
                 },
                 "start_at": {
                     "type": "string"
@@ -3187,13 +3886,15 @@ const docTemplate = `{
                 0,
                 1,
                 2,
-                3
+                3,
+                4
             ],
             "x-enum-varnames": [
                 "ClubStateNone",
                 "ClubStateMember",
                 "ClubStateLeader",
-                "ClubStatePresident"
+                "ClubStatePresident",
+                "ClubStateResident"
             ]
         },
         "types.GameStatus": {

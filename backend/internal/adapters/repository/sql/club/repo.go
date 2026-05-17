@@ -252,6 +252,19 @@ WHERE id=$1 AND club_id=$2
 	return nil
 }
 
+func (r *Repo) IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error) {
+	var exists bool
+	if err := r.db.QueryRowContext(ctx, `SELECT exists(SELECT 1 FROM club_bans WHERE club_id=$1 AND profile_id=$2)`, clubID, profileID).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *Repo) BanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `INSERT INTO club_bans (club_id, profile_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, clubID, profileID)
+	return err
+}
+
 func ptrToNullString(p *string) any {
 	if p == nil {
 		return nil

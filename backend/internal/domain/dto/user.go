@@ -2,6 +2,7 @@ package dto
 
 import (
 	"SmartLeague/internal/domain/types"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -59,6 +60,45 @@ type PaginationInfo struct {
 type GetAllByFilterUsersResponse struct {
 	Items      []*User        `json:"items"`
 	Pagination PaginationInfo `json:"pagination"`
+}
+
+type PlayerGame struct {
+	ID         uuid.UUID         `json:"id"`
+	SeriesID   uuid.UUID         `json:"series_id"`
+	SeriesName string            `json:"series_name"`
+	Name       string            `json:"name"`
+	Number     int               `json:"number"`
+	Status     types.GameStatus  `json:"status"`
+	CreatedAt  time.Time         `json:"created_at"`
+}
+
+type GetUserGamesRequest struct {
+	UserID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+}
+
+type GetUserGamesResponse struct {
+	Items      []*PlayerGame   `json:"items"`
+	Pagination PaginationInfo  `json:"pagination"`
+}
+
+type PlayerSeries struct {
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	StartAt    time.Time  `json:"start_at"`
+	EndAt      time.Time  `json:"end_at"`
+}
+
+type GetUserSeriesRequest struct {
+	UserID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+}
+
+type GetUserSeriesResponse struct {
+	Items      []*PlayerSeries `json:"items"`
+	Pagination PaginationInfo  `json:"pagination"`
 }
 
 type LoginUserRequest struct {

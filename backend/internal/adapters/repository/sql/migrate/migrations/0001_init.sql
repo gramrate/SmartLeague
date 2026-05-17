@@ -175,6 +175,7 @@ CREATE TABLE IF NOT EXISTS game_results (
 	compensation double precision NOT NULL DEFAULT 0,
 	yellow_cards integer NOT NULL DEFAULT 0,
 	removed integer NOT NULL DEFAULT 0,
+	victory_points double precision NOT NULL DEFAULT 0,
 	extra_points double precision NOT NULL DEFAULT 0,
 	total_points double precision NOT NULL DEFAULT 0,
 	created_at timestamptz NOT NULL DEFAULT now(),

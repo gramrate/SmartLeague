@@ -13,6 +13,7 @@ import (
 // @Summary Delete series by id
 // @Tags series
 // @Produce json
+// @Security CookieAuth
 // @Param id path string true "Series ID"
 // @Success 204
 // @Failure 400 {object} dto.HTTPStatus

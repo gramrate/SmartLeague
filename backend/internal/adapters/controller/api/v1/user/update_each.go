@@ -23,6 +23,9 @@ import (
 // @Success 200 {object} dto.UpdateEachUserResponse
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 404 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/user/{id} [patch]
 func (h *handler) UpdateEach(c echo.Context) error {
 	id := c.Param("id")

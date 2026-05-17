@@ -3,12 +3,13 @@ import { Link, useParams } from "react-router-dom";
 import { getClubSeries } from "../../api/series";
 import { useAuthStore } from "../../store/authStore";
 import { ClubState } from "../../types/enums";
+import { BackButton } from "../../shared/backButton";
 
 export function ClubSeriesPage() {
   const { id } = useParams();
   const clubId = id!;
-  const { clubId: myClubID, clubState } = useAuthStore();
-  const canCreateSeries = myClubID === clubId && (clubState === ClubState.Leader || clubState === ClubState.President);
+  const { clubId: myClubId, clubState } = useAuthStore();
+  const canCreateSeries = myClubId === clubId && (clubState === ClubState.Leader || clubState === ClubState.President);
 
   const q = useQuery({
     queryKey: ["club", clubId, "series", { limit: 20, offset: 0 }],
@@ -21,6 +22,7 @@ export function ClubSeriesPage() {
 
   return (
     <div className="space-y-4">
+      <BackButton />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Club series</h1>
         {canCreateSeries ? (

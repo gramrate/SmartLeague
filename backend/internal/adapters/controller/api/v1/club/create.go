@@ -14,6 +14,7 @@ import (
 // @Tags club
 // @Accept json
 // @Produce json
+// @Security CookieAuth
 // @Param request body dto.CreateClubRequest true "Club data"
 // @Success 201 {object} dto.CreateClubResponse
 // @Failure 400 {object} dto.HTTPStatus
