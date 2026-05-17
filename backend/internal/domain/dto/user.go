@@ -42,8 +42,8 @@ type GetUserRequest struct {
 type GetUserResponse User
 
 type GetAllByFilterUsersRequest struct {
-	Limit       *int        `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100" example:"10"`
-	Offset      *int        `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0" example:"0"`
+	Limit       *int        `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
+	Offset      *int        `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 	Role        *types.Role `json:"role,omitempty" form:"role" validate:"omitempty,role" example:"0"`
 	Query       *string     `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=300" example:"Иван Дима"`
 	EmailPrefix *string     `json:"email_prefix,omitempty" form:"email_prefix" validate:"omitempty,email" example:"user@"`
@@ -63,37 +63,37 @@ type GetAllByFilterUsersResponse struct {
 }
 
 type PlayerGame struct {
-	ID         uuid.UUID         `json:"id"`
-	SeriesID   uuid.UUID         `json:"series_id"`
-	SeriesName string            `json:"series_name"`
-	Name       string            `json:"name"`
-	Number     int               `json:"number"`
-	Status     types.GameStatus  `json:"status"`
-	CreatedAt  time.Time         `json:"created_at"`
+	ID         uuid.UUID        `json:"id"`
+	SeriesID   uuid.UUID        `json:"series_id"`
+	SeriesName string           `json:"series_name"`
+	Name       string           `json:"name"`
+	Number     int              `json:"number"`
+	Status     types.GameStatus `json:"status"`
+	CreatedAt  time.Time        `json:"created_at"`
 }
 
 type GetUserGamesRequest struct {
 	UserID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
-	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
 }
 
 type GetUserGamesResponse struct {
-	Items      []*PlayerGame   `json:"items"`
-	Pagination PaginationInfo  `json:"pagination"`
+	Items      []*PlayerGame  `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type PlayerSeries struct {
-	ID         uuid.UUID  `json:"id"`
-	Name       string     `json:"name"`
-	StartAt    time.Time  `json:"start_at"`
-	EndAt      time.Time  `json:"end_at"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	StartAt time.Time `json:"start_at"`
+	EndAt   time.Time `json:"end_at"`
 }
 
 type GetUserSeriesRequest struct {
 	UserID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
-	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
 }
 
 type GetUserSeriesResponse struct {

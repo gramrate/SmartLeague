@@ -42,5 +42,6 @@ type SeriesListItem struct {
 	Description string
 	StartAt     time.Time
 	EndAt       time.Time
+	IsClosed    bool
 	GamesCount  int
 }

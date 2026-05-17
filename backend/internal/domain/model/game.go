@@ -34,8 +34,8 @@ type GameResultRow struct {
 	BestMove      *string
 	FirstKilled   bool
 	Compensation  float64
-	YellowCards   int
-	Removed       int
+	YellowCards   float64
+	Removed       float64
 	VictoryPoints float64
 	ExtraPoints   float64
 	TotalPoints   float64

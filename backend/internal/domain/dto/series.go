@@ -42,12 +42,12 @@ type GetSeriesResponse Series
 
 type GetSeriesFullRequest struct {
 	ID                 uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	ParticipantsLimit  *int      `json:"participants_limit,omitempty" form:"participants_limit" validate:"omitempty,min=1,max=100"`
-	ParticipantsOffset *int      `json:"participants_offset,omitempty" form:"participants_offset" validate:"omitempty,min=0"`
-	GamesLimit         *int      `json:"games_limit,omitempty" form:"games_limit" validate:"omitempty,min=1,max=100"`
-	GamesOffset        *int      `json:"games_offset,omitempty" form:"games_offset" validate:"omitempty,min=0"`
-	LeaderboardLimit   *int      `json:"leaderboard_limit,omitempty" form:"leaderboard_limit" validate:"omitempty,min=1,max=100"`
-	LeaderboardOffset  *int      `json:"leaderboard_offset,omitempty" form:"leaderboard_offset" validate:"omitempty,min=0"`
+	ParticipantsLimit  *int      `json:"participants_limit,omitempty" form:"participants_limit" validate:"omitempty,min=1,max=200"`
+	ParticipantsOffset *int      `json:"participants_offset,omitempty" form:"participants_offset" validate:"omitempty,min=0,max=10000"`
+	GamesLimit         *int      `json:"games_limit,omitempty" form:"games_limit" validate:"omitempty,min=1,max=200"`
+	GamesOffset        *int      `json:"games_offset,omitempty" form:"games_offset" validate:"omitempty,min=0,max=10000"`
+	LeaderboardLimit   *int      `json:"leaderboard_limit,omitempty" form:"leaderboard_limit" validate:"omitempty,min=1,max=200"`
+	LeaderboardOffset  *int      `json:"leaderboard_offset,omitempty" form:"leaderboard_offset" validate:"omitempty,min=0,max=10000"`
 }
 
 type GetSeriesFullResponse struct {
@@ -59,8 +59,8 @@ type GetSeriesFullResponse struct {
 
 type GetClubSeriesRequest struct {
 	ClubID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
-	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
 }
 
 type GetClubSeriesResponse struct {
@@ -76,12 +76,15 @@ type AllSeriesItem struct {
 	Description string    `json:"description"`
 	StartAt     time.Time `json:"start_at"`
 	EndAt       time.Time `json:"end_at"`
+	IsClosed    bool      `json:"is_closed"`
 	GamesCount  int       `json:"games_count"`
 }
 
 type GetAllSeriesRequest struct {
-	Limit  *int `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
-	Offset *int `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+	Limit      *int  `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset     *int  `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+	ShowPast   *bool `json:"show_past,omitempty" form:"show_past"`
+	ShowClosed *bool `json:"show_closed,omitempty" form:"show_closed"`
 }
 
 type GetAllSeriesResponse struct {
@@ -109,8 +112,8 @@ type DeleteSeriesRequest struct {
 
 type GetSeriesParticipantsRequest struct {
 	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit    *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100"`
-	Offset   *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0"`
+	Limit    *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset   *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
 	Query    *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
 }
 

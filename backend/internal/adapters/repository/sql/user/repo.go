@@ -116,15 +116,17 @@ func (r *Repo) GetAllByFilter(
 		argN++
 	}
 	if emailPrefix != nil {
-		where += " AND lower(email) LIKE lower($" + itoa(argN) + ")"
+		where += " AND email ILIKE $" + itoa(argN)
 		args = append(args, normalizeEmail(*emailPrefix)+"%")
 		argN++
 	}
 	if query != nil {
 		q := strings.TrimSpace(*query)
-		where += " AND (lower(email) LIKE lower($" + itoa(argN) + ") OR lower(name) LIKE lower($" + itoa(argN) + ") OR lower(nickname) LIKE lower($" + itoa(argN) + "))"
-		args = append(args, "%"+strings.ToLower(q)+"%")
-		argN++
+		if q != "" {
+			where += " AND (email ILIKE $" + itoa(argN) + " OR name ILIKE $" + itoa(argN) + " OR nickname ILIKE $" + itoa(argN) + ")"
+			args = append(args, "%"+q+"%")
+			argN++
+		}
 	}
 
 	var total int

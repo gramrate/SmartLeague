@@ -2,6 +2,7 @@ package series
 
 import (
 	"SmartLeague/internal/domain/dto"
+	"SmartLeague/internal/domain/types"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -48,6 +49,61 @@ func (h *handler) CreateGame(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, resp)
+}
+
+// CreateGameDraft Create draft game in series (without validation)
+//
+// @Summary Create draft game in series
+// @Tags game
+// @Accept json
+// @Produce json
+// @Security CookieAuth
+// @Param id path string true "Series ID"
+// @Param request body dto.CreateGameDraftRequest true "Draft game data"
+// @Success 201 {object} dto.CreateGameResponse
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/series/{id}/games/draft [post]
+func (h *handler) CreateGameDraft(c echo.Context) error {
+	requesterID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok || requesterID == uuid.Nil {
+		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
+	}
+
+	seriesID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
+	}
+
+	var req dto.CreateGameDraftRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+	req.SeriesID = seriesID
+
+	status := createDraftStatus(req.Status)
+	createReq := dto.CreateGameRequest{
+		SeriesID:    req.SeriesID,
+		Name:        req.Name,
+		Description: req.Description,
+		HostID:      req.HostID,
+		Status:      status,
+	}
+
+	resp, err := h.gameService.Create(c.Request().Context(), requesterID, &createReq)
+	if err != nil {
+		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
+	}
+	return c.JSON(http.StatusCreated, resp)
+}
+
+func createDraftStatus(status *types.GameStatus) types.GameStatus {
+	if status == nil {
+		return types.GameStatusDraft
+	}
+	return *status
 }
 
 // GetSeriesGames Get games in series (paginated)
@@ -161,6 +217,83 @@ func (h *handler) SetParticipants(c echo.Context) error {
 	}
 
 	if err := h.gameService.SetParticipants(c.Request().Context(), requesterID, &req); err != nil {
+		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// SaveGameDraft Save game table as draft without strict validation
+//
+// @Summary Save game draft
+// @Tags game
+// @Accept json
+// @Produce json
+// @Security CookieAuth
+// @Param id path string true "Game ID"
+// @Param request body dto.SaveGameDraftRequest true "Draft table"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id}/draft [post]
+func (h *handler) SaveGameDraft(c echo.Context) error {
+	requesterID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok || requesterID == uuid.Nil {
+		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
+	}
+	gameID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
+	}
+
+	var req dto.SaveGameDraftRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+	req.GameID = gameID
+
+	if err := h.gameService.SaveDraft(c.Request().Context(), requesterID, &req); err != nil {
+		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PublishGame Publish game table with strict validation
+//
+// @Summary Publish game
+// @Tags game
+// @Accept json
+// @Produce json
+// @Security CookieAuth
+// @Param id path string true "Game ID"
+// @Param request body dto.PublishGameRequest true "Publish table"
+// @Success 204
+// @Failure 400 {object} dto.HTTPStatus
+// @Failure 401 {object} dto.HTTPStatus
+// @Failure 403 {object} dto.HTTPStatus
+// @Failure 500 {object} dto.HTTPStatus
+// @Router /api/v1/game/{id}/publish [post]
+func (h *handler) PublishGame(c echo.Context) error {
+	requesterID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok || requesterID == uuid.Nil {
+		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
+	}
+	gameID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
+	}
+
+	var req dto.PublishGameRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+	req.GameID = gameID
+	if err := h.validator.ValidateData(req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+
+	if err := h.gameService.Publish(c.Request().Context(), requesterID, &req); err != nil {
 		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
 	}
 	return c.NoContent(http.StatusNoContent)

@@ -14,6 +14,8 @@ import (
 // @Produce json
 // @Param limit query int false "limit"
 // @Param offset query int false "offset"
+// @Param show_past query boolean false "show past series (end_at < now)"
+// @Param show_closed query boolean false "show closed registration series (is_closed = true)"
 // @Success 200 {object} dto.GetAllSeriesResponse
 // @Failure 400 {object} dto.HTTPStatus
 // @Failure 500 {object} dto.HTTPStatus

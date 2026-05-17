@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -16,13 +15,10 @@ func (r *Repo) CreateGame(ctx context.Context, g model.Game) (*model.Game, error
 	if g.ID == uuid.Nil {
 		g.ID = uuid.New()
 	}
-	if g.Name == "" {
-		g.Name = fmt.Sprintf("Игра - %d", g.Number)
-	}
 
 	row := r.db.QueryRowContext(ctx, `
 INSERT INTO games (id, series_id, name, number, description, host_id, status)
-VALUES ($1,$2,$3,(SELECT COALESCE(MAX(number), 0) + 1 FROM games WHERE series_id=$2),$5,$6,$7)
+VALUES ($1,$2,$3,(SELECT COALESCE(MAX(number), 0) + 1 FROM games WHERE series_id=$2),$4,$5,$6)
 RETURNING id, series_id, name, number, description, host_id, status, created_at, updated_at
 `, g.ID, g.SeriesID, g.Name, ptrToNullString(g.Description), ptrToNullUUID(g.HostID), int16(g.Status))
 
@@ -61,7 +57,7 @@ FROM games WHERE id=$1 AND deleted_at IS NULL
 	return &out, nil
 }
 
-func (r *Repo) ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.Game, int, error) {
+func (r *Repo) ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit, offset int, includeDrafts bool) ([]*model.Game, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -70,17 +66,27 @@ func (r *Repo) ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit,
 	}
 
 	var total int
-	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM games WHERE series_id=$1 AND deleted_at IS NULL`, seriesID).Scan(&total); err != nil {
+	countQuery := `SELECT count(*) FROM games WHERE series_id=$1 AND deleted_at IS NULL`
+	if !includeDrafts {
+		countQuery += ` AND status <> 0`
+	}
+	if err := r.db.QueryRowContext(ctx, countQuery, seriesID).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
+	listQuery := `
 SELECT id, series_id, name, number, description, host_id, status, created_at, updated_at
 FROM games
-WHERE series_id=$1 AND deleted_at IS NULL
+WHERE series_id=$1 AND deleted_at IS NULL`
+	if !includeDrafts {
+		listQuery += `
+  AND status <> 0`
+	}
+	listQuery += `
 ORDER BY number ASC
-LIMIT $2 OFFSET $3
-`, seriesID, limit, offset)
+LIMIT $2 OFFSET $3`
+
+	rows, err := r.db.QueryContext(ctx, listQuery, seriesID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -227,6 +233,11 @@ ON CONFLICT (game_id, profile_id) DO UPDATE SET
 	}
 
 	return tx.Commit()
+}
+
+func (r *Repo) ClearGameResults(ctx context.Context, gameID uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM game_results WHERE game_id=$1`, gameID)
+	return err
 }
 
 func (r *Repo) ListSeriesLeaderboard(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.LeaderboardRow, int, error) {

@@ -21,10 +21,11 @@ type repo interface {
 
 	CreateGame(ctx context.Context, g model.Game) (*model.Game, error)
 	GetGameByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
-	ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.Game, int, error)
+	ListGamesBySeries(ctx context.Context, seriesID uuid.UUID, limit, offset int, includeDrafts bool) ([]*model.Game, int, error)
 	UpdateGame(ctx context.Context, id uuid.UUID, patch model.GameUpdatePatch) (*model.Game, error)
 	ReplaceGameParticipants(ctx context.Context, gameID uuid.UUID, participantIDs []uuid.UUID) error
 	UpsertGameResults(ctx context.Context, gameID uuid.UUID, rows []model.GameResultRow) error
+	ClearGameResults(ctx context.Context, gameID uuid.UUID) error
 	ListGameParticipants(ctx context.Context, gameID uuid.UUID) ([]uuid.UUID, error)
 	ListGameResults(ctx context.Context, gameID uuid.UUID) ([]model.GameResultRow, error)
 	DeleteGame(ctx context.Context, id uuid.UUID) error
@@ -42,6 +43,17 @@ func NewService(repo repo) *Service {
 
 func canManageClub(state types.ClubState) bool {
 	return state == types.ClubStateLeader || state == types.ClubStatePresident
+}
+
+func (s *Service) canManageSeries(ctx context.Context, requesterID *uuid.UUID, clubID uuid.UUID) (bool, error) {
+	if requesterID == nil {
+		return false, nil
+	}
+	profileClubID, profileClubState, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if err != nil {
+		return false, err
+	}
+	return profileClubID != nil && *profileClubID == clubID && canManageClub(profileClubState), nil
 }
 
 func toGameDTO(g *model.Game) *dto.Game {
@@ -99,15 +111,21 @@ func (s *Service) Get(ctx context.Context, requesterID *uuid.UUID, req *dto.GetG
 	if err != nil {
 		return nil, err
 	}
-	if ser.IsClosed {
-		if requesterID == nil {
-			return nil, errorz.Unauthorized
-		}
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if game.Status == types.GameStatusDraft {
+		canManage, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
 		if err != nil {
 			return nil, err
 		}
-		if clubID == nil || *clubID != ser.ClubID {
+		if !canManage {
+			return nil, errorz.Unauthorized
+		}
+	}
+	if game.Status == types.GameStatusDraft {
+		canManage, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
+		if err != nil {
+			return nil, err
+		}
+		if !canManage {
 			return nil, errorz.Unauthorized
 		}
 	}
@@ -120,18 +138,6 @@ func (s *Service) ListBySeries(ctx context.Context, requesterID *uuid.UUID, req 
 	if err != nil {
 		return nil, err
 	}
-	if ser.IsClosed {
-		if requesterID == nil {
-			return nil, errorz.Unauthorized
-		}
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
-		if err != nil {
-			return nil, err
-		}
-		if clubID == nil || *clubID != ser.ClubID {
-			return nil, errorz.Unauthorized
-		}
-	}
 
 	limit := 10
 	offset := 0
@@ -142,7 +148,12 @@ func (s *Service) ListBySeries(ctx context.Context, requesterID *uuid.UUID, req 
 		offset = *req.Offset
 	}
 
-	items, total, err := s.repo.ListGamesBySeries(ctx, req.SeriesID, limit, offset)
+	includeDrafts, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
+	if err != nil {
+		return nil, err
+	}
+
+	items, total, err := s.repo.ListGamesBySeries(ctx, req.SeriesID, limit, offset, includeDrafts)
 	if err != nil {
 		return nil, err
 	}
@@ -307,25 +318,13 @@ func isValidMafiaRole(role types.MafiaRole) bool {
 }
 
 func (s *Service) GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.GetGameRequest) (*dto.GetGameFullResponse, error) {
+	_ = requesterID
 	game, err := s.repo.GetGameByID(ctx, req.ID)
 	if err != nil {
 		return nil, err
 	}
-	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
-	if err != nil {
+	if _, err := s.repo.GetSeriesByID(ctx, game.SeriesID); err != nil {
 		return nil, err
-	}
-	if ser.IsClosed {
-		if requesterID == nil {
-			return nil, errorz.Unauthorized
-		}
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
-		if err != nil {
-			return nil, err
-		}
-		if clubID == nil || *clubID != ser.ClubID {
-			return nil, errorz.Unauthorized
-		}
 	}
 
 	participantIDs, err := s.repo.ListGameParticipants(ctx, req.ID)
@@ -379,4 +378,141 @@ func (s *Service) Delete(ctx context.Context, requesterID uuid.UUID, req *dto.De
 		return errorz.Unauthorized
 	}
 	return s.repo.DeleteGame(ctx, req.ID)
+}
+
+func (s *Service) SaveDraft(ctx context.Context, requesterID uuid.UUID, req *dto.SaveGameDraftRequest) error {
+	game, err := s.repo.GetGameByID(ctx, req.GameID)
+	if err != nil {
+		return err
+	}
+	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
+	if err != nil {
+		return err
+	}
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+		return errorz.Unauthorized
+	}
+
+	participantIDs := make([]uuid.UUID, 0, len(req.Rows))
+	resultRows := make([]model.GameResultRow, 0, len(req.Rows))
+	for _, r := range req.Rows {
+		if r.ProfileID == nil {
+			continue
+		}
+		participantIDs = append(participantIDs, *r.ProfileID)
+		place := r.Slot
+		resultRows = append(resultRows, model.GameResultRow{
+			GameID:        req.GameID,
+			ProfileID:     *r.ProfileID,
+			Place:         &place,
+			Role:          r.Role,
+			BestMove:      r.BestMove,
+			FirstKilled:   false,
+			Compensation:  0,
+			YellowCards:   r.YellowCards,
+			Removed:       r.Removed,
+			VictoryPoints: 0,
+			ExtraPoints:   r.ExtraPoints,
+			TotalPoints:   r.TotalPoints,
+		})
+	}
+
+	if err := s.repo.ReplaceGameParticipants(ctx, req.GameID, participantIDs); err != nil {
+		return err
+	}
+	if err := s.repo.ClearGameResults(ctx, req.GameID); err != nil {
+		return err
+	}
+	if len(resultRows) > 0 {
+		if err := s.repo.UpsertGameResults(ctx, req.GameID, resultRows); err != nil {
+			return err
+		}
+	}
+	draft := types.GameStatusDraft
+	_, err = s.repo.UpdateGame(ctx, req.GameID, model.GameUpdatePatch{Status: &draft})
+	return err
+}
+
+func (s *Service) Publish(ctx context.Context, requesterID uuid.UUID, req *dto.PublishGameRequest) error {
+	if len(req.Rows) != sportMafiaParticipantsCount {
+		return errorz.InvalidRequest
+	}
+
+	game, err := s.repo.GetGameByID(ctx, req.GameID)
+	if err != nil {
+		return err
+	}
+	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
+	if err != nil {
+		return err
+	}
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+		return errorz.Unauthorized
+	}
+
+	seenSlots := map[int]bool{}
+	bestMoveCount := 0
+	participantIDs := make([]uuid.UUID, 0, len(req.Rows))
+	resultRows := make([]model.GameResultRow, 0, len(req.Rows))
+	for _, r := range req.Rows {
+		if r.Slot < 1 || r.Slot > 10 || seenSlots[r.Slot] || r.ProfileID == nil || r.Role == nil {
+			return errorz.InvalidRequest
+		}
+		seenSlots[r.Slot] = true
+
+		ok, err := s.repo.IsSeriesParticipant(ctx, ser.ID, *r.ProfileID)
+		if err != nil {
+			return err
+		}
+		if !ok || !isValidMafiaRole(*r.Role) {
+			return errorz.InvalidRequest
+		}
+		if r.BestMove != nil {
+			if !isValidBestMove(*r.BestMove) {
+				return errorz.InvalidRequest
+			}
+			bestMoveCount++
+		}
+
+		participantIDs = append(participantIDs, *r.ProfileID)
+		place := r.Slot
+		resultRows = append(resultRows, model.GameResultRow{
+			GameID:        req.GameID,
+			ProfileID:     *r.ProfileID,
+			Place:         &place,
+			Role:          r.Role,
+			BestMove:      r.BestMove,
+			FirstKilled:   false,
+			Compensation:  0,
+			YellowCards:   r.YellowCards,
+			Removed:       r.Removed,
+			VictoryPoints: 0,
+			ExtraPoints:   r.ExtraPoints,
+			TotalPoints:   r.TotalPoints,
+		})
+	}
+	if len(seenSlots) != sportMafiaParticipantsCount || bestMoveCount > 1 {
+		return errorz.InvalidRequest
+	}
+
+	if err := s.repo.ReplaceGameParticipants(ctx, req.GameID, participantIDs); err != nil {
+		return err
+	}
+	if err := s.repo.ClearGameResults(ctx, req.GameID); err != nil {
+		return err
+	}
+	if err := s.repo.UpsertGameResults(ctx, req.GameID, resultRows); err != nil {
+		return err
+	}
+	finished := types.GameStatusFinished
+	_, err = s.repo.UpdateGame(ctx, req.GameID, model.GameUpdatePatch{Status: &finished})
+	return err
 }

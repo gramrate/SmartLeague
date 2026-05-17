@@ -19,7 +19,7 @@ type repo interface {
 	CreateSeries(ctx context.Context, s model.Series) (*model.Series, error)
 	GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error)
 	ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeClosed bool, limit, offset int) ([]*model.Series, int, error)
-	ListAllSeries(ctx context.Context, limit, offset int) ([]*model.SeriesListItem, int, error)
+	ListAllSeries(ctx context.Context, limit, offset int, showPast, showClosed bool) ([]*model.SeriesListItem, int, error)
 	UpdateSeries(ctx context.Context, id uuid.UUID, patch model.SeriesUpdatePatch) (*model.Series, error)
 	DeleteSeries(ctx context.Context, id uuid.UUID) error
 
@@ -125,19 +125,6 @@ func (s *Service) GetSeries(ctx context.Context, requesterID *uuid.UUID, req *dt
 		}
 	}
 
-	if ser.IsClosed {
-		if requesterID == nil {
-			return nil, errorz.Unauthorized
-		}
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
-		if err != nil {
-			return nil, err
-		}
-		if clubID == nil || *clubID != ser.ClubID {
-			return nil, errorz.Unauthorized
-		}
-	}
-
 	resp := dto.GetSeriesResponse(*seriesToDTO(ser, creatorID))
 	return &resp, nil
 }
@@ -199,14 +186,22 @@ func (s *Service) GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req
 func (s *Service) GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest) (*dto.GetAllSeriesResponse, error) {
 	limit := 10
 	offset := 0
+	showPast := false
+	showClosed := false
 	if req.Limit != nil {
 		limit = *req.Limit
 	}
 	if req.Offset != nil {
 		offset = *req.Offset
 	}
+	if req.ShowPast != nil {
+		showPast = *req.ShowPast
+	}
+	if req.ShowClosed != nil {
+		showClosed = *req.ShowClosed
+	}
 
-	items, total, err := s.repo.ListAllSeries(ctx, limit, offset)
+	items, total, err := s.repo.ListAllSeries(ctx, limit, offset, showPast, showClosed)
 	if err != nil {
 		return nil, err
 	}
@@ -221,6 +216,7 @@ func (s *Service) GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest
 			Description: it.Description,
 			StartAt:     it.StartAt,
 			EndAt:       it.EndAt,
+			IsClosed:    it.IsClosed,
 			GamesCount:  it.GamesCount,
 		})
 	}
@@ -291,22 +287,9 @@ func (s *Service) DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *
 }
 
 func (s *Service) GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error) {
-	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
-	if err != nil {
+	_ = requesterID
+	if _, err := s.repo.GetSeriesByID(ctx, req.SeriesID); err != nil {
 		return nil, err
-	}
-
-	if ser.IsClosed {
-		if requesterID == nil {
-			return nil, errorz.Unauthorized
-		}
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
-		if err != nil {
-			return nil, err
-		}
-		if clubID == nil || *clubID != ser.ClubID {
-			return nil, errorz.Unauthorized
-		}
 	}
 
 	limit := 10
@@ -354,13 +337,7 @@ func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
 	}
 
 	if ser.IsClosed {
-		clubID, _, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
-		if err != nil {
-			return err
-		}
-		if clubID == nil || *clubID != ser.ClubID {
-			return errorz.Unauthorized
-		}
+		return errorz.SeriesJoinClosed
 	}
 
 	maxParticipants := maxParticipantsForGameType(ser.GameType)
@@ -376,27 +353,21 @@ func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
 }
 
 func (s *Service) Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
+		return err
+	}
+	if ser.IsClosed {
+		return errorz.SeriesJoinClosed
+	}
 	return s.repo.RemoveSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
 }
 
 func (s *Service) GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error) {
-	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
-	if err != nil {
+	_ = requesterID
+	if _, err := s.repo.GetSeriesByID(ctx, req.SeriesID); err != nil {
 		return nil, err
 	}
-	if ser.IsClosed {
-		if requesterID == nil {
-			return nil, errorz.Unauthorized
-		}
-		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
-		if err != nil {
-			return nil, err
-		}
-		if clubID == nil || *clubID != ser.ClubID {
-			return nil, errorz.Unauthorized
-		}
-	}
-
 	limit := 10
 	offset := 0
 	if req.Limit != nil {

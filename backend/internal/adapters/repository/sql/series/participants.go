@@ -59,8 +59,8 @@ func (r *Repo) ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, l
 	if query != nil {
 		qv := strings.TrimSpace(*query)
 		if qv != "" {
-			where += " AND (lower(p.nickname) LIKE lower($2) OR lower(p.name) LIKE lower($2) OR lower(p.email) LIKE lower($2))"
-			like := "%" + strings.ToLower(qv) + "%"
+			where += " AND (p.nickname ILIKE $2 OR p.name ILIKE $2 OR p.email ILIKE $2)"
+			like := "%" + qv + "%"
 			countArgs = append(countArgs, like)
 			listArgs = append(listArgs, like)
 		}

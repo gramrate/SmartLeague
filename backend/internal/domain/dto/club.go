@@ -23,8 +23,8 @@ type GetClubRequest struct {
 type GetClubResponse Club
 
 type GetAllClubsRequest struct {
-	Limit  *int `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100" example:"10"`
-	Offset *int `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0" example:"0"`
+	Limit  *int `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
+	Offset *int `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 }
 
 type GetAllClubsResponse struct {
@@ -46,8 +46,8 @@ type DeleteClubRequest struct {
 
 type GetClubMembersRequest struct {
 	ClubID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=100" example:"10"`
-	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0" example:"0"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 }
 
 type GetClubMembersResponse struct {

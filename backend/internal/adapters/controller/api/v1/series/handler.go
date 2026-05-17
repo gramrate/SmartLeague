@@ -32,6 +32,8 @@ type gameService interface {
 	GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.GetGameRequest) (*dto.GetGameFullResponse, error)
 	Update(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateGameRequest) (*dto.UpdateGameResponse, error)
 	Delete(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteGameRequest) error
+	SaveDraft(ctx context.Context, requesterID uuid.UUID, req *dto.SaveGameDraftRequest) error
+	Publish(ctx context.Context, requesterID uuid.UUID, req *dto.PublishGameRequest) error
 	SetParticipants(ctx context.Context, requesterID uuid.UUID, req *dto.SetGameParticipantsRequest) error
 	UpsertResults(ctx context.Context, requesterID uuid.UUID, req *dto.UpsertGameResultsRequest) error
 }
@@ -65,26 +67,29 @@ func NewHandler(
 
 func (h *handler) Setup(router *echo.Group) {
 	router.POST("/series", h.CreateSeries, h.authMiddleware.RequireAuth)
-	router.GET("/series/:id", h.GetSeries)
-	router.GET("/series/:id/full", h.GetSeriesFull)
+	router.GET("/series/:id", h.GetSeries, h.authMiddleware.OptionalAuth)
+	router.GET("/series/:id/full", h.GetSeriesFull, h.authMiddleware.OptionalAuth)
 	router.PATCH("/series/:id", h.UpdateSeries, h.authMiddleware.RequireAuth)
 	router.DELETE("/series/:id", h.DeleteSeries, h.authMiddleware.RequireAuth)
 
-	router.GET("/club/:id/series", h.GetClubSeries)
-	router.GET("/series/all", h.GetAllSeries)
+	router.GET("/club/:id/series", h.GetClubSeries, h.authMiddleware.OptionalAuth)
+	router.GET("/series/all", h.GetAllSeries, h.authMiddleware.OptionalAuth)
 
-	router.GET("/series/:id/participants", h.GetParticipants)
+	router.GET("/series/:id/participants", h.GetParticipants, h.authMiddleware.OptionalAuth)
 	router.POST("/series/:id/join", h.JoinSeries, h.authMiddleware.RequireAuth)
 	router.POST("/series/:id/leave", h.LeaveSeries, h.authMiddleware.RequireAuth)
 
 	router.POST("/series/:id/games", h.CreateGame, h.authMiddleware.RequireAuth)
-	router.GET("/series/:id/games", h.GetSeriesGames)
-	router.GET("/series/:id/leaderboard", h.GetLeaderboard)
+	router.POST("/series/:id/games/draft", h.CreateGameDraft, h.authMiddleware.RequireAuth)
+	router.GET("/series/:id/games", h.GetSeriesGames, h.authMiddleware.OptionalAuth)
+	router.GET("/series/:id/leaderboard", h.GetLeaderboard, h.authMiddleware.OptionalAuth)
 
-	router.GET("/game/:id", h.GetGame)
-	router.GET("/game/:id/full", h.GetGameFull)
+	router.GET("/game/:id", h.GetGame, h.authMiddleware.OptionalAuth)
+	router.GET("/game/:id/full", h.GetGameFull, h.authMiddleware.OptionalAuth)
 	router.DELETE("/game/:id", h.DeleteGame, h.authMiddleware.RequireAuth)
 	router.PATCH("/game/:id", h.UpdateGame, h.authMiddleware.RequireAuth)
+	router.POST("/game/:id/draft", h.SaveGameDraft, h.authMiddleware.RequireAuth)
+	router.POST("/game/:id/publish", h.PublishGame, h.authMiddleware.RequireAuth)
 	router.POST("/game/:id/participants", h.SetParticipants, h.authMiddleware.RequireAuth)
 	router.POST("/game/:id/results", h.UpsertResults, h.authMiddleware.RequireAuth)
 }

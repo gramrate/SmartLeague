@@ -173,7 +173,7 @@ LIMIT $2 OFFSET $3
 	return out, total, nil
 }
 
-func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int) ([]*model.SeriesListItem, int, error) {
+func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, showPast, showClosed bool) ([]*model.SeriesListItem, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -181,16 +181,25 @@ func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int) ([]*model.S
 		offset = 0
 	}
 
+	where := "s.deleted_at IS NULL"
+	if !showClosed {
+		where += " AND s.is_closed = false"
+	}
+	if !showPast {
+		where += " AND s.end_at >= now()"
+	}
+
 	var total int
-	if err := r.db.QueryRowContext(ctx, `
+	countQuery := fmt.Sprintf(`
 SELECT count(*)
 FROM series s
-WHERE s.deleted_at IS NULL AND s.is_closed = false
-`).Scan(&total); err != nil {
+WHERE %s
+`, where)
+	if err := r.db.QueryRowContext(ctx, countQuery).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
+	listQuery := fmt.Sprintf(`
 SELECT
   s.id,
   s.club_id,
@@ -199,15 +208,19 @@ SELECT
   s.scoring_rules,
   s.start_at,
   s.end_at,
-  count(g.id) AS games_count
+  s.is_closed,
+  (
+    SELECT count(*)
+    FROM games g
+    WHERE g.series_id = s.id AND g.deleted_at IS NULL AND g.status <> 0
+  ) AS games_count
 FROM series s
 JOIN clubs c ON c.id = s.club_id
-LEFT JOIN games g ON g.series_id = s.id AND g.deleted_at IS NULL
-WHERE s.deleted_at IS NULL AND s.is_closed = false
-GROUP BY s.id, s.club_id, c.name, s.name, s.scoring_rules, s.start_at, s.end_at
+WHERE %s
 ORDER BY s.start_at DESC
 LIMIT $1 OFFSET $2
-`, limit, offset)
+`, where)
+	rows, err := r.db.QueryContext(ctx, listQuery, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -224,6 +237,7 @@ LIMIT $1 OFFSET $2
 			&item.Description,
 			&item.StartAt,
 			&item.EndAt,
+			&item.IsClosed,
 			&item.GamesCount,
 		); err != nil {
 			return nil, 0, err
@@ -274,10 +288,10 @@ SET name=$2,
     start_at=$4,
     end_at=$5,
     description=NULL,
-    price_rub=$7,
-    is_closed=$8,
-    game_type=$9,
-    status=$10,
+    price_rub=$6,
+    is_closed=$7,
+    game_type=$8,
+    status=$9,
     updated_at=now()
 WHERE id=$1
 RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_closed, game_type, status, created_at, updated_at
