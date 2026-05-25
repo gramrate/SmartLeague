@@ -72,6 +72,8 @@ export interface Series {
   end_at: string;
   status?: SeriesStatus;
   game_type?: number;
+  is_rating: boolean;
+  is_club_only: boolean;
   is_closed?: boolean;
   price_rub?: number;
 }
@@ -84,6 +86,9 @@ export interface AllSeriesItem {
   club_name?: string;
   start_at: string;
   end_at: string;
+  price_rub: number;
+  is_rating: boolean;
+  is_club_only: boolean;
   is_closed: boolean;
   games_count: number;
 }
@@ -117,6 +122,7 @@ export interface ManageGameRow {
   profile_id?: string;
   role?: MafiaRole;
   best_move?: string;
+  compensation: number;
   yellow_cards: number;
   removed: number;
   extra_points: number;
@@ -187,6 +193,8 @@ export interface CreateSeriesRequest {
   start_at: string;
   end_at: string;
   price_rub?: number;
+  is_rating?: boolean;
+  is_club_only?: boolean;
   game_type?: number;
   is_closed?: boolean;
   status?: SeriesStatus;
@@ -198,6 +206,8 @@ export interface UpdateSeriesRequest {
   start_at?: string;
   end_at?: string;
   price_rub?: number;
+  is_rating?: boolean;
+  is_club_only?: boolean;
   is_closed?: boolean;
   status?: SeriesStatus;
 }

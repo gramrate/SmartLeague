@@ -563,13 +563,6 @@ definitions:
     type: object
   dto.RegisterUserRequest:
     properties:
-      club_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      description:
-        example: About me
-        maxLength: 2000
-        type: string
       email:
         example: user@example.com
         maxLength: 254

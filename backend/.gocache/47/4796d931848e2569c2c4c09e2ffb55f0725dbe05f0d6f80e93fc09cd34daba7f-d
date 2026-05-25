@@ -1,0 +1,13 @@
+./change_password.go
+./delete.go
+./get_all_by_filter.go
+./get_by_id.go
+./get_player_activity.go
+./get_role.go
+./login.go
+./logout.go
+./mapper.go
+./register.go
+./service.go
+./update_current.go
+./update_each.go

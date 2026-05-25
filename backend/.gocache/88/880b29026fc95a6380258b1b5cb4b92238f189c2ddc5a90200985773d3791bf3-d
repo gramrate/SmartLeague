@@ -1,0 +1,10 @@
+./create.go
+./delete.go
+./get_all.go
+./get_by_id.go
+./handler.go
+./join_leave.go
+./manage_members.go
+./members.go
+./set_leader.go
+./update.go

@@ -35,6 +35,8 @@ func (h *handler) CreateSeries(c echo.Context) error {
 		StartAt     string `json:"start_at"`
 		EndAt       string `json:"end_at"`
 		PriceRub    int    `json:"price_rub"`
+		IsRating    *bool  `json:"is_rating"`
+		IsClubOnly  *bool  `json:"is_club_only"`
 		IsClosed    bool   `json:"is_closed"`
 		Status      int16  `json:"status"`
 	}
@@ -56,6 +58,8 @@ func (h *handler) CreateSeries(c echo.Context) error {
 		StartAt:     startAt,
 		EndAt:       endAt,
 		PriceRub:    raw.PriceRub,
+		IsRating:    raw.IsRating,
+		IsClubOnly:  raw.IsClubOnly,
 		IsClosed:    raw.IsClosed,
 		GameType:    types.GameTypeSportMafia,
 		Status:      types.SeriesStatus(raw.Status),

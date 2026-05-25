@@ -22,13 +22,18 @@ import (
 // @Failure 500 {object} dto.HTTPStatus
 // @Router /api/v1/club/{id} [delete]
 func (h *handler) Delete(c echo.Context) error {
+	requesterID, ok := c.Get("user_id").(uuid.UUID)
+	if !ok || requesterID == uuid.Nil {
+		return c.JSON(http.StatusUnauthorized, dto.HTTPStatus{Code: http.StatusUnauthorized, Message: "unauthorized"})
+	}
+
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
 	}
 
-	if err := h.clubService.Delete(c.Request().Context(), &dto.DeleteClubRequest{ID: id}); err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
+	if err := h.clubService.DeleteByManager(c.Request().Context(), requesterID, &dto.DeleteClubRequest{ID: id}); err != nil {
+		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
 	}
 	return c.NoContent(http.StatusNoContent)
 }

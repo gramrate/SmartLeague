@@ -13,8 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Crown, UserX, Ban } from "lucide-react";
+import { fmtDateRange } from "@/lib/format";
 
 export const Route = createFileRoute("/clubs/$id/manage")({ component: ManageClubPage });
 
@@ -22,6 +25,7 @@ function ManageClubPage() {
   const { id } = Route.useParams();
   const me = useAuthStore((s) => s.me);
   const status = useAuthStore((s) => s.status);
+  const refreshMe = useAuthStore((s) => s.refreshMe);
   const navigate = useNavigate();
   const qc = useQueryClient();
   const canManage = canManageClub(me, id);
@@ -33,18 +37,45 @@ function ManageClubPage() {
 
   const club = useQuery({ queryKey: ["club", id], queryFn: () => clubsApi.get(id) });
   const members = useQuery({ queryKey: ["club", id, "members"], queryFn: () => clubsApi.members(id) });
-  const series = useQuery({ queryKey: ["club", id, "series"], queryFn: () => clubsApi.series(id) });
+  const series = useQuery({
+    queryKey: ["club", id, "series", "all"],
+    queryFn: async () => {
+      const limit = 200;
+      let offset = 0;
+      const all: any[] = [];
+      for (;;) {
+        const page = await clubsApi.series(id, limit, offset);
+        all.push(...(page.items ?? []));
+        if (!page.pagination?.has_next) break;
+        offset += limit;
+      }
+      all.sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
+      return { items: all };
+    },
+  });
   const games = useQuery({
     queryKey: ["club", id, "manage-games", series.data?.items?.map((s) => s.id).join(",") ?? ""],
     enabled: !!series.data?.items?.length,
     queryFn: async () => {
       const items = series.data?.items ?? [];
-      const responses = await Promise.all(items.map((s) => seriesApi.games(s.id).catch(() => null)));
-      return responses.flatMap((res, i) => (res?.items ?? []).map((g) => ({
-        ...g,
-        _seriesId: items[i].id,
-        _seriesName: items[i].name,
-      })));
+      const seriesGames = await Promise.all(items.map(async (s) => {
+        const limit = 200;
+        let offset = 0;
+        const allGames: any[] = [];
+        for (;;) {
+          const page = await seriesApi.games(s.id, limit, offset).catch(() => null);
+          if (!page) break;
+          allGames.push(...(page.items ?? []));
+          if (!page.pagination?.has_next) break;
+          offset += limit;
+        }
+        return allGames.map((g) => ({
+          ...g,
+          _seriesId: s.id,
+          _seriesName: s.name,
+        }));
+      }));
+      return seriesGames.flat();
     },
   });
 
@@ -63,6 +94,7 @@ function ManageClubPage() {
       await clubsApi.update(id, { name, description });
       qc.invalidateQueries({ queryKey: ["club", id] });
       toast.success("Клуб обновлен");
+      navigate({ to: "/clubs/$id", params: { id } });
     } catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
   };
 
@@ -70,9 +102,16 @@ function ManageClubPage() {
   const president = allMembers.find((m) => m.club_state === ClubState.President);
   const others = allMembers.filter((m) => m.id !== president?.id);
   const [presidentTargetId, setPresidentTargetId] = useState<string>("");
+  const [presidentTargetQuery, setPresidentTargetQuery] = useState("");
+  const [presidentDropdownOpen, setPresidentDropdownOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferring, setTransferring] = useState(false);
+  const [deletingClub, setDeletingClub] = useState(false);
   useEffect(() => {
-    if (!presidentTargetId && others.length > 0) setPresidentTargetId(others[0].id);
-  }, [others, presidentTargetId]);
+    if (!transferOpen) return;
+    setPresidentTargetId("");
+    setPresidentTargetQuery("");
+  }, [transferOpen]);
 
   const setRole = async (memberId: string, state: ClubState) => {
     try {
@@ -92,9 +131,20 @@ function ManageClubPage() {
     catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
   };
   const promoteLeader = async (memberId: string) => {
-    if (!confirm("Передать президентство этому участнику? Вы станете лидером.")) return;
-    try { await clubsApi.setLeader(id, memberId); qc.invalidateQueries({ queryKey: ["club", id, "members"] }); toast.success("Президентство передано"); }
+    if (!confirm("Передать президентство выбранному участнику? Вы станете лидером.")) return;
+    setTransferring(true);
+    try {
+      await clubsApi.setLeader(id, memberId);
+      await refreshMe();
+      qc.invalidateQueries({ queryKey: ["club", id] });
+      qc.invalidateQueries({ queryKey: ["club", id, "members"] });
+      qc.invalidateQueries({ queryKey: ["club", id, "series"] });
+      qc.invalidateQueries({ queryKey: ["club", id, "manage-games"] });
+      toast.success("Президентство передано");
+      setTransferOpen(false);
+    }
     catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
+    finally { setTransferring(false); }
   };
   const deleteSeries = async (sid: string) => {
     if (!confirm("Удалить эту серию?")) return;
@@ -184,7 +234,11 @@ function ManageClubPage() {
           <ul className="divide-y divide-border/40">
             {series.data.items.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-3">
-                <Link to="/series/$id" params={{ id: s.id }} className="hover:text-primary">{s.name}</Link>
+                <div>
+                  <Link to="/series/$id" params={{ id: s.id }} className="hover:text-primary">{s.name}</Link>
+                  <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
+                  <p className="text-xs text-muted-foreground">{s.is_rating ? "На рейтинг" : "Без рейтинга"}</p>
+                </div>
                 <Button size="sm" variant="outline" onClick={() => deleteSeries(s.id)}>Удалить</Button>
               </li>
             ))}
@@ -205,10 +259,12 @@ function ManageClubPage() {
                     {g.name || `Игра #${g.number}`}
                   </Link>
                   <p className="text-xs text-muted-foreground">
+                    Серия:
+                    {" "}
                     <Link to="/series/$id" params={{ id: g._seriesId }} className="hover:underline">
                       {g._seriesName}
                     </Link>
-                    {" · #"}
+                    {" · Игра #"}
                     {g.number}
                   </p>
                 </div>
@@ -219,47 +275,109 @@ function ManageClubPage() {
         )}
       </section>
 
-      <section className="mt-8 rounded-2xl border border-destructive/40 bg-card/60 p-6">
-        <h2 className="mb-4 font-display text-lg font-semibold text-destructive">Опасные действия</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          {isPresident && (
-            <>
-              <Select value={presidentTargetId} onValueChange={setPresidentTargetId}>
-                <SelectTrigger className="h-9 w-[260px]">
-                  <SelectValue placeholder="Выберите участника" />
-                </SelectTrigger>
-                <SelectContent>
-                  {others.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{displayUserName(m)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                disabled={!presidentTargetId}
-                onClick={() => presidentTargetId && promoteLeader(presidentTargetId)}
-              >
-                Передать президентство
-              </Button>
-            </>
-          )}
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              if (!confirm("Удалить клуб? Это действие необратимо.")) return;
-              try {
-                await clubsApi.delete(id);
-                toast.success("Клуб удален");
-                navigate({ to: "/clubs" });
-              } catch (e) {
-                toast.error(e instanceof ApiError ? e.message : "Ошибка");
-              }
-            }}
-          >
-            Удалить клуб
-          </Button>
-        </div>
-      </section>
+      {isPresident && (
+        <section className="mt-8 rounded-2xl border border-destructive/40 bg-card/60 p-6">
+          <h2 className="mb-4 font-display text-lg font-semibold text-destructive">Опасные действия</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={() => setTransferOpen(true)} disabled={!others.length}>
+              Передать президентство
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Удалить клуб</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Удалить клуб?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Это действие необратимо.
+                    {" "}
+                    При удалении клуба президентство передастся случайному лидеру, если лидеров нет — случайному резиденту, если резидентов нет — случайному участнику.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={deletingClub}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setDeletingClub(true);
+                      try {
+                        await clubsApi.delete(id);
+                        toast.success("Клуб удален");
+                        navigate({ to: "/clubs" });
+                      } catch (err) {
+                        toast.error(err instanceof ApiError ? err.message : "Ошибка");
+                      } finally {
+                        setDeletingClub(false);
+                      }
+                    }}
+                  >
+                    {deletingClub ? "Удаление..." : "Удалить"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </section>
+      )}
+
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Передать президентство</DialogTitle>
+            <DialogDescription>
+              Выберите участника клуба и нажмите кнопку передачи.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Новый президент</Label>
+            <div className="relative">
+              <Input
+                value={presidentTargetQuery}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPresidentTargetQuery(value);
+                  setPresidentDropdownOpen(true);
+                  const exact = others.find((m) => displayUserName(m).toLowerCase() === value.trim().toLowerCase());
+                  setPresidentTargetId(exact?.id ?? "");
+                }}
+                onFocus={() => setPresidentDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setPresidentDropdownOpen(false), 120)}
+                placeholder="Введите или выберите участника"
+                className="h-9"
+              />
+              {presidentDropdownOpen && (
+                <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
+                  {others
+                    .filter((m) => displayUserName(m).toLowerCase().includes(presidentTargetQuery.trim().toLowerCase()))
+                    .map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className="block w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setPresidentTargetId(m.id);
+                          setPresidentTargetQuery(displayUserName(m));
+                          setPresidentDropdownOpen(false);
+                        }}
+                      >
+                        {displayUserName(m)}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransferOpen(false)}>Отмена</Button>
+            <Button disabled={!presidentTargetId || transferring} onClick={() => presidentTargetId && promoteLeader(presidentTargetId)}>
+              {transferring ? "Передача..." : "Передать"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }

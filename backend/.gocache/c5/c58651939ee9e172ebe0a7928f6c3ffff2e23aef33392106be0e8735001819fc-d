@@ -1,0 +1,16 @@
+./club.go
+./config.go
+./config_interfaces.go
+./cookie.go
+./form_decoder.go
+./game.go
+./jwt.go
+./logger.go
+./minio.go
+./redis.go
+./series.go
+./service_provider.go
+./sql_db.go
+./token.go
+./user.go
+./validator.go

@@ -17,6 +17,7 @@ type clubService interface {
 	Update(ctx context.Context, req *dto.UpdateClubRequest) (*dto.UpdateClubResponse, error)
 	UpdateByManager(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateClubRequest) (*dto.UpdateClubResponse, error)
 	Delete(ctx context.Context, req *dto.DeleteClubRequest) error
+	DeleteByManager(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteClubRequest) error
 	GetMembers(ctx context.Context, req *dto.GetClubMembersRequest) (*dto.GetClubMembersResponse, error)
 	Join(ctx context.Context, req *dto.JoinClubRequest) error
 	Leave(ctx context.Context, req *dto.LeaveClubRequest) error

@@ -1,0 +1,8 @@
+./http.go
+./json_info.go
+./jwt.go
+./logger.go
+./mail.go
+./minio.go
+./pg.go
+./redis.go

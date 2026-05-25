@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS series (
 	end_at timestamptz NOT NULL,
 	description text NULL,
 	price_rub integer NOT NULL DEFAULT 0,
+	is_rating boolean NOT NULL DEFAULT false,
+	is_club_only boolean NOT NULL DEFAULT false,
 	is_closed boolean NOT NULL DEFAULT false,
 	game_type smallint NOT NULL DEFAULT 0,
 	status smallint NOT NULL DEFAULT 0,

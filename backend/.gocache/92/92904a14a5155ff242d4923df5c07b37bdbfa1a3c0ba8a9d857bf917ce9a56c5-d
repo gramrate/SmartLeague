@@ -1,0 +1,3 @@
+./config.go
+./generate.go
+./parse.go

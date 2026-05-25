@@ -23,10 +23,8 @@ type RegisterUserRequest struct {
 	Nickname    *string     `json:"nickname,omitempty" validate:"omitempty,min=1,max=100" example:"mishmish"`
 	Name        string      `json:"name" validate:"required,min=1,max=100" example:"Ivan"`
 	ShowName    *bool       `json:"show_name,omitempty" validate:"omitempty" example:"true"`
-	Description *string     `json:"description,omitempty" validate:"omitempty,max=2000" example:"About me"`
 	Email       string      `json:"email" validate:"required,email,min=6,max=254" example:"user@example.com"`
 	Password    string      `json:"password" validate:"required,min=8,max=100" example:"SecurePass123!" format:"password"`
-	ClubID      *uuid.UUID  `json:"club_id,omitempty" validate:"omitempty,uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Role        *types.Role `json:"role,omitempty" validate:"omitempty,role" swaggerignore:"true"`
 }
 

@@ -22,8 +22,8 @@ func (s *userService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		PasswordHash: passwordHash,
 		Name:         req.Name,
 		ShowName:     boolOrDefault(req.ShowName, true),
-		Description:  req.Description,
-		ClubID:       req.ClubID,
+		Description:  nil,
+		ClubID:       nil,
 		ClubState:    types.ClubStateNone,
 		Role:         types.RoleUser,
 	}

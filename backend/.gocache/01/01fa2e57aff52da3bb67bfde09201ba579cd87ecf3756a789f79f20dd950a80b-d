@@ -1,0 +1,7 @@
+./club.go
+./game.go
+./ping.go
+./series.go
+./status.go
+./token.go
+./user.go

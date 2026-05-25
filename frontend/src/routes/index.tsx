@@ -11,8 +11,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const clubs = useQuery({ queryKey: ["clubs", "preview"], queryFn: () => clubsApi.all(6, 0), retry: 0 });
-  const series = useQuery({ queryKey: ["series", "preview"], queryFn: () => seriesApi.all(6, 0), retry: 0 });
+  const clubs = useQuery({ queryKey: ["clubs", "preview"], queryFn: () => clubsApi.all({ limit: 6, offset: 0 }), retry: 0 });
+  const series = useQuery({ queryKey: ["series", "preview"], queryFn: () => seriesApi.all({ limit: 6, offset: 0 }), retry: 0 });
 
   return (
     <PageShell>

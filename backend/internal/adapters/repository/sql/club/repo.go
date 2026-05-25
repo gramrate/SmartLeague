@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -58,7 +59,7 @@ WHERE id=$1
 	return &out, nil
 }
 
-func (r *Repo) List(ctx context.Context, limit, offset int) ([]*model.Club, int, error) {
+func (r *Repo) List(ctx context.Context, query *string, limit, offset int) ([]*model.Club, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -66,17 +67,28 @@ func (r *Repo) List(ctx context.Context, limit, offset int) ([]*model.Club, int,
 		offset = 0
 	}
 
+	where := "1=1"
+	args := make([]any, 0, 3)
+	if query != nil && *query != "" {
+		where += " AND (LOWER(name) LIKE LOWER($1) OR LOWER(COALESCE(description, '')) LIKE LOWER($1))"
+		args = append(args, "%"+*query+"%")
+	}
+
 	var total int
-	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM clubs`).Scan(&total); err != nil {
+	countQuery := fmt.Sprintf(`SELECT count(*) FROM clubs WHERE %s`, where)
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
+	listQuery := fmt.Sprintf(`
 SELECT id, creator_id, name, description, created_at, updated_at
 FROM clubs
+WHERE %s
 ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
-`, limit, offset)
+LIMIT $%d OFFSET $%d
+`, where, len(args)+1, len(args)+2)
+	args = append(args, limit, offset)
+	rows, err := r.db.QueryContext(ctx, listQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -133,7 +145,25 @@ RETURNING id, creator_id, name, description, created_at, updated_at
 }
 
 func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
-	res, err := r.db.ExecContext(ctx, `DELETE FROM clubs WHERE id=$1`, id)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Detach all members from club and reset their club state.
+	// If some member records are already missing, UPDATE just skips them.
+	if _, err := tx.ExecContext(ctx, `
+UPDATE profiles
+SET club_id=NULL,
+    club_state=$2,
+    updated_at=now()
+WHERE club_id=$1
+`, id, int16(types.ClubStateNone)); err != nil {
+		return err
+	}
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM clubs WHERE id=$1`, id)
 	if err != nil {
 		return err
 	}
@@ -144,7 +174,7 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	if affected == 0 {
 		return errorz.ClubNotFound
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (r *Repo) SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *uuid.UUID, state types.ClubState) error {
@@ -250,6 +280,50 @@ WHERE id=$1 AND club_id=$2
 		return errorz.UserNotFound
 	}
 	return nil
+}
+
+func (r *Repo) TransferPresidency(ctx context.Context, clubID uuid.UUID, fromPresidentID uuid.UUID, toPresidentID uuid.UUID) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Current president -> leader
+	res, err := tx.ExecContext(ctx, `
+UPDATE profiles
+SET club_state=$3, updated_at=now()
+WHERE id=$1 AND club_id=$2
+`, fromPresidentID, clubID, int16(types.ClubStateLeader))
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errorz.UserNotFound
+	}
+
+	// Selected member -> president
+	res, err = tx.ExecContext(ctx, `
+UPDATE profiles
+SET club_state=$3, updated_at=now()
+WHERE id=$1 AND club_id=$2
+`, toPresidentID, clubID, int16(types.ClubStatePresident))
+	if err != nil {
+		return err
+	}
+	affected, err = res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return errorz.UserNotFound
+	}
+
+	return tx.Commit()
 }
 
 func (r *Repo) IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error) {

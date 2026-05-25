@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { fromInputDate } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -27,6 +28,9 @@ function CreateSeriesPage() {
   const [description, setDescription] = useState("");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
+  const [priceRub, setPriceRub] = useState("0");
+  const [isRating, setIsRating] = useState(false);
+  const [isClubOnly, setIsClubOnly] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (!canCreate) return null;
@@ -40,6 +44,9 @@ function CreateSeriesPage() {
         description: description.trim(),
         start_at: fromInputDate(startAt),
         end_at: fromInputDate(endAt),
+        price_rub: Math.max(0, Number(priceRub || 0)),
+        is_rating: isRating,
+        is_club_only: isClubOnly,
       });
       toast.success("Серия создана");
       navigate({ to: "/series/$id", params: { id: s.id } });
@@ -59,6 +66,18 @@ function CreateSeriesPage() {
             <div className="space-y-1.5"><Label>Начало</Label><Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} required /></div>
             <div className="space-y-1.5"><Label>Конец</Label><Input type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} required /></div>
           </div>
+          <div className="space-y-1.5">
+            <Label>Стоимость (₽)</Label>
+            <Input type="number" min={0} step={1} value={priceRub} onChange={(e) => setPriceRub(e.target.value)} />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <Checkbox checked={isRating} onCheckedChange={(v) => setIsRating(!!v)} />
+            На рейтинг
+          </label>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <Checkbox checked={isClubOnly} onCheckedChange={(v) => setIsClubOnly(!!v)} />
+            Только для участников клуба
+          </label>
           <Button type="submit" disabled={busy || !name || !description || !startAt || !endAt}>
             {busy ? "Создание…" : "Создать серию"}
           </Button>

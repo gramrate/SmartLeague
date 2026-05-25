@@ -8,10 +8,11 @@ import { ClubState } from "@/types/api";
 import { displayUserName, canManageClub } from "@/lib/roles";
 import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
-import { fmtDateRange } from "@/lib/format";
-import { Settings, UserPlus } from "lucide-react";
+import { fmtDateRange, fmtRub } from "@/lib/format";
+import { Crown, Settings, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/clubs/$id")({ component: ClubPage });
 
@@ -39,6 +40,7 @@ function ClubPage() {
 
   const canManage = canManageClub(me, id);
   const isInClub = me?.club_id === id;
+  const isPresident = isInClub && me?.club_state === ClubState.President;
   const canJoin = me && !me.club_id;
 
   const onJoin = async () => {
@@ -47,6 +49,7 @@ function ClubPage() {
       const u = await authApi.me();
       setMe(u);
       qc.invalidateQueries({ queryKey: ["club", id, "members"] });
+      qc.invalidateQueries({ queryKey: ["series"] });
       toast.success("Вы вступили в клуб");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Не удалось вступить в клуб");
@@ -60,6 +63,18 @@ function ClubPage() {
       toast.success("Серия удалена");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Ошибка");
+    }
+  };
+  const leaveClub = async () => {
+    try {
+      await clubsApi.leave();
+      const u = await authApi.me();
+      setMe(u);
+      qc.invalidateQueries({ queryKey: ["series"] });
+      qc.invalidateQueries({ queryKey: ["club"] });
+      toast.success("Вы покинули клуб");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Не удалось выйти из клуба");
     }
   };
 
@@ -95,7 +110,7 @@ function ClubPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-xl font-semibold">Серии</h2>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" asChild><Link to="/clubs/$id/series" params={{ id }}>Все серии</Link></Button>
+                <Button size="sm" variant="outline" asChild><Link to="/clubs/$id/series" params={{ id }}>Посмотреть все серии клуба</Link></Button>
                 {canManage && (
                   <Button size="sm" asChild><Link to="/series/create">Создать серию</Link></Button>
                 )}
@@ -104,11 +119,21 @@ function ClubPage() {
             {series.isLoading ? <LoadingBlock /> :
               !series.data?.items?.length ? <EmptyBlock title="Серий пока нет" /> : (
               <div className="space-y-2">
-                {series.data.items.map((s) => (
+                {series.data.items.slice(0, 3).map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/40 p-3">
                     <Link to="/series/$id" params={{ id: s.id }} className="min-w-0 flex-1 hover:text-primary">
                       <p className="font-medium">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
+                          {s.is_rating ? "На рейтинг" : "Без рейтинга"}
+                        </span>
+                        {Number(s.price_rub ?? 0) > 0 && (
+                          <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                            Платно · {fmtRub(s.price_rub)}
+                          </span>
+                        )}
+                      </div>
                     </Link>
                     {canManage && (
                       <Button size="sm" variant="outline" onClick={() => void deleteSeries(s.id)}>
@@ -124,7 +149,7 @@ function ClubPage() {
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-xl font-semibold">Текущие игры</h2>
-              <Button size="sm" variant="outline" asChild><Link to="/clubs/$id/games" params={{ id }}>Все игры</Link></Button>
+              <Button size="sm" variant="outline" asChild><Link to="/clubs/$id/games" params={{ id }}>Посмотреть все игры клуба</Link></Button>
             </div>
             {games.isLoading ? <LoadingBlock /> :
               !games.data?.length ? <EmptyBlock title="Игр пока нет" /> : (
@@ -149,20 +174,74 @@ function ClubPage() {
             <h2 className="mb-4 font-display text-lg font-semibold">Участники</h2>
             {members.isLoading ? <LoadingBlock /> :
               !members.data?.items?.length ? <p className="text-sm text-muted-foreground">Участников пока нет</p> : (
-              <ul className="space-y-2">
-                {members.data.items.map((m) => (
-                  <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-                    <Link to="/user/$id" params={{ id: m.id }} className="truncate hover:text-primary">
-                      {displayUserName(m)}
-                    </Link>
-                    <RoleBadge state={(m.club_state ?? ClubState.None) as ClubState} />
-                  </li>
-                ))}
-              </ul>
+              <div className="space-y-4">
+                {(() => {
+                  const president = members.data.items.find(
+                    (m) => (m.club_state ?? ClubState.None) === ClubState.President && m.club_id === club.data?.id,
+                  );
+                  return president ? (
+                    <section className="rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/15 to-card/60 p-4 shadow-[var(--shadow-glow)]">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <Crown className="h-6 w-6 text-primary" />
+                          <div>
+                            <p className="text-xs uppercase tracking-widest text-primary">Президент</p>
+                            <Link to="/user/$id" params={{ id: president.id }} className="font-display text-xl font-bold hover:underline">
+                              {displayUserName(president)}
+                            </Link>
+                          </div>
+                        </div>
+                        <RoleBadge state={ClubState.President} />
+                      </div>
+                    </section>
+                  ) : null;
+                })()}
+                <ul className="space-y-2">
+                  {members.data.items
+                    .filter((m) => !((m.club_state ?? ClubState.None) === ClubState.President && m.club_id === club.data?.id))
+                    .map((m) => (
+                      <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                        <Link to="/user/$id" params={{ id: m.id }} className="truncate hover:text-primary">
+                          {displayUserName(m)}
+                        </Link>
+                        {m.club_id === club.data?.id && (m.club_state ?? ClubState.None) !== ClubState.None ? (
+                          <RoleBadge state={(m.club_state ?? ClubState.None) as ClubState} />
+                        ) : (
+                          <span />
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              </div>
             )}
           </div>
         </aside>
       </div>
+      {isInClub && !isPresident && (
+        <section className="mt-8 rounded-2xl border border-border/60 bg-card/60 p-6">
+          <div className="flex justify-center">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="w-full max-w-sm">Покинуть клуб</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Покинуть клуб?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Вы потеряете доступ к клубным сериям и играм только для участников клуба.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void leaveClub()}>
+                    Покинуть
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </section>
+      )}
     </PageShell>
   );
 }

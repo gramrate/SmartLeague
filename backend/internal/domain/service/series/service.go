@@ -18,8 +18,8 @@ type repo interface {
 
 	CreateSeries(ctx context.Context, s model.Series) (*model.Series, error)
 	GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error)
-	ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeClosed bool, limit, offset int) ([]*model.Series, int, error)
-	ListAllSeries(ctx context.Context, limit, offset int, showPast, showClosed bool) ([]*model.SeriesListItem, int, error)
+	ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeClosed, includeClubOnly bool, limit, offset int) ([]*model.Series, int, error)
+	ListAllSeries(ctx context.Context, limit, offset int, query, clubQuery, from, to *string, isRating *bool, requesterClubID *uuid.UUID, showPast, showClosed bool) ([]*model.SeriesListItem, int, error)
 	UpdateSeries(ctx context.Context, id uuid.UUID, patch model.SeriesUpdatePatch) (*model.Series, error)
 	DeleteSeries(ctx context.Context, id uuid.UUID) error
 
@@ -48,6 +48,20 @@ func maxParticipantsForGameType(gameType types.GameType) int {
 	return maxParticipantsSportMafia
 }
 
+func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, series *model.Series) (bool, error) {
+	if !series.IsClubOnly {
+		return true, nil
+	}
+	if requesterID == nil {
+		return false, nil
+	}
+	clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if err != nil {
+		return false, err
+	}
+	return clubID != nil && *clubID == series.ClubID, nil
+}
+
 func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 	return &dto.Series{
 		ID:          s.ID,
@@ -58,6 +72,8 @@ func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 		StartAt:     s.StartAt,
 		EndAt:       s.EndAt,
 		PriceRub:    s.PriceRub,
+		IsRating:    s.IsRating,
+		IsClubOnly:  s.IsClubOnly,
 		IsClosed:    s.IsClosed,
 		GameType:    s.GameType,
 		Status:      s.Status,
@@ -96,6 +112,8 @@ func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		StartAt:     req.StartAt,
 		EndAt:       req.EndAt,
 		PriceRub:    req.PriceRub,
+		IsRating:    req.IsRating != nil && *req.IsRating,
+		IsClubOnly:  req.IsClubOnly != nil && *req.IsClubOnly,
 		IsClosed:    req.IsClosed,
 		GameType:    types.GameTypeSportMafia,
 		Status:      req.Status,
@@ -112,6 +130,13 @@ func (s *Service) GetSeries(ctx context.Context, requesterID *uuid.UUID, req *dt
 	ser, err := s.repo.GetSeriesByID(ctx, req.ID)
 	if err != nil {
 		return nil, err
+	}
+	canAccess, err := s.canAccessSeries(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+	if !canAccess {
+		return nil, errorz.Unauthorized
 	}
 
 	var creatorID *uuid.UUID
@@ -150,7 +175,7 @@ func (s *Service) GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req
 		isLeader = includeClosed && canManageClub(clubState)
 	}
 
-	items, total, err := s.repo.ListSeriesByClub(ctx, req.ClubID, includeClosed, limit, offset)
+	items, total, err := s.repo.ListSeriesByClub(ctx, req.ClubID, includeClosed, includeClosed, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +208,7 @@ func (s *Service) GetClubSeries(ctx context.Context, requesterID *uuid.UUID, req
 	}, nil
 }
 
-func (s *Service) GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest) (*dto.GetAllSeriesResponse, error) {
+func (s *Service) GetAllSeries(ctx context.Context, requesterID *uuid.UUID, req *dto.GetAllSeriesRequest) (*dto.GetAllSeriesResponse, error) {
 	limit := 10
 	offset := 0
 	showPast := false
@@ -201,7 +226,16 @@ func (s *Service) GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest
 		showClosed = *req.ShowClosed
 	}
 
-	items, total, err := s.repo.ListAllSeries(ctx, limit, offset, showPast, showClosed)
+	var requesterClubID *uuid.UUID
+	if requesterID != nil {
+		clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+		if err != nil {
+			return nil, err
+		}
+		requesterClubID = clubID
+	}
+
+	items, total, err := s.repo.ListAllSeries(ctx, limit, offset, req.Query, req.ClubQuery, req.From, req.To, req.IsRating, requesterClubID, showPast, showClosed)
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +250,9 @@ func (s *Service) GetAllSeries(ctx context.Context, req *dto.GetAllSeriesRequest
 			Description: it.Description,
 			StartAt:     it.StartAt,
 			EndAt:       it.EndAt,
+			PriceRub:    it.PriceRub,
+			IsRating:    it.IsRating,
+			IsClubOnly:  it.IsClubOnly,
 			IsClosed:    it.IsClosed,
 			GamesCount:  it.GamesCount,
 		})
@@ -259,6 +296,8 @@ func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		StartAt:     req.StartAt,
 		EndAt:       req.EndAt,
 		PriceRub:    req.PriceRub,
+		IsRating:    req.IsRating,
+		IsClubOnly:  req.IsClubOnly,
 		IsClosed:    req.IsClosed,
 		Status:      req.Status,
 	}
@@ -287,9 +326,16 @@ func (s *Service) DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *
 }
 
 func (s *Service) GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error) {
-	_ = requesterID
-	if _, err := s.repo.GetSeriesByID(ctx, req.SeriesID); err != nil {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
 		return nil, err
+	}
+	canAccess, err := s.canAccessSeries(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+	if !canAccess {
+		return nil, errorz.Unauthorized
 	}
 
 	limit := 10
@@ -335,6 +381,15 @@ func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
 	if err != nil {
 		return err
 	}
+	if ser.IsClubOnly {
+		profileClubID, _, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
+		if err != nil {
+			return err
+		}
+		if profileClubID == nil || *profileClubID != ser.ClubID {
+			return errorz.Unauthorized
+		}
+	}
 
 	if ser.IsClosed {
 		return errorz.SeriesJoinClosed
@@ -364,9 +419,16 @@ func (s *Service) Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error 
 }
 
 func (s *Service) GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error) {
-	_ = requesterID
-	if _, err := s.repo.GetSeriesByID(ctx, req.SeriesID); err != nil {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
 		return nil, err
+	}
+	canAccess, err := s.canAccessSeries(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+	if !canAccess {
+		return nil, errorz.Unauthorized
 	}
 	limit := 10
 	offset := 0

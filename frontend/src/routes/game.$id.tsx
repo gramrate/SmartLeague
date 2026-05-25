@@ -5,7 +5,6 @@ import { gamesApi, seriesApi } from "@/lib/api";
 import { LoadingBlock, ErrorBlock } from "@/components/site/States";
 import { displayUserName, canManageClub } from "@/lib/roles";
 import { useAuthStore } from "@/lib/auth-store";
-import { UserLink } from "@/components/site/UserLink";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { useMemo } from "react";
@@ -50,8 +49,6 @@ function GamePage() {
   }
 
   const results = (game.data.results ?? []).slice().sort((a, b) => (a.place ?? 99) - (b.place ?? 99));
-  const pids = game.data.participant_ids ?? [];
-
   return (
     <PageShell>
       <PageHeader
@@ -74,20 +71,21 @@ function GamePage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2 rounded-2xl border border-border/60 bg-card/60 p-6">
+      <div className="grid gap-6">
+        <section className="w-full rounded-2xl border border-border/60 bg-card/60 p-6">
           <h2 className="mb-4 font-display text-xl font-semibold">Результаты</h2>
           {results.length === 0 ? (
             <p className="text-sm text-muted-foreground">Результатов пока нет.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-xs">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="border-b border-border/60 text-left text-xs uppercase text-muted-foreground">
                     <th className="py-2 pr-2">Место</th>
                     <th className="py-2 pr-2">Никнейм</th>
                     <th className="py-2 pr-2">Роль</th>
                     <th className="py-2 pr-2">Лучший ход</th>
+                    <th className="py-2 pr-2">Компенсация</th>
                     <th className="py-2 pr-2">ЖК</th>
                     <th className="py-2 pr-2">Удаление</th>
                     <th className="py-2 pr-2">Доп балл</th>
@@ -105,6 +103,7 @@ function GamePage() {
                       </td>
                       <td className="py-2 pr-2 text-muted-foreground">{r.role ? (ROLE_LABEL[r.role] ?? r.role) : "—"}</td>
                       <td className="py-2 pr-2">{r.best_move ?? "—"}</td>
+                      <td className="py-2 pr-2">{r.compensation?.toFixed(2) ?? "—"}</td>
                       <td className="py-2 pr-2">{r.yellow_cards?.toFixed(2) ?? "—"}</td>
                       <td className="py-2 pr-2">{r.removed?.toFixed(2) ?? "—"}</td>
                       <td className="py-2 pr-2">{r.extra_points?.toFixed(2) ?? "—"}</td>
@@ -116,20 +115,6 @@ function GamePage() {
             </div>
           )}
         </section>
-
-        <aside className="rounded-2xl border border-border/60 bg-card/60 p-6">
-          <h2 className="mb-4 font-display text-lg font-semibold">Участники</h2>
-          {pids.length === 0 ? <p className="text-sm text-muted-foreground">Участников нет</p> : (
-            <ul className="space-y-2 text-sm">
-              {pids.map((pid, i) => (
-                <li key={pid} className="flex items-center gap-2">
-                  <span className="grid h-6 w-6 place-items-center rounded bg-secondary text-xs">{i + 1}</span>
-                  <UserLink userId={pid} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </aside>
       </div>
     </PageShell>
   );

@@ -1,0 +1,6 @@
+./club_state.go
+./game_status.go
+./game_types.go
+./mafia_role.go
+./roles.go
+./series_status.go

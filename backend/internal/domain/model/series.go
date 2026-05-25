@@ -16,6 +16,8 @@ type Series struct {
 	StartAt     time.Time
 	EndAt       time.Time
 	PriceRub    int
+	IsRating    bool
+	IsClubOnly  bool
 	IsClosed    bool
 	GameType    types.GameType
 	Status      types.SeriesStatus
@@ -29,6 +31,8 @@ type SeriesUpdatePatch struct {
 	StartAt     *time.Time
 	EndAt       *time.Time
 	PriceRub    *int
+	IsRating    *bool
+	IsClubOnly  *bool
 	IsClosed    *bool
 	GameType    *types.GameType
 	Status      *types.SeriesStatus
@@ -42,6 +46,9 @@ type SeriesListItem struct {
 	Description string
 	StartAt     time.Time
 	EndAt       time.Time
+	PriceRub    int
+	IsRating    bool
+	IsClubOnly  bool
 	IsClosed    bool
 	GamesCount  int
 }

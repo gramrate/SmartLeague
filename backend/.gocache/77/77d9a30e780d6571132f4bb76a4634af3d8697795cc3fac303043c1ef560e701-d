@@ -1,0 +1,12 @@
+./change_password.go
+./get_all_by_filter.go
+./get_by_id.go
+./get_me.go
+./get_user_games.go
+./get_user_series.go
+./handler.go
+./login.go
+./logout.go
+./register.go
+./update_current.go
+./update_each.go

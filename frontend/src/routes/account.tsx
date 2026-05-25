@@ -11,7 +11,7 @@ import { RoleBadge } from "@/components/site/RoleBadge";
 import { ClubState } from "@/types/api";
 import { authApi, clubsApi, ApiError } from "@/lib/api";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/account")({ component: AccountPage });
 
@@ -20,6 +20,7 @@ function AccountPage() {
   const status = useAuthStore((s) => s.status);
   const setMe = useAuthStore((s) => s.setMe);
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   useEffect(() => { if (status === "ready" && !me) navigate({ to: "/login" }); }, [me, status, navigate]);
 
@@ -56,14 +57,15 @@ function AccountPage() {
   };
 
   const leaveClub = async () => {
-    if (!confirm("Выйти из клуба?")) return;
     try {
       await clubsApi.leave();
       const u = await authApi.me();
       setMe(u);
+      qc.invalidateQueries({ queryKey: ["series"] });
+      qc.invalidateQueries({ queryKey: ["club"] });
       toast.success("Вы вышли из клуба");
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Ошибка");
+      toast.error(e instanceof ApiError ? e.message : "Не удалось выйти из клуба");
     }
   };
 
@@ -104,7 +106,7 @@ function AccountPage() {
                   {club.data?.name ?? "Ваш клуб"}
                 </Link>
                 <RoleBadge state={(me.club_state ?? ClubState.None) as ClubState} />
-                <Button variant="outline" size="sm" className="w-full" onClick={leaveClub}>Выйти из клуба</Button>
+                <Button size="sm" variant="outline" onClick={leaveClub}>Выйти из клуба</Button>
               </div>
             ) : (
               <div className="mt-2 space-y-2">

@@ -21,6 +21,7 @@ type RowState = {
   profile_id?: string;
   role?: MafiaRole;
   best_move?: string;
+  compensation: string;
   yellow_cards: string;
   removed: string;
   extra_points: string;
@@ -100,6 +101,7 @@ function ManageGamePage() {
         profile_id: pid,
         role: rr?.role ?? "civilian",
         best_move: rr?.best_move ?? "",
+        compensation: rr ? String(rr.compensation ?? 0) : "0",
         yellow_cards: rr ? String(rr.yellow_cards ?? 0) : "0",
         removed: rr ? String(rr.removed ?? 0) : "0",
         extra_points: rr ? String(rr.extra_points ?? 0) : "0",
@@ -138,6 +140,7 @@ function ManageGamePage() {
         profile_id: hasManualNickname ? pr.profile_id : (pr.profile_id ?? r.profile_id),
         role: pr.role ?? r.role,
         best_move: pr.best_move ?? r.best_move,
+        compensation: pr.compensation ?? r.compensation,
         yellow_cards: pr.yellow_cards ?? r.yellow_cards,
         removed: pr.removed ?? r.removed,
         extra_points: pr.extra_points ?? r.extra_points,
@@ -179,6 +182,7 @@ function ManageGamePage() {
     profile_id: r.profile_id,
     role: r.role,
     best_move: normalizeBestMove(r.best_move),
+    compensation: toNum(r.compensation),
     yellow_cards: toNum(r.yellow_cards),
     removed: toNum(r.removed),
     extra_points: toNum(r.extra_points),
@@ -262,6 +266,7 @@ function ManageGamePage() {
                 <th className="px-2 py-2">Никнейм</th>
                 <th className="px-2 py-2">Роль</th>
                 <th className="w-24 px-2 py-2">Лучший ход</th>
+                <th className="px-2 py-2">Компенсация</th>
                 <th className="px-2 py-2">ЖК</th>
                 <th className="px-2 py-2">Удаление</th>
                 <th className="px-2 py-2">Доп балл</th>
@@ -328,6 +333,7 @@ function ManageGamePage() {
                       className="h-8"
                     />
                   </td>
+                  <td className="px-2 py-2"><Input value={r.compensation} onChange={(e) => setCell(r.slot, { compensation: e.target.value })} className="h-8" /></td>
                   <td className="px-2 py-2"><Input value={r.yellow_cards} onChange={(e) => setCell(r.slot, { yellow_cards: e.target.value })} className="h-8" /></td>
                   <td className="px-2 py-2"><Input value={r.removed} onChange={(e) => setCell(r.slot, { removed: e.target.value })} className="h-8" /></td>
                   <td className="px-2 py-2"><Input value={r.extra_points} onChange={(e) => setCell(r.slot, { extra_points: e.target.value })} className="h-8" /></td>

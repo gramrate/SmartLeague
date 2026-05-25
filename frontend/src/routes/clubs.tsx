@@ -6,9 +6,9 @@ import { LoadingBlock, ErrorBlock, EmptyBlock } from "@/components/site/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/auth-store";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
-import { includesCaseInsensitive } from "@/lib/search";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 
 export const Route = createFileRoute("/clubs")({ component: ClubsPage });
 
@@ -16,13 +16,14 @@ function ClubsPage() {
   const location = useLocation();
   const me = useAuthStore((s) => s.me);
   const [q, setQ] = useState("");
-  const { data, isLoading, error } = useQuery({ queryKey: ["clubs", "all"], queryFn: () => clubsApi.all(200, 0) });
-
-  const items = useMemo(() => {
-    const xs = data?.items ?? [];
-    if (!q.trim()) return xs;
-    return xs.filter((c) => includesCaseInsensitive(c.name, q) || includesCaseInsensitive(c.description, q));
-  }, [data, q]);
+  const debouncedQ = useDebouncedValue(q, 150);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const offset = (page - 1) * pageSize;
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["clubs", "all", debouncedQ, page],
+    queryFn: () => clubsApi.all({ q: debouncedQ || undefined, limit: pageSize, offset }),
+  });
 
   if (location.pathname !== "/clubs") {
     return <Outlet />;
@@ -42,12 +43,20 @@ function ClubsPage() {
         }
       />
       <div className="mb-6 max-w-md">
-        <Input placeholder="Поиск клубов…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Input
+          placeholder="Поиск клубов…"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setPage(1);
+          }}
+        />
       </div>
       {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :
-        items.length === 0 ? <EmptyBlock title="Клубы не найдены" /> : (
+        !data?.items?.length ? <EmptyBlock title="Клубы не найдены" /> : (
+        <>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((c) => (
+          {data.items.map((c) => (
             <Link key={c.id} to="/clubs/$id" params={{ id: c.id }}
               className="group rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:bg-card">
               <h3 className="font-display text-lg font-semibold group-hover:text-primary">{c.name}</h3>
@@ -55,6 +64,14 @@ function ClubsPage() {
             </Link>
           ))}
         </div>
+        <div className="mt-5 flex items-center justify-between text-sm text-muted-foreground">
+          <span>Страница {data.pagination.current_page} из {data.pagination.total_pages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={!data.pagination.has_previous || isLoading} onClick={() => setPage((p) => Math.max(1, p - 1))}>Назад</Button>
+            <Button variant="outline" size="sm" disabled={!data.pagination.has_next || isLoading} onClick={() => setPage((p) => p + 1)}>Далее</Button>
+          </div>
+        </div>
+        </>
       )}
     </PageShell>
   );

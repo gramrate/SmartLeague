@@ -3,7 +3,7 @@ import { PageShell, PageHeader } from "@/components/site/PageShell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { seriesApi, clubsApi, ApiError } from "@/lib/api";
 import { LoadingBlock, ErrorBlock, EmptyBlock } from "@/components/site/States";
-import { fmtDateRange } from "@/lib/format";
+import { fmtDateRange, fmtRub } from "@/lib/format";
 import { useAuthStore } from "@/lib/auth-store";
 import { canManageClub, displayUserName } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserLink } from "@/components/site/UserLink";
-import { GameStatus } from "@/types/api";
+import { ClubState, GameStatus } from "@/types/api";
+import { RoleBadge } from "@/components/site/RoleBadge";
 
 export const Route = createFileRoute("/series/$id")({ component: SeriesPage });
 
@@ -140,6 +141,16 @@ function SeriesPage() {
         )}
       </div>
       <p className="mb-6 text-sm text-muted-foreground">{fmtDateRange(series.start_at, series.end_at)}</p>
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        {Number(series.price_rub ?? 0) > 0 && (
+          <div className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+            Платно · {fmtRub(series.price_rub)}
+          </div>
+        )}
+        <div className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
+          {series.is_rating ? "На рейтинг" : "Без рейтинга"}
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="lg:col-span-2 space-y-6">
@@ -202,8 +213,13 @@ function SeriesPage() {
             {!full.data!.participants.items?.length ? <p className="text-sm text-muted-foreground">Участников нет</p> : (
               <ul className="space-y-2 text-sm">
                 {full.data!.participants.items.map((p) => (
-                  <li key={p.id}>
-                    <Link to="/user/$id" params={{ id: p.id }} className="hover:text-primary">{displayUserName(p)}</Link>
+                  <li key={p.id} className="flex items-center justify-between gap-2">
+                    <Link to="/user/$id" params={{ id: p.id }} className="truncate hover:text-primary">{displayUserName(p)}</Link>
+                    {p.club_id === series.club_id && (p.club_state ?? ClubState.None) !== ClubState.None ? (
+                      <RoleBadge state={(p.club_state ?? ClubState.None) as ClubState} />
+                    ) : (
+                      <span />
+                    )}
                   </li>
                 ))}
               </ul>

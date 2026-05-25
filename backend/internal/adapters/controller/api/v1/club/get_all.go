@@ -12,6 +12,7 @@ import (
 // @Summary Get clubs list
 // @Tags club
 // @Produce json
+// @Param q query string false "search by club name/description"
 // @Param limit query int false "limit"
 // @Param offset query int false "offset"
 // @Success 200 {object} dto.GetAllClubsResponse

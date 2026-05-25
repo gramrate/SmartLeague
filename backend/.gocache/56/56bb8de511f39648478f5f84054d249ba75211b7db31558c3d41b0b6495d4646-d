@@ -1,0 +1,12 @@
+./create_series.go
+./delete_series.go
+./game_get_delete.go
+./games.go
+./get_all_series.go
+./get_club_series.go
+./get_series.go
+./get_series_full.go
+./handler.go
+./helpers.go
+./participants.go
+./update_series.go

@@ -14,7 +14,7 @@ import (
 type clubRepo interface {
 	Create(ctx context.Context, c model.Club) (*model.Club, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Club, error)
-	List(ctx context.Context, limit, offset int) ([]*model.Club, int, error)
+	List(ctx context.Context, query *string, limit, offset int) ([]*model.Club, int, error)
 	Update(ctx context.Context, id uuid.UUID, patch model.ClubUpdatePatch) (*model.Club, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 
@@ -23,6 +23,7 @@ type clubRepo interface {
 
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
 	SetMemberState(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID, state types.ClubState) error
+	TransferPresidency(ctx context.Context, clubID uuid.UUID, fromPresidentID uuid.UUID, toPresidentID uuid.UUID) error
 	IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error)
 	BanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) error
 }
@@ -83,7 +84,7 @@ func (s *service) GetAll(ctx context.Context, req *dto.GetAllClubsRequest) (*dto
 		offset = *req.Offset
 	}
 
-	items, total, err := s.repo.List(ctx, limit, offset)
+	items, total, err := s.repo.List(ctx, req.Query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +145,17 @@ func (s *service) UpdateByManager(ctx context.Context, requesterID uuid.UUID, re
 }
 
 func (s *service) Delete(ctx context.Context, req *dto.DeleteClubRequest) error {
+	return s.repo.Delete(ctx, req.ID)
+}
+
+func (s *service) DeleteByManager(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteClubRequest) error {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if requesterClubID == nil || *requesterClubID != req.ID || requesterState != types.ClubStatePresident {
+		return errorz.Unauthorized
+	}
 	return s.repo.Delete(ctx, req.ID)
 }
 
@@ -249,7 +261,8 @@ func (s *service) SetLeader(ctx context.Context, requesterID uuid.UUID, clubID u
 	if memberClubID == nil || *memberClubID != clubID || memberState == types.ClubStateNone {
 		return errorz.InvalidRequest
 	}
-	return s.repo.SetMemberState(ctx, memberID, clubID, types.ClubStateLeader)
+	// Transfer presidency: requester becomes leader, selected member becomes president.
+	return s.repo.TransferPresidency(ctx, clubID, requesterID, memberID)
 }
 
 func (s *service) SetMemberRole(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID, state types.ClubState) error {

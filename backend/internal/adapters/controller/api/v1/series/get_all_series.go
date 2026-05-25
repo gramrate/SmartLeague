@@ -14,6 +14,11 @@ import (
 // @Produce json
 // @Param limit query int false "limit"
 // @Param offset query int false "offset"
+// @Param q query string false "search by series name"
+// @Param club query string false "search by club name"
+// @Param from query string false "filter start boundary, YYYY-MM-DD"
+// @Param to query string false "filter end boundary, YYYY-MM-DD"
+// @Param is_rating query boolean false "filter by rating flag (true/false)"
 // @Param show_past query boolean false "show past series (end_at < now)"
 // @Param show_closed query boolean false "show closed registration series (is_closed = true)"
 // @Success 200 {object} dto.GetAllSeriesResponse
@@ -29,7 +34,7 @@ func (h *handler) GetAllSeries(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	resp, err := h.seriesService.GetAllSeries(c.Request().Context(), &req)
+	resp, err := h.seriesService.GetAllSeries(c.Request().Context(), maybeRequesterID(c.Get("user_id")), &req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
 	}

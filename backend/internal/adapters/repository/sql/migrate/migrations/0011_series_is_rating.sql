@@ -1,0 +1,2 @@
+ALTER TABLE series
+	ADD COLUMN IF NOT EXISTS is_rating boolean NOT NULL DEFAULT false;

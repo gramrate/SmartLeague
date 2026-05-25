@@ -1,0 +1,6 @@
+./club.go
+./game.go
+./leaderboard.go
+./refresh_token.go
+./series.go
+./user.go

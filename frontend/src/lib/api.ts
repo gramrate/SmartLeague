@@ -133,8 +133,8 @@ export const usersApi = {
 
 // ---------- Clubs ----------
 export const clubsApi = {
-  all: (limit = 100, offset = 0) =>
-    apiFetch<Paged<Club>>("/api/v1/club/all", { query: { limit, offset } }),
+  all: (params?: { q?: string; limit?: number; offset?: number }) =>
+    apiFetch<Paged<Club>>("/api/v1/club/all", { query: params }),
   get: (id: string) => apiFetch<Club>(`/api/v1/club/${id}`),
   create: (data: CreateClubRequest) =>
     apiFetch<Club>("/api/v1/club", { method: "POST", body: data }),
@@ -162,8 +162,18 @@ export const clubsApi = {
 
 // ---------- Series ----------
 export const seriesApi = {
-  all: (limit = 100, offset = 0, show_past = false, show_closed = false) =>
-    apiFetch<Paged<AllSeriesItem>>("/api/v1/series/all", { query: { limit, offset, show_past, show_closed } }),
+  all: (params?: {
+    q?: string;
+    club?: string;
+    from?: string;
+    to?: string;
+    is_rating?: boolean;
+    show_past?: boolean;
+    show_closed?: boolean;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<Paged<AllSeriesItem>>("/api/v1/series/all", { query: params }),
   get: (id: string) => apiFetch<Series>(`/api/v1/series/${id}`),
   full: (id: string) => apiFetch<SeriesFull>(`/api/v1/series/${id}/full`),
   create: (clubId: string, data: CreateSeriesRequest) => {

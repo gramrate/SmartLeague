@@ -102,6 +102,7 @@ type ManageGameRow struct {
 	ProfileID   *uuid.UUID        `json:"profile_id,omitempty"`
 	Role        *types.MafiaRole  `json:"role,omitempty"`
 	BestMove    *string           `json:"best_move,omitempty"`
+	Compensation float64          `json:"compensation"`
 	YellowCards float64           `json:"yellow_cards"`
 	Removed     float64           `json:"removed"`
 	ExtraPoints float64           `json:"extra_points"`

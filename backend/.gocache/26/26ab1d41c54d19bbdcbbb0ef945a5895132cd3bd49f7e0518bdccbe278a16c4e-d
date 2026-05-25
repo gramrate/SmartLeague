@@ -1,0 +1,4 @@
+./delete.go
+./get.go
+./repo.go
+./set.go

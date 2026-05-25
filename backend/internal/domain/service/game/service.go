@@ -56,6 +56,20 @@ func (s *Service) canManageSeries(ctx context.Context, requesterID *uuid.UUID, c
 	return profileClubID != nil && *profileClubID == clubID && canManageClub(profileClubState), nil
 }
 
+func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, series *model.Series) (bool, error) {
+	if !series.IsClubOnly {
+		return true, nil
+	}
+	if requesterID == nil {
+		return false, nil
+	}
+	profileClubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if err != nil {
+		return false, err
+	}
+	return profileClubID != nil && *profileClubID == series.ClubID, nil
+}
+
 func toGameDTO(g *model.Game) *dto.Game {
 	return &dto.Game{
 		ID:          g.ID,
@@ -111,6 +125,13 @@ func (s *Service) Get(ctx context.Context, requesterID *uuid.UUID, req *dto.GetG
 	if err != nil {
 		return nil, err
 	}
+	canAccess, err := s.canAccessSeries(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+	if !canAccess {
+		return nil, errorz.Unauthorized
+	}
 	if game.Status == types.GameStatusDraft {
 		canManage, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
 		if err != nil {
@@ -137,6 +158,13 @@ func (s *Service) ListBySeries(ctx context.Context, requesterID *uuid.UUID, req 
 	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
 	if err != nil {
 		return nil, err
+	}
+	canAccess, err := s.canAccessSeries(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+	if !canAccess {
+		return nil, errorz.Unauthorized
 	}
 
 	limit := 10
@@ -318,13 +346,20 @@ func isValidMafiaRole(role types.MafiaRole) bool {
 }
 
 func (s *Service) GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.GetGameRequest) (*dto.GetGameFullResponse, error) {
-	_ = requesterID
 	game, err := s.repo.GetGameByID(ctx, req.ID)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.repo.GetSeriesByID(ctx, game.SeriesID); err != nil {
+	ser, err := s.repo.GetSeriesByID(ctx, game.SeriesID)
+	if err != nil {
 		return nil, err
+	}
+	canAccess, err := s.canAccessSeries(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+	if !canAccess {
+		return nil, errorz.Unauthorized
 	}
 
 	participantIDs, err := s.repo.ListGameParticipants(ctx, req.ID)
@@ -412,7 +447,7 @@ func (s *Service) SaveDraft(ctx context.Context, requesterID uuid.UUID, req *dto
 			Role:          r.Role,
 			BestMove:      r.BestMove,
 			FirstKilled:   false,
-			Compensation:  0,
+			Compensation:  r.Compensation,
 			YellowCards:   r.YellowCards,
 			Removed:       r.Removed,
 			VictoryPoints: 0,
@@ -491,7 +526,7 @@ func (s *Service) Publish(ctx context.Context, requesterID uuid.UUID, req *dto.P
 			Role:          r.Role,
 			BestMove:      r.BestMove,
 			FirstKilled:   false,
-			Compensation:  0,
+			Compensation:  r.Compensation,
 			YellowCards:   r.YellowCards,
 			Removed:       r.Removed,
 			VictoryPoints: 0,

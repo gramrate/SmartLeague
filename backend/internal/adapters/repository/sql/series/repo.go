@@ -39,12 +39,12 @@ func (r *Repo) CreateSeries(ctx context.Context, s model.Series) (*model.Series,
 	}
 
 	row := r.db.QueryRowContext(ctx, `
-INSERT INTO series (id, club_id, creator_id, name, scoring_rules, start_at, end_at, description, price_rub, is_closed, game_type, status)
-VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11)
-RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_closed, game_type, status, created_at, updated_at
+INSERT INTO series (id, club_id, creator_id, name, scoring_rules, start_at, end_at, description, price_rub, is_rating, is_club_only, is_closed, game_type, status)
+VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12,$13)
+RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
 `,
 		s.ID, s.ClubID, s.CreatorID, s.Name, s.Description, s.StartAt, s.EndAt,
-		s.PriceRub, s.IsClosed, int16(s.GameType), int16(s.Status),
+		s.PriceRub, s.IsRating, s.IsClubOnly, s.IsClosed, int16(s.GameType), int16(s.Status),
 	)
 
 	var out model.Series
@@ -59,6 +59,8 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		&out.StartAt,
 		&out.EndAt,
 		&out.PriceRub,
+		&out.IsRating,
+		&out.IsClubOnly,
 		&out.IsClosed,
 		&gameType,
 		&status,
@@ -74,7 +76,7 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 
 func (r *Repo) GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error) {
 	row := r.db.QueryRowContext(ctx, `
-SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_closed, game_type, status, created_at, updated_at
+SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
 FROM series
 WHERE id=$1 AND deleted_at IS NULL
 `, id)
@@ -91,6 +93,8 @@ WHERE id=$1 AND deleted_at IS NULL
 		&out.StartAt,
 		&out.EndAt,
 		&out.PriceRub,
+		&out.IsRating,
+		&out.IsClubOnly,
 		&out.IsClosed,
 		&gameType,
 		&status,
@@ -107,7 +111,7 @@ WHERE id=$1 AND deleted_at IS NULL
 	return &out, nil
 }
 
-func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeClosed bool, limit, offset int) ([]*model.Series, int, error) {
+func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeClosed, includeClubOnly bool, limit, offset int) ([]*model.Series, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -119,6 +123,9 @@ func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeCl
 	if !includeClosed {
 		where = where + " AND is_closed=false"
 	}
+	if !includeClubOnly {
+		where = where + " AND is_club_only=false"
+	}
 	where = where + " AND deleted_at IS NULL"
 
 	var total int
@@ -128,7 +135,7 @@ func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeCl
 	}
 
 	listQuery := fmt.Sprintf(`
-SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_closed, game_type, status, created_at, updated_at
+SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
 FROM series
 WHERE %s
 ORDER BY start_at DESC
@@ -155,6 +162,8 @@ LIMIT $2 OFFSET $3
 			&s.StartAt,
 			&s.EndAt,
 			&s.PriceRub,
+			&s.IsRating,
+			&s.IsClubOnly,
 			&s.IsClosed,
 			&gameType,
 			&status,
@@ -173,7 +182,7 @@ LIMIT $2 OFFSET $3
 	return out, total, nil
 }
 
-func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, showPast, showClosed bool) ([]*model.SeriesListItem, int, error) {
+func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, query, clubQuery, from, to *string, isRating *bool, requesterClubID *uuid.UUID, showPast, showClosed bool) ([]*model.SeriesListItem, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -182,11 +191,45 @@ func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, showPast, s
 	}
 
 	where := "s.deleted_at IS NULL"
+	args := make([]any, 0, 8)
+	nextArg := 1
 	if !showClosed {
 		where += " AND s.is_closed = false"
 	}
 	if !showPast {
 		where += " AND s.end_at >= now()"
+	}
+	if requesterClubID != nil {
+		where += fmt.Sprintf(" AND (s.is_club_only = false OR s.club_id = $%d)", nextArg)
+		args = append(args, *requesterClubID)
+		nextArg++
+	} else {
+		where += " AND s.is_club_only = false"
+	}
+	if isRating != nil {
+		where += fmt.Sprintf(" AND s.is_rating = $%d", nextArg)
+		args = append(args, *isRating)
+		nextArg++
+	}
+	if query != nil && *query != "" {
+		where += fmt.Sprintf(" AND LOWER(s.name) LIKE LOWER($%d)", nextArg)
+		args = append(args, "%"+*query+"%")
+		nextArg++
+	}
+	if clubQuery != nil && *clubQuery != "" {
+		where += fmt.Sprintf(" AND LOWER(c.name) LIKE LOWER($%d)", nextArg)
+		args = append(args, "%"+*clubQuery+"%")
+		nextArg++
+	}
+	if from != nil && *from != "" {
+		where += fmt.Sprintf(" AND s.end_at >= $%d::date", nextArg)
+		args = append(args, *from)
+		nextArg++
+	}
+	if to != nil && *to != "" {
+		where += fmt.Sprintf(" AND s.start_at < ($%d::date + interval '1 day')", nextArg)
+		args = append(args, *to)
+		nextArg++
 	}
 
 	var total int
@@ -195,7 +238,7 @@ SELECT count(*)
 FROM series s
 WHERE %s
 `, where)
-	if err := r.db.QueryRowContext(ctx, countQuery).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -208,6 +251,9 @@ SELECT
   s.scoring_rules,
   s.start_at,
   s.end_at,
+  s.price_rub,
+  s.is_rating,
+  s.is_club_only,
   s.is_closed,
   (
     SELECT count(*)
@@ -218,9 +264,10 @@ FROM series s
 JOIN clubs c ON c.id = s.club_id
 WHERE %s
 ORDER BY s.start_at DESC
-LIMIT $1 OFFSET $2
-`, where)
-	rows, err := r.db.QueryContext(ctx, listQuery, limit, offset)
+LIMIT $%d OFFSET $%d
+`, where, nextArg, nextArg+1)
+	args = append(args, limit, offset)
+	rows, err := r.db.QueryContext(ctx, listQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -237,6 +284,9 @@ LIMIT $1 OFFSET $2
 			&item.Description,
 			&item.StartAt,
 			&item.EndAt,
+			&item.PriceRub,
+			&item.IsRating,
+			&item.IsClubOnly,
 			&item.IsClosed,
 			&item.GamesCount,
 		); err != nil {
@@ -271,6 +321,12 @@ func (r *Repo) UpdateSeries(ctx context.Context, id uuid.UUID, patch model.Serie
 	if patch.PriceRub != nil {
 		next.PriceRub = *patch.PriceRub
 	}
+	if patch.IsRating != nil {
+		next.IsRating = *patch.IsRating
+	}
+	if patch.IsClubOnly != nil {
+		next.IsClubOnly = *patch.IsClubOnly
+	}
 	if patch.IsClosed != nil {
 		next.IsClosed = *patch.IsClosed
 	}
@@ -289,12 +345,14 @@ SET name=$2,
     end_at=$5,
     description=NULL,
     price_rub=$6,
-    is_closed=$7,
-    game_type=$8,
-    status=$9,
+    is_rating=$7,
+    is_club_only=$8,
+    is_closed=$9,
+    game_type=$10,
+    status=$11,
     updated_at=now()
 WHERE id=$1
-RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_closed, game_type, status, created_at, updated_at
+RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
 `,
 		id,
 		next.Name,
@@ -302,6 +360,8 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		next.StartAt,
 		next.EndAt,
 		next.PriceRub,
+		next.IsRating,
+		next.IsClubOnly,
 		next.IsClosed,
 		int16(next.GameType),
 		int16(next.Status),
@@ -319,6 +379,8 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		&out.StartAt,
 		&out.EndAt,
 		&out.PriceRub,
+		&out.IsRating,
+		&out.IsClubOnly,
 		&out.IsClosed,
 		&gameType,
 		&status,
@@ -336,7 +398,13 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 }
 
 func (r *Repo) DeleteSeries(ctx context.Context, id uuid.UUID) error {
-	res, err := r.db.ExecContext(ctx, `UPDATE series SET deleted_at=now(), updated_at=now() WHERE id=$1 AND deleted_at IS NULL`, id)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	res, err := tx.ExecContext(ctx, `UPDATE series SET deleted_at=now(), updated_at=now() WHERE id=$1 AND deleted_at IS NULL`, id)
 	if err != nil {
 		return err
 	}
@@ -347,7 +415,17 @@ func (r *Repo) DeleteSeries(ctx context.Context, id uuid.UUID) error {
 	if affected == 0 {
 		return errorz.SeriesNotFound
 	}
-	return nil
+
+	// Soft-delete all games linked to the deleted series.
+	if _, err := tx.ExecContext(ctx, `
+UPDATE games
+SET deleted_at=now(), updated_at=now()
+WHERE series_id=$1 AND deleted_at IS NULL
+`, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func ptrToNullString(p *string) any {

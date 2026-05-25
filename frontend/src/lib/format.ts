@@ -31,3 +31,8 @@ export function fromInputDate(s: string): string {
   if (!s) return "";
   return new Date(s + "T00:00:00.000Z").toISOString();
 }
+
+export function fmtRub(value?: number | null) {
+  const amount = Number(value ?? 0);
+  return `${amount.toLocaleString("ru-RU")} ₽`;
+}
