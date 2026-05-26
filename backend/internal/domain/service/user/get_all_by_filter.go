@@ -21,8 +21,9 @@ func (s *userService) GetAllByFilter(ctx context.Context, req *dto.GetAllByFilte
 		limit,
 		offset,
 		req.Role,
+		req.ClubState,
+		req.ClubQuery,
 		req.Query,
-		req.EmailPrefix,
 	)
 	if err != nil {
 		return nil, err

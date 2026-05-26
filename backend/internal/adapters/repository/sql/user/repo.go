@@ -97,7 +97,9 @@ func (r *Repo) GetAllByFilter(
 	ctx context.Context,
 	limit, offset int,
 	role *types.Role,
-	query, emailPrefix *string,
+	clubState *types.ClubState,
+	clubQuery *string,
+	query *string,
 ) ([]*model.User, int, error) {
 	if limit <= 0 {
 		limit = 50
@@ -111,31 +113,45 @@ func (r *Repo) GetAllByFilter(
 	argN := 1
 
 	if role != nil {
-		where += " AND role=$" + itoa(argN)
+		where += " AND p.role=$" + itoa(argN)
 		args = append(args, int16(*role))
 		argN++
 	}
-	if emailPrefix != nil {
-		where += " AND email ILIKE $" + itoa(argN)
-		args = append(args, normalizeEmail(*emailPrefix)+"%")
-		argN++
+	if clubState != nil {
+		if *clubState == types.ClubStateLeader {
+			where += " AND p.club_state IN ($" + itoa(argN) + ",$" + itoa(argN+1) + ")"
+			args = append(args, int16(types.ClubStateLeader), int16(types.ClubStatePresident))
+			argN += 2
+		} else {
+			where += " AND p.club_state=$" + itoa(argN)
+			args = append(args, int16(*clubState))
+			argN++
+		}
+	}
+	if clubQuery != nil {
+		cq := strings.TrimSpace(*clubQuery)
+		if cq != "" {
+			where += " AND c.name ILIKE $" + itoa(argN)
+			args = append(args, "%"+cq+"%")
+			argN++
+		}
 	}
 	if query != nil {
 		q := strings.TrimSpace(*query)
 		if q != "" {
-			where += " AND (email ILIKE $" + itoa(argN) + " OR name ILIKE $" + itoa(argN) + " OR nickname ILIKE $" + itoa(argN) + ")"
+			where += " AND p.nickname ILIKE $" + itoa(argN)
 			args = append(args, "%"+q+"%")
 			argN++
 		}
 	}
 
 	var total int
-	countSQL := "SELECT count(*) FROM profiles WHERE " + where
+	countSQL := "SELECT count(*) FROM profiles p LEFT JOIN clubs c ON c.id = p.club_id WHERE " + where
 	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	listSQL := "SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role FROM profiles WHERE " + where + " ORDER BY created_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
+	listSQL := "SELECT p.id, p.nickname, p.name, p.show_name, p.description, p.email, p.password_hash, p.club_id, p.club_state, p.role FROM profiles p LEFT JOIN clubs c ON c.id = p.club_id WHERE " + where + " ORDER BY p.created_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
 	args = append(args, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, listSQL, args...)
@@ -216,7 +232,14 @@ LIMIT $2 OFFSET $3
 	return out, seriesNames, total, nil
 }
 
-func (r *Repo) GetSeriesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Series, int, error) {
+func (r *Repo) GetSeriesByProfileID(
+	ctx context.Context,
+	profileID uuid.UUID,
+	limit, offset int,
+	query, from, to *string,
+	isRating *bool,
+	showPast, showClosed bool,
+) ([]*model.Series, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -224,23 +247,45 @@ func (r *Repo) GetSeriesByProfileID(ctx context.Context, profileID uuid.UUID, li
 		offset = 0
 	}
 
+	where := "sp.profile_id=$1 AND s.deleted_at IS NULL"
+	args := []any{profileID}
+	argN := 2
+	if !showPast {
+		where += " AND s.end_at::date >= CURRENT_DATE"
+	}
+	if !showClosed {
+		where += " AND s.is_closed = false"
+	}
+	if isRating != nil {
+		where += " AND s.is_rating=$" + itoa(argN)
+		args = append(args, *isRating)
+		argN++
+	}
+	if query != nil && *query != "" {
+		where += " AND s.name ILIKE $" + itoa(argN)
+		args = append(args, "%"+strings.TrimSpace(*query)+"%")
+		argN++
+	}
+	if from != nil && *from != "" {
+		where += " AND s.end_at >= $" + itoa(argN) + "::date"
+		args = append(args, *from)
+		argN++
+	}
+	if to != nil && *to != "" {
+		where += " AND s.start_at < ($" + itoa(argN) + "::date + interval '1 day')"
+		args = append(args, *to)
+		argN++
+	}
+
 	var total int
-	if err := r.db.QueryRowContext(ctx, `
-SELECT count(*)
-FROM series_participants sp
-WHERE sp.profile_id=$1
-`, profileID).Scan(&total); err != nil {
+	countSQL := "SELECT count(*) FROM series_participants sp JOIN series s ON s.id = sp.series_id WHERE " + where
+	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
-SELECT s.id, s.club_id, s.creator_id, s.name, s.scoring_rules, s.start_at, s.end_at, s.price_rub, s.is_closed, s.game_type, s.status, s.created_at, s.updated_at
-FROM series_participants sp
-JOIN series s ON s.id = sp.series_id
-WHERE sp.profile_id=$1 AND s.deleted_at IS NULL
-ORDER BY s.start_at DESC
-LIMIT $2 OFFSET $3
-`, profileID, limit, offset)
+	listSQL := "SELECT s.id, s.club_id, s.creator_id, s.name, s.scoring_rules, s.start_at, s.end_at, s.price_rub, s.is_rating, s.is_club_only, s.is_closed, s.game_type, s.created_at, s.updated_at FROM series_participants sp JOIN series s ON s.id = sp.series_id WHERE " + where + " ORDER BY s.start_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
+	args = append(args, limit, offset)
+	rows, err := r.db.QueryContext(ctx, listSQL, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -250,12 +295,10 @@ LIMIT $2 OFFSET $3
 	for rows.Next() {
 		var s model.Series
 		var gameType int16
-		var status int16
-		if err := rows.Scan(&s.ID, &s.ClubID, &s.CreatorID, &s.Name, &s.Description, &s.StartAt, &s.EndAt, &s.PriceRub, &s.IsClosed, &gameType, &status, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.ClubID, &s.CreatorID, &s.Name, &s.Description, &s.StartAt, &s.EndAt, &s.PriceRub, &s.IsRating, &s.IsClubOnly, &s.IsClosed, &gameType, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		s.GameType = types.GameType(gameType)
-		s.Status = types.SeriesStatus(status)
 		out = append(out, &s)
 	}
 	if err := rows.Err(); err != nil {

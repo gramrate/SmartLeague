@@ -19,7 +19,8 @@ type clubRepo interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *uuid.UUID, state types.ClubState) error
-	ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.User, int, error)
+	ListMembers(ctx context.Context, clubID uuid.UUID, query *string, clubState *types.ClubState, limit, offset int) ([]*model.User, int, error)
+	ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error)
 
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
 	SetMemberState(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID, state types.ClubState) error
@@ -169,7 +170,7 @@ func (s *service) GetMembers(ctx context.Context, req *dto.GetClubMembersRequest
 		offset = *req.Offset
 	}
 
-	items, total, err := s.repo.ListMembers(ctx, req.ClubID, limit, offset)
+	items, total, err := s.repo.ListMembers(ctx, req.ClubID, req.Query, req.ClubState, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -203,6 +204,53 @@ func (s *service) GetMembers(ctx context.Context, req *dto.GetClubMembersRequest
 			TotalPages:  totalPages,
 			CurrentPage: currentPage,
 			HasNext:     offset+limit < total,
+			HasPrevious: offset > 0,
+		},
+	}, nil
+}
+
+func (s *service) GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error) {
+	limit := 10
+	offset := 0
+	if req.Limit != nil {
+		limit = *req.Limit
+	}
+	if req.Offset != nil {
+		offset = *req.Offset
+	}
+
+	games, seriesNames, totalItems, err := s.repo.ListGames(ctx, req.ClubID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*dto.PlayerGame, 0, len(games))
+	for i, g := range games {
+		items = append(items, &dto.PlayerGame{
+			ID:         g.ID,
+			SeriesID:   g.SeriesID,
+			SeriesName: seriesNames[i],
+			Name:       g.Name,
+			Number:     g.Number,
+			Status:     g.Status,
+			CreatedAt:  g.CreatedAt,
+		})
+	}
+
+	totalPages := int(math.Ceil(float64(totalItems) / float64(limit)))
+	currentPage := (offset / limit) + 1
+	if totalPages == 0 {
+		totalPages = 1
+		currentPage = 1
+	}
+
+	return &dto.GetClubGamesResponse{
+		Items: items,
+		Pagination: dto.PaginationInfo{
+			TotalItems:  totalItems,
+			TotalPages:  totalPages,
+			CurrentPage: currentPage,
+			HasNext:     offset+limit < totalItems,
 			HasPrevious: offset > 0,
 		},
 	}, nil

@@ -1,0 +1,2 @@
+ALTER TABLE series
+	DROP COLUMN IF EXISTS status;

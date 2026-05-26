@@ -38,7 +38,6 @@ func (h *handler) CreateSeries(c echo.Context) error {
 		IsRating    *bool  `json:"is_rating"`
 		IsClubOnly  *bool  `json:"is_club_only"`
 		IsClosed    bool   `json:"is_closed"`
-		Status      int16  `json:"status"`
 	}
 	if err := c.Bind(&raw); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
@@ -62,7 +61,6 @@ func (h *handler) CreateSeries(c echo.Context) error {
 		IsClubOnly:  raw.IsClubOnly,
 		IsClosed:    raw.IsClosed,
 		GameType:    types.GameTypeSportMafia,
-		Status:      types.SeriesStatus(raw.Status),
 	}
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})

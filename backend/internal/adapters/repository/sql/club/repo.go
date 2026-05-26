@@ -195,7 +195,7 @@ func (r *Repo) SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *
 	return nil
 }
 
-func (r *Repo) ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.User, int, error) {
+func (r *Repo) ListMembers(ctx context.Context, clubID uuid.UUID, query *string, clubState *types.ClubState, limit, offset int) ([]*model.User, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -203,18 +203,43 @@ func (r *Repo) ListMembers(ctx context.Context, clubID uuid.UUID, limit, offset 
 		offset = 0
 	}
 
+	where := "club_id=$1"
+	args := make([]any, 0, 4)
+	args = append(args, clubID)
+	nextArg := 2
+	if query != nil && *query != "" {
+		where += fmt.Sprintf(" AND LOWER(nickname) LIKE LOWER($%d)", nextArg)
+		args = append(args, "%"+*query+"%")
+		nextArg++
+	}
+	if clubState != nil {
+		if *clubState == types.ClubStateLeader {
+			where += fmt.Sprintf(" AND club_state IN ($%d,$%d)", nextArg, nextArg+1)
+			args = append(args, int16(types.ClubStateLeader), int16(types.ClubStatePresident))
+			nextArg += 2
+		} else {
+			where += fmt.Sprintf(" AND club_state = $%d", nextArg)
+			args = append(args, int16(*clubState))
+			nextArg++
+		}
+	}
+
 	var total int
-	if err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM profiles WHERE club_id=$1`, clubID).Scan(&total); err != nil {
+	countQuery := fmt.Sprintf(`SELECT count(*) FROM profiles WHERE %s`, where)
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
+	listQuery := fmt.Sprintf(`
 SELECT id, nickname, name, show_name, description, email, password_hash, club_id, club_state, role
 FROM profiles
-WHERE club_id=$1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
-`, clubID, limit, offset)
+WHERE %s
+ORDER BY club_state DESC, COALESCE(name, nickname) ASC, nickname ASC
+LIMIT $%d OFFSET $%d
+`, where, nextArg, nextArg+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, listQuery, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -251,6 +276,61 @@ LIMIT $2 OFFSET $3
 		return nil, 0, err
 	}
 	return out, total, nil
+}
+
+func (r *Repo) ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, `
+SELECT count(*)
+FROM games g
+JOIN series s ON s.id = g.series_id
+WHERE s.club_id=$1 AND s.deleted_at IS NULL AND g.deleted_at IS NULL
+`, clubID).Scan(&total); err != nil {
+		return nil, nil, 0, err
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+SELECT g.id, g.series_id, s.name, g.name, g.number, g.description, g.host_id, g.status, g.created_at, g.updated_at
+FROM games g
+JOIN series s ON s.id = g.series_id
+WHERE s.club_id=$1 AND s.deleted_at IS NULL AND g.deleted_at IS NULL
+ORDER BY g.created_at DESC
+LIMIT $2 OFFSET $3
+`, clubID, limit, offset)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	defer rows.Close()
+
+	var out []*model.Game
+	var seriesNames []string
+	for rows.Next() {
+		var g model.Game
+		var seriesName string
+		var hostID sql.NullString
+		var status int16
+		var description sql.NullString
+		if err := rows.Scan(&g.ID, &g.SeriesID, &seriesName, &g.Name, &g.Number, &description, &hostID, &status, &g.CreatedAt, &g.UpdatedAt); err != nil {
+			return nil, nil, 0, err
+		}
+		g.Description = nullStringToPtr(description)
+		g.HostID = nullStringToUUIDPtr(hostID)
+		g.Status = types.GameStatus(status)
+		out = append(out, &g)
+		seriesNames = append(seriesNames, seriesName)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, 0, err
+	}
+
+	return out, seriesNames, total, nil
 }
 
 func (r *Repo) GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error) {

@@ -53,6 +53,8 @@ func (s *userService) GetUserGames(ctx context.Context, req *dto.GetUserGamesReq
 
 func (s *userService) GetUserSeries(ctx context.Context, req *dto.GetUserSeriesRequest) (*dto.GetUserSeriesResponse, error) {
 	limit := 10
+	showPast := false
+	showClosed := false
 	if req.Limit != nil {
 		limit = *req.Limit
 	}
@@ -60,8 +62,16 @@ func (s *userService) GetUserSeries(ctx context.Context, req *dto.GetUserSeriesR
 	if req.Offset != nil {
 		offset = *req.Offset
 	}
+	if req.ShowPast != nil {
+		showPast = *req.ShowPast
+	}
+	if req.ShowClosed != nil {
+		showClosed = *req.ShowClosed
+	}
 
-	seriesItems, totalItems, err := s.userRepo.GetSeriesByProfileID(ctx, req.UserID, limit, offset)
+	seriesItems, totalItems, err := s.userRepo.GetSeriesByProfileID(
+		ctx, req.UserID, limit, offset, req.Query, req.From, req.To, req.IsRating, showPast, showClosed,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -69,10 +79,13 @@ func (s *userService) GetUserSeries(ctx context.Context, req *dto.GetUserSeriesR
 	items := make([]*dto.PlayerSeries, 0, len(seriesItems))
 	for _, sItem := range seriesItems {
 		items = append(items, &dto.PlayerSeries{
-			ID:      sItem.ID,
-			Name:    sItem.Name,
-			StartAt: sItem.StartAt,
-			EndAt:   sItem.EndAt,
+			ID:       sItem.ID,
+			Name:     sItem.Name,
+			StartAt:  sItem.StartAt,
+			EndAt:    sItem.EndAt,
+			PriceRub: sItem.PriceRub,
+			IsRating: sItem.IsRating,
+			IsClosed: sItem.IsClosed,
 		})
 	}
 

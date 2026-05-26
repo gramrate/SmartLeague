@@ -1,6 +1,9 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"SmartLeague/internal/domain/types"
+	"github.com/google/uuid"
+)
 
 type Club struct {
 	ID          uuid.UUID `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
@@ -46,13 +49,26 @@ type DeleteClubRequest struct {
 }
 
 type GetClubMembersRequest struct {
+	ClubID    uuid.UUID         `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Query     *string           `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200" example:"иван"`
+	ClubState *types.ClubState  `json:"club_state,omitempty" form:"club_state" validate:"omitempty,min=1,max=3" example:"2"`
+	Limit     *int              `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
+	Offset    *int              `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
+}
+
+type GetClubMembersResponse struct {
+	Items      []*User        `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
+}
+
+type GetClubGamesRequest struct {
 	ClubID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
 	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 }
 
-type GetClubMembersResponse struct {
-	Items      []*User        `json:"items"`
+type GetClubGamesResponse struct {
+	Items      []*PlayerGame  `json:"items"`
 	Pagination PaginationInfo `json:"pagination"`
 }
 

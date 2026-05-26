@@ -14,13 +14,6 @@ export enum GameStatus {
   Finished = 2,
 }
 
-export enum SeriesStatus {
-  Closed = 0,
-  Registration = 1,
-  ClosedRegistration = 2,
-  Games = 3,
-}
-
 export enum SystemRole {
   User = 0,
   Moderator = 1,
@@ -70,7 +63,6 @@ export interface Series {
   description?: string;
   start_at: string;
   end_at: string;
-  status?: SeriesStatus;
   game_type?: number;
   is_rating: boolean;
   is_club_only: boolean;
@@ -161,6 +153,9 @@ export interface PlayerSeries {
   name: string;
   start_at: string;
   end_at: string;
+  price_rub?: number;
+  is_rating?: boolean;
+  is_closed?: boolean;
 }
 
 export interface LoginRequest {
@@ -197,7 +192,6 @@ export interface CreateSeriesRequest {
   is_club_only?: boolean;
   game_type?: number;
   is_closed?: boolean;
-  status?: SeriesStatus;
 }
 
 export interface UpdateSeriesRequest {
@@ -209,7 +203,6 @@ export interface UpdateSeriesRequest {
   is_rating?: boolean;
   is_club_only?: boolean;
   is_closed?: boolean;
-  status?: SeriesStatus;
 }
 
 export interface CreateGameRequest {

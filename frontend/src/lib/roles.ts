@@ -1,4 +1,4 @@
-import { ClubState, GameStatus, SeriesStatus } from "@/types/api";
+import { ClubState, GameStatus } from "@/types/api";
 
 export const CLUB_STATE_LABEL: Record<ClubState, string> = {
   [ClubState.None]: "—",
@@ -32,13 +32,6 @@ export const GAME_STATUS_LABEL: Record<GameStatus, string> = {
   [GameStatus.Draft]: "Черновик",
   [GameStatus.InProgress]: "Идет",
   [GameStatus.Finished]: "Завершена",
-};
-
-export const SERIES_STATUS_LABEL: Record<SeriesStatus, string> = {
-  [SeriesStatus.Closed]: "Закрыта",
-  [SeriesStatus.Registration]: "Регистрация",
-  [SeriesStatus.ClosedRegistration]: "Регистрация закрыта",
-  [SeriesStatus.Games]: "Игры",
 };
 
 export function displayUserName(u: {

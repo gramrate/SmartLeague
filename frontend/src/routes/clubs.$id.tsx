@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { PageShell, PageHeader } from "@/components/site/PageShell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { clubsApi, authApi, ApiError, seriesApi } from "@/lib/api";
+import { clubsApi, authApi, ApiError } from "@/lib/api";
 import { LoadingBlock, ErrorBlock, EmptyBlock } from "@/components/site/States";
 import { RoleBadge } from "@/components/site/RoleBadge";
 import { ClubState } from "@/types/api";
@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { fmtDateRange, fmtRub } from "@/lib/format";
 import { Crown, Settings, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useMemo } from "react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/clubs/$id")({ component: ClubPage });
 
@@ -24,23 +22,18 @@ function ClubPage() {
   const qc = useQueryClient();
 
   const club = useQuery({ queryKey: ["club", id], queryFn: () => clubsApi.get(id) });
-  const members = useQuery({ queryKey: ["club", id, "members"], queryFn: () => clubsApi.members(id) });
+  const members = useQuery({
+    queryKey: ["club", id, "members", "preview"],
+    queryFn: () => clubsApi.members(id, { limit: 20, offset: 0 }),
+  });
   const series = useQuery({ queryKey: ["club", id, "series"], queryFn: () => clubsApi.series(id) });
-  const seriesIds = useMemo(() => (series.data?.items ?? []).map((s) => s.id), [series.data]);
   const games = useQuery({
-    queryKey: ["club", id, "games", seriesIds],
-    enabled: seriesIds.length > 0,
-    queryFn: async () => {
-      const responses = await Promise.all(seriesIds.map((sid) => seriesApi.games(sid).catch(() => null)));
-      return responses
-        .flatMap((res, i) => (res?.items ?? []).map((g) => ({ ...g, seriesName: series.data!.items![i].name })))
-        .sort((a, b) => b.number - a.number);
-    },
+    queryKey: ["club", id, "games", "preview"],
+    queryFn: () => clubsApi.games(id, { limit: 3, offset: 0 }),
   });
 
   const canManage = canManageClub(me, id);
   const isInClub = me?.club_id === id;
-  const isPresident = isInClub && me?.club_state === ClubState.President;
   const canJoin = me && !me.club_id;
 
   const onJoin = async () => {
@@ -65,19 +58,6 @@ function ClubPage() {
       toast.error(e instanceof ApiError ? e.message : "Ошибка");
     }
   };
-  const leaveClub = async () => {
-    try {
-      await clubsApi.leave();
-      const u = await authApi.me();
-      setMe(u);
-      qc.invalidateQueries({ queryKey: ["series"] });
-      qc.invalidateQueries({ queryKey: ["club"] });
-      toast.success("Вы покинули клуб");
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Не удалось выйти из клуба");
-    }
-  };
-
   if (club.isLoading) return <PageShell><LoadingBlock /></PageShell>;
   if (club.error) return <PageShell><ErrorBlock error={club.error} /></PageShell>;
   if (!club.data) return null;
@@ -125,9 +105,11 @@ function ClubPage() {
                       <p className="font-medium">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                          {s.is_rating ? "На рейтинг" : "Без рейтинга"}
-                        </span>
+                        {s.is_rating && (
+                          <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
+                            На рейтинг
+                          </span>
+                        )}
                         {Number(s.price_rub ?? 0) > 0 && (
                           <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
                             Платно · {fmtRub(s.price_rub)}
@@ -148,18 +130,18 @@ function ClubPage() {
 
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-semibold">Текущие игры</h2>
+              <h2 className="font-display text-xl font-semibold">Игры</h2>
               <Button size="sm" variant="outline" asChild><Link to="/clubs/$id/games" params={{ id }}>Посмотреть все игры клуба</Link></Button>
             </div>
             {games.isLoading ? <LoadingBlock /> :
-              !games.data?.length ? <EmptyBlock title="Игр пока нет" /> : (
+              !games.data?.items?.length ? <EmptyBlock title="Игр пока нет" /> : (
               <div className="space-y-2">
-                {games.data.slice(0, 5).map((g) => (
+                {games.data.items.map((g) => (
                   <Link key={g.id} to="/game/$id" params={{ id: g.id }}
                     className="flex items-center justify-between rounded-lg border border-border/40 bg-background/40 p-3 hover:border-primary/50">
                     <div>
                       <p className="font-medium">{g.name || `Игра #${g.number}`}</p>
-                      <p className="text-xs text-muted-foreground">{g.seriesName}</p>
+                      <p className="text-xs text-muted-foreground">{g.series_name}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">#{g.number}</span>
                   </Link>
@@ -171,7 +153,12 @@ function ClubPage() {
 
         <aside className="space-y-6">
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
-            <h2 className="mb-4 font-display text-lg font-semibold">Участники</h2>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold">Участники</h2>
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/clubs/$id/members" params={{ id }}>Показать всех</Link>
+              </Button>
+            </div>
             {members.isLoading ? <LoadingBlock /> :
               !members.data?.items?.length ? <p className="text-sm text-muted-foreground">Участников пока нет</p> : (
               <div className="space-y-4">
@@ -217,31 +204,6 @@ function ClubPage() {
           </div>
         </aside>
       </div>
-      {isInClub && !isPresident && (
-        <section className="mt-8 rounded-2xl border border-border/60 bg-card/60 p-6">
-          <div className="flex justify-center">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full max-w-sm">Покинуть клуб</Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Покинуть клуб?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Вы потеряете доступ к клубным сериям и играм только для участников клуба.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Отмена</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => void leaveClub()}>
-                    Покинуть
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </section>
-      )}
     </PageShell>
   );
 }

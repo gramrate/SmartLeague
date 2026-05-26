@@ -40,11 +40,12 @@ type GetUserRequest struct {
 type GetUserResponse User
 
 type GetAllByFilterUsersRequest struct {
-	Limit       *int        `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
-	Offset      *int        `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
-	Role        *types.Role `json:"role,omitempty" form:"role" validate:"omitempty,role" example:"0"`
-	Query       *string     `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=300" example:"Иван Дима"`
-	EmailPrefix *string     `json:"email_prefix,omitempty" form:"email_prefix" validate:"omitempty,email" example:"user@"`
+	Limit     *int             `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
+	Offset    *int             `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
+	Role      *types.Role      `json:"role,omitempty" form:"role" validate:"omitempty,role" example:"0"`
+	ClubState *types.ClubState `json:"club_state,omitempty" form:"club_state" validate:"omitempty,min=1,max=3" example:"2"`
+	ClubQuery *string          `json:"club,omitempty" form:"club" validate:"omitempty,min=1,max=200" example:"smart"`
+	Query     *string          `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100" example:"mishmish"`
 }
 
 type PaginationInfo struct {
@@ -82,16 +83,25 @@ type GetUserGamesResponse struct {
 }
 
 type PlayerSeries struct {
-	ID      uuid.UUID `json:"id"`
-	Name    string    `json:"name"`
-	StartAt time.Time `json:"start_at"`
-	EndAt   time.Time `json:"end_at"`
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	StartAt  time.Time `json:"start_at"`
+	EndAt    time.Time `json:"end_at"`
+	PriceRub int       `json:"price_rub"`
+	IsRating bool      `json:"is_rating"`
+	IsClosed bool      `json:"is_closed"`
 }
 
 type GetUserSeriesRequest struct {
-	UserID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
-	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+	UserID     uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Limit      *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset     *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+	Query      *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200"`
+	From       *string   `json:"from,omitempty" form:"from" validate:"omitempty,len=10"`
+	To         *string   `json:"to,omitempty" form:"to" validate:"omitempty,len=10"`
+	IsRating   *bool     `json:"is_rating,omitempty" form:"is_rating"`
+	ShowPast   *bool     `json:"show_past,omitempty" form:"show_past"`
+	ShowClosed *bool     `json:"show_closed,omitempty" form:"show_closed"`
 }
 
 type GetUserSeriesResponse struct {

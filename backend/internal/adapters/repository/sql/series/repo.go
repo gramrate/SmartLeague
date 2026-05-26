@@ -39,17 +39,16 @@ func (r *Repo) CreateSeries(ctx context.Context, s model.Series) (*model.Series,
 	}
 
 	row := r.db.QueryRowContext(ctx, `
-INSERT INTO series (id, club_id, creator_id, name, scoring_rules, start_at, end_at, description, price_rub, is_rating, is_club_only, is_closed, game_type, status)
-VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12,$13)
-RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
+INSERT INTO series (id, club_id, creator_id, name, scoring_rules, start_at, end_at, description, price_rub, is_rating, is_club_only, is_closed, game_type)
+VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12)
+RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
 `,
 		s.ID, s.ClubID, s.CreatorID, s.Name, s.Description, s.StartAt, s.EndAt,
-		s.PriceRub, s.IsRating, s.IsClubOnly, s.IsClosed, int16(s.GameType), int16(s.Status),
+		s.PriceRub, s.IsRating, s.IsClubOnly, s.IsClosed, int16(s.GameType),
 	)
 
 	var out model.Series
 	var gameType int16
-	var status int16
 	if err := row.Scan(
 		&out.ID,
 		&out.ClubID,
@@ -63,27 +62,24 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		&out.IsClubOnly,
 		&out.IsClosed,
 		&gameType,
-		&status,
 		&out.CreatedAt,
 		&out.UpdatedAt,
 	); err != nil {
 		return nil, err
 	}
 	out.GameType = types.GameType(gameType)
-	out.Status = types.SeriesStatus(status)
 	return &out, nil
 }
 
 func (r *Repo) GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error) {
 	row := r.db.QueryRowContext(ctx, `
-SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
+SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
 FROM series
 WHERE id=$1 AND deleted_at IS NULL
 `, id)
 
 	var out model.Series
 	var gameType int16
-	var status int16
 	if err := row.Scan(
 		&out.ID,
 		&out.ClubID,
@@ -97,7 +93,6 @@ WHERE id=$1 AND deleted_at IS NULL
 		&out.IsClubOnly,
 		&out.IsClosed,
 		&gameType,
-		&status,
 		&out.CreatedAt,
 		&out.UpdatedAt,
 	); err != nil {
@@ -107,7 +102,6 @@ WHERE id=$1 AND deleted_at IS NULL
 		return nil, err
 	}
 	out.GameType = types.GameType(gameType)
-	out.Status = types.SeriesStatus(status)
 	return &out, nil
 }
 
@@ -135,7 +129,7 @@ func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeCl
 	}
 
 	listQuery := fmt.Sprintf(`
-SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
+SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
 FROM series
 WHERE %s
 ORDER BY start_at DESC
@@ -152,7 +146,6 @@ LIMIT $2 OFFSET $3
 	for rows.Next() {
 		var s model.Series
 		var gameType int16
-		var status int16
 		if err := rows.Scan(
 			&s.ID,
 			&s.ClubID,
@@ -166,14 +159,12 @@ LIMIT $2 OFFSET $3
 			&s.IsClubOnly,
 			&s.IsClosed,
 			&gameType,
-			&status,
 			&s.CreatedAt,
 			&s.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
 		s.GameType = types.GameType(gameType)
-		s.Status = types.SeriesStatus(status)
 		out = append(out, &s)
 	}
 	if err := rows.Err(); err != nil {
@@ -197,7 +188,7 @@ func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, query, club
 		where += " AND s.is_closed = false"
 	}
 	if !showPast {
-		where += " AND s.end_at >= now()"
+		where += " AND s.end_at::date >= CURRENT_DATE"
 	}
 	if requesterClubID != nil {
 		where += fmt.Sprintf(" AND (s.is_club_only = false OR s.club_id = $%d)", nextArg)
@@ -236,6 +227,7 @@ func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, query, club
 	countQuery := fmt.Sprintf(`
 SELECT count(*)
 FROM series s
+JOIN clubs c ON c.id = s.club_id
 WHERE %s
 `, where)
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
@@ -333,10 +325,6 @@ func (r *Repo) UpdateSeries(ctx context.Context, id uuid.UUID, patch model.Serie
 	if patch.GameType != nil {
 		next.GameType = *patch.GameType
 	}
-	if patch.Status != nil {
-		next.Status = *patch.Status
-	}
-
 	row := r.db.QueryRowContext(ctx, `
 UPDATE series
 SET name=$2,
@@ -349,10 +337,9 @@ SET name=$2,
     is_club_only=$8,
     is_closed=$9,
     game_type=$10,
-    status=$11,
     updated_at=now()
 WHERE id=$1
-RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, status, created_at, updated_at
+RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
 `,
 		id,
 		next.Name,
@@ -364,12 +351,10 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		next.IsClubOnly,
 		next.IsClosed,
 		int16(next.GameType),
-		int16(next.Status),
 	)
 
 	var out model.Series
 	var gameType int16
-	var status int16
 	if err := row.Scan(
 		&out.ID,
 		&out.ClubID,
@@ -383,7 +368,6 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		&out.IsClubOnly,
 		&out.IsClosed,
 		&gameType,
-		&status,
 		&out.CreatedAt,
 		&out.UpdatedAt,
 	); err != nil {
@@ -393,7 +377,6 @@ RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_
 		return nil, err
 	}
 	out.GameType = types.GameType(gameType)
-	out.Status = types.SeriesStatus(status)
 	return &out, nil
 }
 

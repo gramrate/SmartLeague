@@ -63,11 +63,11 @@ func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, s
 	if requesterID == nil {
 		return false, nil
 	}
-	profileClubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	isParticipant, err := s.repo.IsSeriesParticipant(ctx, series.ID, *requesterID)
 	if err != nil {
 		return false, err
 	}
-	return profileClubID != nil && *profileClubID == series.ClubID, nil
+	return isParticipant, nil
 }
 
 func toGameDTO(g *model.Game) *dto.Game {

@@ -55,11 +55,11 @@ func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, s
 	if requesterID == nil {
 		return false, nil
 	}
-	clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	isParticipant, err := s.repo.IsSeriesParticipant(ctx, series.ID, *requesterID)
 	if err != nil {
 		return false, err
 	}
-	return clubID != nil && *clubID == series.ClubID, nil
+	return isParticipant, nil
 }
 
 func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
@@ -76,7 +76,6 @@ func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 		IsClubOnly:  s.IsClubOnly,
 		IsClosed:    s.IsClosed,
 		GameType:    s.GameType,
-		Status:      s.Status,
 	}
 }
 
@@ -116,7 +115,6 @@ func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		IsClubOnly:  req.IsClubOnly != nil && *req.IsClubOnly,
 		IsClosed:    req.IsClosed,
 		GameType:    types.GameTypeSportMafia,
-		Status:      req.Status,
 	})
 	if err != nil {
 		return nil, err
@@ -299,7 +297,6 @@ func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *
 		IsRating:    req.IsRating,
 		IsClubOnly:  req.IsClubOnly,
 		IsClosed:    req.IsClosed,
-		Status:      req.Status,
 	}
 
 	updated, err := s.repo.UpdateSeries(ctx, req.ID, patch)
@@ -382,13 +379,7 @@ func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
 		return err
 	}
 	if ser.IsClubOnly {
-		profileClubID, _, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
-		if err != nil {
-			return err
-		}
-		if profileClubID == nil || *profileClubID != ser.ClubID {
-			return errorz.Unauthorized
-		}
+		return errorz.Unauthorized
 	}
 
 	if ser.IsClosed {

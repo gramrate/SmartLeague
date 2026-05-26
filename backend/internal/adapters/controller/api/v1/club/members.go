@@ -14,6 +14,7 @@ import (
 // @Tags club
 // @Produce json
 // @Param id path string true "Club ID"
+// @Param q query string false "search by nickname or name"
 // @Param limit query int false "limit"
 // @Param offset query int false "offset"
 // @Success 200 {object} dto.GetClubMembersResponse

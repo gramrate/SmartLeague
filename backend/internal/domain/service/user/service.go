@@ -16,10 +16,19 @@ type userRepo interface {
 		ctx context.Context,
 		limit, offset int,
 		role *types.Role,
-		query, emailPrefix *string,
+		clubState *types.ClubState,
+		clubQuery *string,
+		query *string,
 	) ([]*model.User, int, error)
 	GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error)
-	GetSeriesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Series, int, error)
+	GetSeriesByProfileID(
+		ctx context.Context,
+		profileID uuid.UUID,
+		limit, offset int,
+		query, from, to *string,
+		isRating *bool,
+		showPast, showClosed bool,
+	) ([]*model.Series, int, error)
 	Update(ctx context.Context, userEntity model.User) (*model.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }

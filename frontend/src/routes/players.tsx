@@ -13,23 +13,38 @@ export const Route = createFileRoute("/players")({ component: PlayersPage });
 
 function PlayersPage() {
   const [q, setQ] = useState("");
+  const [club, setClub] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 20;
   const debouncedQ = useDebouncedValue(q, 150);
+  const debouncedClub = useDebouncedValue(club, 150);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["players", debouncedQ, page],
-    queryFn: () => usersApi.search({ q: debouncedQ || undefined, limit: pageSize, offset: (page - 1) * pageSize }),
+    queryKey: ["players", debouncedQ, debouncedClub, page],
+    queryFn: () => usersApi.search({
+      q: debouncedQ || undefined,
+      club: debouncedClub || undefined,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
   });
 
   return (
     <PageShell>
-      <PageHeader eyebrow="Игроки" title="Поиск игрока" description="Поиск по никнейму, имени или email." />
-      <div className="mb-6 max-w-md">
+      <PageHeader eyebrow="Игроки" title="Поиск игрока" description="Поиск по никнейму." />
+      <div className="mb-6 grid max-w-3xl gap-3 sm:grid-cols-2">
         <Input
           placeholder="Поиск игроков…"
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
+            setPage(1);
+          }}
+        />
+        <Input
+          placeholder="Клуб…"
+          value={club}
+          onChange={(e) => {
+            setClub(e.target.value);
             setPage(1);
           }}
         />

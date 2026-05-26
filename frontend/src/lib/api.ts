@@ -123,12 +123,21 @@ export const authApi = {
 // ---------- Users ----------
 export const usersApi = {
   get: (id: string) => apiFetch<User>(`/api/v1/user/${id}`),
-  search: (params: { q?: string; limit?: number; offset?: number; email_prefix?: string }) =>
+  search: (params: { q?: string; club?: string; club_state?: number; limit?: number; offset?: number }) =>
     apiFetch<Paged<User>>("/api/v1/user/all", { query: params }),
   games: (id: string, limit = 50, offset = 0) =>
     apiFetch<Paged<PlayerGame>>(`/api/v1/user/${id}/games`, { query: { limit, offset } }),
-  series: (id: string, limit = 50, offset = 0) =>
-    apiFetch<Paged<PlayerSeries>>(`/api/v1/user/${id}/series`, { query: { limit, offset } }),
+  series: (id: string, params?: {
+    q?: string;
+    from?: string;
+    to?: string;
+    is_rating?: boolean;
+    show_past?: boolean;
+    show_closed?: boolean;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiFetch<Paged<PlayerSeries>>(`/api/v1/user/${id}/series`, { query: params }),
 };
 
 // ---------- Clubs ----------
@@ -141,8 +150,10 @@ export const clubsApi = {
   update: (id: string, data: UpdateClubRequest) =>
     apiFetch<Club>(`/api/v1/club/${id}`, { method: "PATCH", body: data }),
   delete: (id: string) => apiFetch<void>(`/api/v1/club/${id}`, { method: "DELETE" }),
-  members: (id: string, limit = 100, offset = 0) =>
-    apiFetch<Paged<User>>(`/api/v1/club/${id}/members`, { query: { limit, offset } }),
+  members: (id: string, params?: { q?: string; club_state?: number; limit?: number; offset?: number }) =>
+    apiFetch<Paged<User>>(`/api/v1/club/${id}/members`, { query: params }),
+  games: (id: string, params?: { limit?: number; offset?: number }) =>
+    apiFetch<Paged<PlayerGame>>(`/api/v1/club/${id}/games`, { query: params }),
   series: (id: string, limit = 100, offset = 0) =>
     apiFetch<Paged<Series>>(`/api/v1/club/${id}/series`, { query: { limit, offset } }),
   join: (id: string) =>

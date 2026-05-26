@@ -18,6 +18,15 @@ export function Header() {
     { to: "/players", label: "Игроки" },
     ...(me?.club_id ? [{ to: "/clubs/$id" as const, label: "Мой клуб", params: { id: me.club_id } }] : []),
   ];
+  const isNavActive = (item: (typeof nav)[number]) => {
+    if ("params" in item && item.params?.id) {
+      return pathname.startsWith(`/clubs/${item.params.id}`);
+    }
+    if (item.to === "/clubs" && me?.club_id && pathname.startsWith(`/clubs/${me.club_id}`)) {
+      return false;
+    }
+    return pathname.startsWith(item.to);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -42,8 +51,7 @@ export function Header() {
               params={("params" in n ? n.params : undefined) as never}
               className={cn(
                 "rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
-                ("params" in n && n.params?.id ? pathname.startsWith(`/clubs/${n.params.id}`) : pathname.startsWith(n.to)) &&
-                  "bg-secondary text-foreground",
+                isNavActive(n) && "bg-secondary text-foreground",
               )}
             >
               {n.label}

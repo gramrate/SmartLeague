@@ -22,6 +22,7 @@ type clubService interface {
 	Delete(ctx context.Context, req *dto.DeleteClubRequest) error
 	DeleteByManager(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteClubRequest) error
 	GetMembers(ctx context.Context, req *dto.GetClubMembersRequest) (*dto.GetClubMembersResponse, error)
+	GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error)
 	Join(ctx context.Context, req *dto.JoinClubRequest) error
 	Leave(ctx context.Context, req *dto.LeaveClubRequest) error
 	SetLeader(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
@@ -63,6 +64,7 @@ func (h *handler) Setup(router *echo.Group) {
 	router.DELETE("/club/:id", h.Delete, h.authMiddleware.RequireAuth)
 
 	router.GET("/club/:id/members", h.GetMembers)
+	router.GET("/club/:id/games", h.GetGames)
 	router.POST("/club/:id/join", h.Join, h.authMiddleware.RequireAuth)
 	router.POST("/club/leave", h.Leave, h.authMiddleware.RequireAuth)
 	router.POST("/club/:id/leader/:member_id", h.SetLeader, h.authMiddleware.RequireAuth)

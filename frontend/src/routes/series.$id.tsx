@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { PageShell, PageHeader } from "@/components/site/PageShell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { seriesApi, clubsApi, ApiError } from "@/lib/api";
+import { seriesApi, clubsApi, gamesApi, ApiError } from "@/lib/api";
 import { LoadingBlock, ErrorBlock, EmptyBlock } from "@/components/site/States";
 import { fmtDateRange, fmtRub } from "@/lib/format";
 import { useAuthStore } from "@/lib/auth-store";
@@ -12,14 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserLink } from "@/components/site/UserLink";
 import { ClubState, GameStatus } from "@/types/api";
 import { RoleBadge } from "@/components/site/RoleBadge";
+import { Settings } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/series/$id")({ component: SeriesPage });
 
 function SeriesPage() {
   const { id } = Route.useParams();
+  const location = useLocation();
   const me = useAuthStore((s) => s.me);
   const qc = useQueryClient();
   const full = useQuery({ queryKey: ["series", id, "full"], queryFn: () => seriesApi.full(id) });
@@ -39,7 +41,7 @@ function SeriesPage() {
   const [creatingGame, setCreatingGame] = useState(false);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [updatingSeriesStatus, setUpdatingSeriesStatus] = useState(false);
+  const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
   const createGame = async () => {
     setCreatingGame(true);
     try {
@@ -80,26 +82,24 @@ function SeriesPage() {
       setLeaving(false);
     }
   };
-  const toggleSeriesRegistration = async () => {
-    if (!series) return;
-    const nextClosed = !series.is_closed;
-    if (!confirm(nextClosed ? "Закрыть регистрацию в серии?" : "Открыть регистрацию в серии?")) return;
-    setUpdatingSeriesStatus(true);
+  const deleteGame = async (gameId: string) => {
+    setDeletingGameId(gameId);
     try {
-      await seriesApi.update(series.id, { is_closed: nextClosed });
+      await gamesApi.delete(gameId);
       qc.invalidateQueries({ queryKey: ["series", id, "full"] });
-      qc.invalidateQueries({ queryKey: ["series", id] });
-      toast.success(nextClosed ? "Серия закрыта" : "Серия открыта");
+      toast.success("Игра удалена");
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Ошибка");
     } finally {
-      setUpdatingSeriesStatus(false);
+      setDeletingGameId(null);
     }
   };
-
   if (full.isLoading) return <PageShell><LoadingBlock /></PageShell>;
   if (full.error) return <PageShell><ErrorBlock error={full.error} /></PageShell>;
   if (!series) return null;
+  if (location.pathname !== `/series/${id}`) {
+    return <Outlet />;
+  }
 
   const participantsById = new Map((full.data!.participants.items ?? []).map((p) => [p.id, p]));
 
@@ -114,6 +114,14 @@ function SeriesPage() {
             {club.data && (
               <Button variant="outline" asChild><Link to="/clubs/$id" params={{ id: series.club_id }}>{club.data.name}</Link></Button>
             )}
+            {canManage && (
+              <Button asChild>
+                <Link to="/series/$id/manage" params={{ id: series.id }}>
+                  <Settings className="mr-1 h-4 w-4" />
+                  Управление серией
+                </Link>
+              </Button>
+            )}
           </>
         }
       />
@@ -124,21 +132,7 @@ function SeriesPage() {
         </span>
       </div>
       <div className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/40 p-3">
-        {me && !isParticipant && (
-          <Button onClick={joinSeries} disabled={joining || !!series.is_closed}>
-            {joining ? "Подключение..." : "Присоединиться к серии"}
-          </Button>
-        )}
-        {me && isParticipant && (
-          <Button variant="outline" onClick={leaveSeries} disabled={leaving || !!series.is_closed}>
-            {leaving ? "Выход..." : "Покинуть серию"}
-          </Button>
-        )}
-        {canManage && (
-          <Button className="ml-auto" variant="outline" disabled={updatingSeriesStatus} onClick={toggleSeriesRegistration}>
-            {updatingSeriesStatus ? "Сохранение..." : series.is_closed ? "Открыть регистрацию" : "Закрыть регистрацию"}
-          </Button>
-        )}
+        <span className="text-sm text-muted-foreground">Участников: {full.data?.participants.items?.length ?? 0}</span>
       </div>
       <p className="mb-6 text-sm text-muted-foreground">{fmtDateRange(series.start_at, series.end_at)}</p>
       <div className="mb-6 flex flex-wrap items-center gap-2">
@@ -160,10 +154,39 @@ function SeriesPage() {
               <ul className="divide-y divide-border/40">
                 {full.data!.games.items.map((g) => (
                   <li key={g.id}>
-                    <Link to="/game/$id" params={{ id: g.id }} className="flex items-center justify-between py-3 hover:text-primary">
-                      <span>#{g.number} · {g.name || "Игра"}</span>
-                      <span className="text-xs text-muted-foreground">{g.status === 2 ? "Завершена" : g.status === 1 ? "Идет" : "Черновик"}</span>
-                    </Link>
+                    <div className="flex items-center justify-between gap-3 py-3">
+                      <Link to="/game/$id" params={{ id: g.id }} className="min-w-0 flex-1 hover:text-primary">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate">#{g.number} · {g.name || "Игра"}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">{g.status === 2 ? "Завершена" : g.status === 1 ? "Идет" : "Черновик"}</span>
+                        </div>
+                      </Link>
+                      {canManage && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">Удалить</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Удалить игру?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Это действие нельзя отменить. Игра будет удалена из серии.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Отмена</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => void deleteGame(g.id)}
+                                disabled={deletingGameId === g.id}
+                              >
+                                {deletingGameId === g.id ? "Удаление..." : "Удалить"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -209,6 +232,19 @@ function SeriesPage() {
 
         <aside className="space-y-6">
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
+            {me && (
+              <div className="mb-4 flex justify-end">
+                {!isParticipant && !series.is_closed ? (
+                  <Button onClick={joinSeries} disabled={joining}>
+                    {joining ? "Подключение..." : "Присоединиться к серии"}
+                  </Button>
+                ) : isParticipant ? (
+                  <Button variant="outline" onClick={leaveSeries} disabled={leaving || !!series.is_closed}>
+                    {leaving ? "Выход..." : "Покинуть серию"}
+                  </Button>
+                ) : null}
+              </div>
+            )}
             <h2 className="mb-4 font-display text-lg font-semibold">Участники</h2>
             {!full.data!.participants.items?.length ? <p className="text-sm text-muted-foreground">Участников нет</p> : (
               <ul className="space-y-2 text-sm">

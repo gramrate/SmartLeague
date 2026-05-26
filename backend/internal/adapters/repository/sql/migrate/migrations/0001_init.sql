@@ -59,7 +59,6 @@ CREATE TABLE IF NOT EXISTS series (
 	is_club_only boolean NOT NULL DEFAULT false,
 	is_closed boolean NOT NULL DEFAULT false,
 	game_type smallint NOT NULL DEFAULT 0,
-	status smallint NOT NULL DEFAULT 0,
 	created_at timestamptz NOT NULL DEFAULT now(),
 	updated_at timestamptz NOT NULL DEFAULT now()
 );

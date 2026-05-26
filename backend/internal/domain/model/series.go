@@ -20,7 +20,6 @@ type Series struct {
 	IsClubOnly  bool
 	IsClosed    bool
 	GameType    types.GameType
-	Status      types.SeriesStatus
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -35,7 +34,6 @@ type SeriesUpdatePatch struct {
 	IsClubOnly  *bool
 	IsClosed    *bool
 	GameType    *types.GameType
-	Status      *types.SeriesStatus
 }
 
 type SeriesListItem struct {

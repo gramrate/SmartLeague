@@ -116,13 +116,14 @@ function AllSeriesPage() {
                 )}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                  {s.is_rating ? "На рейтинг" : "Без рейтинга"}
-                </span>
+                {s.is_rating && (
+                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
+                    На рейтинг
+                  </span>
+                )}
                 {s.price_rub > 0 && (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Платно · {fmtRub(s.price_rub)}</span>
                 )}
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{s.games_count} игр</span>
               </div>
             </div>
           ))}
