@@ -1,19 +1,24 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { PageShell, PageHeader } from "@/components/site/PageShell";
-import { useQuery } from "@tanstack/react-query";
-import { usersApi, clubsApi } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usersApi, clubsApi, ApiError } from "@/lib/api";
 import { LoadingBlock, ErrorBlock, EmptyBlock } from "@/components/site/States";
 import { RoleBadge } from "@/components/site/RoleBadge";
 import { ClubState } from "@/types/api";
 import { displayUserName } from "@/lib/roles";
 import { fmtDate, fmtDateRange, fmtRub } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/lib/auth-store";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/user/$id")({ component: UserPage });
 
 function UserPage() {
   const { id } = Route.useParams();
   const location = useLocation();
+  const me = useAuthStore((s) => s.me);
+  const qc = useQueryClient();
   const user = useQuery({ queryKey: ["user", id], queryFn: () => usersApi.get(id) });
   const games = useQuery({ queryKey: ["user", id, "games"], queryFn: () => usersApi.games(id, 100, 0) });
   const series = useQuery({
@@ -37,10 +42,53 @@ function UserPage() {
   const allSeries = series.data?.items ?? [];
   const recentGames = allGames.slice(0, 3);
   const visibleSeries = allSeries;
+  const canBlockFromProfile =
+    !!me?.club_id &&
+    (me.club_state === ClubState.Leader || me.club_state === ClubState.President) &&
+    me.id !== user.data.id;
+
+  const blockFromProfile = async () => {
+    if (!me?.club_id) return;
+    try {
+      await clubsApi.blockProfile(me.club_id, user.data.id);
+      qc.invalidateQueries({ queryKey: ["club", me.club_id, "members"] });
+      qc.invalidateQueries({ queryKey: ["club", me.club_id, "bans"] });
+      toast.success("Игрок заблокирован");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Ошибка");
+    }
+  };
 
   return (
     <PageShell>
-      <PageHeader eyebrow="Игрок" title={displayUserName(user.data)} description={user.data.description} />
+      <PageHeader
+        eyebrow="Игрок"
+        title={displayUserName(user.data)}
+        description={user.data.description}
+        actions={
+          canBlockFromProfile ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="secondary">Заблокировать в своем клубе</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Заблокировать игрока?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Игрок будет заблокирован в вашем клубе и не сможет вступить в него.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void blockFromProfile()}>
+                    Заблокировать
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : undefined
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <aside className="space-y-6">

@@ -72,6 +72,18 @@ type GetClubGamesResponse struct {
 	Pagination PaginationInfo `json:"pagination"`
 }
 
+type GetClubBansRequest struct {
+	ClubID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Query  *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200"`
+	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+}
+
+type GetClubBansResponse struct {
+	Items      []*User        `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
+}
+
 type JoinClubRequest struct {
 	ProfileID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	ClubID    uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`

@@ -28,6 +28,8 @@ type repo interface {
 	CountSeriesParticipants(ctx context.Context, seriesID uuid.UUID) (int, error)
 	ListSeriesParticipants(ctx context.Context, seriesID uuid.UUID, limit, offset int, query *string) ([]*model.User, int, error)
 	IsSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) (bool, error)
+	ListPaidSeriesParticipants(ctx context.Context, seriesID uuid.UUID) ([]uuid.UUID, error)
+	SetSeriesParticipantPaid(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID, paid bool) error
 
 	ListSeriesLeaderboard(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.LeaderboardRow, int, error)
 }
@@ -371,6 +373,53 @@ func (s *Service) GetParticipants(ctx context.Context, requesterID *uuid.UUID, r
 			HasPrevious: offset > 0,
 		},
 	}, nil
+}
+
+func (s *Service) GetPayments(ctx context.Context, requesterID uuid.UUID, req *dto.GetSeriesPaymentsRequest) (*dto.GetSeriesPaymentsResponse, error) {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
+		return nil, err
+	}
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return nil, err
+	}
+	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+		return nil, errorz.PermissionDenied
+	}
+	if ser.PriceRub <= 0 {
+		return &dto.GetSeriesPaymentsResponse{PaidProfileIDs: []uuid.UUID{}}, nil
+	}
+	ids, err := s.repo.ListPaidSeriesParticipants(ctx, req.SeriesID)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.GetSeriesPaymentsResponse{PaidProfileIDs: ids}, nil
+}
+
+func (s *Service) SetPayment(ctx context.Context, requesterID uuid.UUID, req *dto.SetSeriesPaymentRequest) error {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
+		return err
+	}
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+		return errorz.PermissionDenied
+	}
+	if ser.PriceRub <= 0 {
+		return errorz.InvalidRequest
+	}
+	isParticipant, err := s.repo.IsSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
+	if err != nil {
+		return err
+	}
+	if !isParticipant {
+		return errorz.InvalidRequest
+	}
+	return s.repo.SetSeriesParticipantPaid(ctx, req.SeriesID, req.ProfileID, req.Paid)
 }
 
 func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {

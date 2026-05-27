@@ -419,6 +419,71 @@ func (r *Repo) BanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID
 	return err
 }
 
+func (r *Repo) UnbanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM club_bans WHERE club_id=$1 AND profile_id=$2`, clubID, profileID)
+	return err
+}
+
+func (r *Repo) ListBannedProfiles(ctx context.Context, clubID uuid.UUID, query *string, limit, offset int) ([]*model.User, int, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	where := "b.club_id=$1"
+	args := make([]any, 0, 4)
+	args = append(args, clubID)
+	nextArg := 2
+	if query != nil && *query != "" {
+		where += fmt.Sprintf(" AND LOWER(p.nickname) LIKE LOWER($%d)", nextArg)
+		args = append(args, "%"+*query+"%")
+		nextArg++
+	}
+
+	var total int
+	countQuery := fmt.Sprintf(`SELECT count(*) FROM club_bans b JOIN profiles p ON p.id=b.profile_id WHERE %s`, where)
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	listQuery := fmt.Sprintf(`
+SELECT p.id, p.nickname, p.name, p.show_name, p.description, p.email, p.password_hash, p.club_id, p.club_state, p.role
+FROM club_bans b
+JOIN profiles p ON p.id = b.profile_id
+WHERE %s
+ORDER BY p.nickname ASC
+LIMIT $%d OFFSET $%d
+`, where, nextArg, nextArg+1)
+	args = append(args, limit, offset)
+	rows, err := r.db.QueryContext(ctx, listQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var out []*model.User
+	for rows.Next() {
+		var p model.User
+		var desc sql.NullString
+		var clubIDRaw sql.NullString
+		var clubState int16
+		var role int16
+		if err := rows.Scan(&p.ID, &p.Nickname, &p.Name, &p.ShowName, &desc, &p.Email, &p.PasswordHash, &clubIDRaw, &clubState, &role); err != nil {
+			return nil, 0, err
+		}
+		p.Description = nullStringToPtr(desc)
+		p.ClubID = nullStringToUUIDPtr(clubIDRaw)
+		p.ClubState = types.ClubState(clubState)
+		p.Role = types.Role(role)
+		out = append(out, &p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return out, total, nil
+}
+
 func ptrToNullString(p *string) any {
 	if p == nil {
 		return nil

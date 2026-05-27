@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { PageShell, PageHeader } from "@/components/site/PageShell";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { clubsApi, ApiError, seriesApi, gamesApi } from "@/lib/api";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { clubsApi, ApiError, seriesApi, gamesApi, usersApi } from "@/lib/api";
 import { LoadingBlock, ErrorBlock } from "@/components/site/States";
 import { useAuthStore } from "@/lib/auth-store";
 import { canManageClub, displayUserName, CLUB_STATE_LABEL } from "@/lib/roles";
@@ -18,6 +18,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import { Crown, UserX, Ban } from "lucide-react";
 import { fmtDateRange } from "@/lib/format";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 
 export const Route = createFileRoute("/clubs/$id/manage")({ component: ManageClubPage });
 
@@ -37,6 +39,42 @@ function ManageClubPage() {
 
   const club = useQuery({ queryKey: ["club", id], queryFn: () => clubsApi.get(id) });
   const members = useQuery({ queryKey: ["club", id, "members"], queryFn: () => clubsApi.members(id) });
+  const [banQ, setBanQ] = useState("");
+  const [banSearchQ, setBanSearchQ] = useState("");
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
+  const [banPage, setBanPage] = useState(1);
+  const banPageSize = 8;
+  const [banSearchPage, setBanSearchPage] = useState(1);
+  const banSearchPageSize = 8;
+  const [banOverrides, setBanOverrides] = useState<Record<string, boolean>>({});
+  const debouncedBanQ = useDebouncedValue(banQ, 150);
+  const debouncedBanSearchQ = useDebouncedValue(banSearchQ, 150);
+  const bans = useQuery({
+    queryKey: ["club", id, "bans", debouncedBanQ, banPage],
+    queryFn: () =>
+      clubsApi.bans(id, {
+        q: debouncedBanQ || undefined,
+        limit: banPageSize,
+        offset: (banPage - 1) * banPageSize,
+      }),
+    placeholderData: keepPreviousData,
+  });
+  const bannedIds = new Set((bans.data?.items ?? []).map((u) => u.id));
+  const isBanned = (userId: string) => banOverrides[userId] ?? bannedIds.has(userId);
+  useEffect(() => {
+    setBanOverrides({});
+  }, [debouncedBanQ, banPage, debouncedBanSearchQ, banSearchPage]);
+  const playerSearch = useQuery({
+    queryKey: ["club", id, "ban-player-search", debouncedBanSearchQ, banSearchPage],
+    enabled: banDialogOpen,
+    queryFn: () =>
+      usersApi.search({
+        q: debouncedBanSearchQ.trim() || undefined,
+        limit: banSearchPageSize,
+        offset: (banSearchPage - 1) * banSearchPageSize,
+      }),
+    placeholderData: keepPreviousData,
+  });
   const series = useQuery({
     queryKey: ["club", id, "series", "all"],
     queryFn: async () => {
@@ -99,6 +137,7 @@ function ManageClubPage() {
   };
 
   const allMembers = members.data?.items ?? [];
+  const memberRoleById = new Map(allMembers.map((m) => [m.id, m.club_state ?? ClubState.Member] as const));
   const president = allMembers.find((m) => m.club_state === ClubState.President);
   const others = allMembers.filter((m) => m.id !== president?.id);
   const [presidentTargetId, setPresidentTargetId] = useState<string>("");
@@ -129,6 +168,22 @@ function ManageClubPage() {
     if (!confirm("Заблокировать этого участника?")) return;
     try { await clubsApi.block(id, memberId); qc.invalidateQueries({ queryKey: ["club", id, "members"] }); toast.success("Участник заблокирован"); }
     catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
+  };
+  const unban = async (memberId: string) => {
+    if (!confirm("Разблокировать этого игрока?")) return;
+    try {
+      await clubsApi.unban(id, memberId);
+      setBanOverrides((prev) => ({ ...prev, [memberId]: false }));
+      toast.success("Игрок разблокирован");
+    } catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
+  };
+  const blockFromSearch = async (profileId: string) => {
+    if (!confirm("Заблокировать этого игрока?")) return;
+    try {
+      await clubsApi.blockProfile(id, profileId);
+      setBanOverrides((prev) => ({ ...prev, [profileId]: true }));
+      toast.success("Игрок заблокирован");
+    } catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
   };
   const promoteLeader = async (memberId: string) => {
     if (!confirm("Передать президентство выбранному участнику? Вы станете лидером.")) return;
@@ -194,7 +249,12 @@ function ManageClubPage() {
 
       {/* Members */}
       <section className="mb-8 rounded-2xl border border-border/60 bg-card/60 p-6">
-        <h2 className="mb-4 font-display text-lg font-semibold">Участники</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold">Участники</h2>
+          <Button size="sm" variant="outline" onClick={() => setBanDialogOpen(true)}>
+            Посмотреть список блокировок
+          </Button>
+        </div>
         {others.length === 0 ? <p className="text-sm text-muted-foreground">Других участников нет.</p> : (
           <ul className="divide-y divide-border/40">
             {others.map((m) => {
@@ -376,6 +436,171 @@ function ManageClubPage() {
               {transferring ? "Передача..." : "Передать"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Блокировки клуба</DialogTitle>
+            <DialogDescription>
+              Поиск и управление заблокированными игроками.
+            </DialogDescription>
+          </DialogHeader>
+          <Tabs defaultValue="banned" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="banned">Заблокированные</TabsTrigger>
+              <TabsTrigger value="all">Список всех игроков</TabsTrigger>
+            </TabsList>
+            <TabsContent value="banned" className="mt-3 space-y-3">
+              <div className="flex items-end gap-2">
+                <div className="flex-1 space-y-1.5">
+                  <Label>Поиск в бан-листе</Label>
+                  <Input
+                    value={banQ}
+                    onChange={(e) => {
+                      setBanQ(e.target.value);
+                      setBanPage(1);
+                    }}
+                    placeholder="Никнейм..."
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void bans.refetch();
+                    void playerSearch.refetch();
+                  }}
+                >
+                  Обновить
+                </Button>
+              </div>
+              <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+                <p className="mb-2 text-sm text-muted-foreground">Список заблокированных</p>
+                {bans.isFetching && <p className="mb-2 text-xs text-muted-foreground">Обновление...</p>}
+                {!bans.data?.items?.length ? (
+                  <p className="text-sm text-muted-foreground">Заблокированных игроков нет.</p>
+                ) : (
+                  <>
+                    <ul className="divide-y divide-border/40">
+                      {bans.data.items.map((u) => (
+                        <li key={u.id} className="flex items-center justify-between gap-3 py-2">
+                          <Link to="/user/$id" params={{ id: u.id }} className="hover:text-primary">{displayUserName(u)}</Link>
+                          {isBanned(u.id) ? (
+                            <Button size="sm" variant="secondary" onClick={() => unban(u.id)}>Разблокировать</Button>
+                          ) : (
+                            <Button size="sm" variant="secondary" onClick={() => blockFromSearch(u.id)}>
+                              <Ban className="mr-1 h-4 w-4" />
+                              Заблокировать
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Страница {bans.data.pagination.current_page} из {bans.data.pagination.total_pages}</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!bans.data.pagination.has_previous}
+                          onClick={() => setBanPage((p) => Math.max(1, p - 1))}
+                        >
+                          Назад
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!bans.data.pagination.has_next}
+                          onClick={() => setBanPage((p) => p + 1)}
+                        >
+                          Далее
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="all" className="mt-3 space-y-3">
+              <div className="flex items-end gap-2">
+                <div className="flex-1 space-y-1.5">
+                  <Label>Поиск игрока</Label>
+                  <Input
+                    value={banSearchQ}
+                    onChange={(e) => {
+                      setBanSearchQ(e.target.value);
+                      setBanSearchPage(1);
+                    }}
+                    placeholder="Никнейм..."
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void bans.refetch();
+                    void playerSearch.refetch();
+                  }}
+                >
+                  Обновить
+                </Button>
+              </div>
+              <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+                {playerSearch.isFetching && <p className="mb-2 text-xs text-muted-foreground">Обновление...</p>}
+                {!playerSearch.data?.items?.length ? (
+                  <p className="text-sm text-muted-foreground">Никого не найдено</p>
+                ) : (
+                  <>
+                    <ul className="space-y-2">
+                      {playerSearch.data.items.map((u) => (
+                        <li key={u.id} className="flex items-center justify-between gap-2 text-sm">
+                          <div className="min-w-0">
+                            <Link to="/user/$id" params={{ id: u.id }} className="truncate hover:text-primary">{displayUserName(u)}</Link>
+                            {memberRoleById.has(u.id) && (
+                              <p className="text-xs text-muted-foreground">
+                                {CLUB_STATE_LABEL[memberRoleById.get(u.id)!]}
+                              </p>
+                            )}
+                          </div>
+                          {isBanned(u.id) ? (
+                            <Button size="sm" variant="secondary" onClick={() => unban(u.id)}>
+                              Разблокировать
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="secondary" onClick={() => blockFromSearch(u.id)}>
+                              <Ban className="mr-1 h-4 w-4" />
+                              Заблокировать
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Страница {playerSearch.data.pagination.current_page} из {playerSearch.data.pagination.total_pages}</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!playerSearch.data.pagination.has_previous}
+                          onClick={() => setBanSearchPage((p) => Math.max(1, p - 1))}
+                        >
+                          Назад
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!playerSearch.data.pagination.has_next}
+                          onClick={() => setBanSearchPage((p) => p + 1)}
+                        >
+                          Далее
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </PageShell>

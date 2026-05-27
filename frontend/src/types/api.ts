@@ -138,6 +138,10 @@ export interface SeriesFull {
   leaderboard: Paged<LeaderboardRow>;
 }
 
+export interface SeriesPayments {
+  paid_profile_ids: string[];
+}
+
 export interface PlayerGame {
   id: string;
   series_id: string;

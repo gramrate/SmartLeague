@@ -20,6 +20,8 @@ type seriesService interface {
 	UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateSeriesRequest) (*dto.UpdateSeriesResponse, error)
 	DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteSeriesRequest) error
 	GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error)
+	GetPayments(ctx context.Context, requesterID uuid.UUID, req *dto.GetSeriesPaymentsRequest) (*dto.GetSeriesPaymentsResponse, error)
+	SetPayment(ctx context.Context, requesterID uuid.UUID, req *dto.SetSeriesPaymentRequest) error
 	Join(ctx context.Context, req *dto.JoinSeriesRequest) error
 	Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error
 	GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error)
@@ -76,6 +78,8 @@ func (h *handler) Setup(router *echo.Group) {
 	router.GET("/series/all", h.GetAllSeries, h.authMiddleware.OptionalAuth)
 
 	router.GET("/series/:id/participants", h.GetParticipants, h.authMiddleware.OptionalAuth)
+	router.GET("/series/:id/payments", h.GetPayments, h.authMiddleware.RequireAuth)
+	router.POST("/series/:id/payment/:profile_id", h.SetPayment, h.authMiddleware.RequireAuth)
 	router.POST("/series/:id/join", h.JoinSeries, h.authMiddleware.RequireAuth)
 	router.POST("/series/:id/leave", h.LeaveSeries, h.authMiddleware.RequireAuth)
 

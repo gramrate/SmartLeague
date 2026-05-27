@@ -117,3 +117,45 @@ LIMIT $`+fmt.Sprintf("%d", len(listArgs)+1)+` OFFSET $`+fmt.Sprintf("%d", len(li
 
 	return out, total, nil
 }
+
+func (r *Repo) ListPaidSeriesParticipants(ctx context.Context, seriesID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := r.db.QueryContext(ctx, `
+SELECT profile_id
+FROM series_paid_participants
+WHERE series_id=$1
+ORDER BY paid_at ASC
+`, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]uuid.UUID, 0)
+	for rows.Next() {
+		var profileID uuid.UUID
+		if err := rows.Scan(&profileID); err != nil {
+			return nil, err
+		}
+		out = append(out, profileID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (r *Repo) SetSeriesParticipantPaid(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID, paid bool) error {
+	if paid {
+		_, err := r.db.ExecContext(ctx, `
+INSERT INTO series_paid_participants (series_id, profile_id)
+VALUES ($1,$2)
+ON CONFLICT (series_id, profile_id) DO UPDATE SET paid_at=now()
+`, seriesID, profileID)
+		return err
+	}
+	_, err := r.db.ExecContext(ctx, `
+DELETE FROM series_paid_participants
+WHERE series_id=$1 AND profile_id=$2
+`, seriesID, profileID)
+	return err
+}

@@ -208,8 +208,12 @@ func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, query, club
 		nextArg++
 	}
 	if clubQuery != nil && *clubQuery != "" {
-		where += fmt.Sprintf(" AND LOWER(c.name) LIKE LOWER($%d)", nextArg)
-		args = append(args, "%"+*clubQuery+"%")
+		clubID, err := uuid.Parse(*clubQuery)
+		if err != nil {
+			return nil, 0, err
+		}
+		where += fmt.Sprintf(" AND s.club_id = $%d", nextArg)
+		args = append(args, clubID)
 		nextArg++
 	}
 	if from != nil && *from != "" {

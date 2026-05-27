@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fromInputDate, toInputDate } from "@/lib/format";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/series/$id/manage")({ component: SeriesManagePage });
 
@@ -38,6 +39,16 @@ function SeriesManagePage() {
     queryFn: () => clubsApi.get(series!.club_id),
     enabled: !!series?.club_id,
   });
+  const participants = useQuery({
+    queryKey: ["series", id, "participants", "manage-payments"],
+    queryFn: () => seriesApi.participants(id, 200, 0),
+    enabled: !!series && Number(series.price_rub ?? 0) > 0,
+  });
+  const payments = useQuery({
+    queryKey: ["series", id, "payments"],
+    queryFn: () => seriesApi.payments(id),
+    enabled: !!series && Number(series.price_rub ?? 0) > 0,
+  });
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -49,6 +60,7 @@ function SeriesManagePage() {
   const [isClosed, setIsClosed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [paidOverrides, setPaidOverrides] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!series) return;
@@ -76,9 +88,18 @@ function SeriesManagePage() {
     );
   }, [series, name, description, startAt, endAt, priceRub, isRating, isClubOnly, isClosed]);
 
+  useEffect(() => {
+    setPaidOverrides({});
+  }, [payments.data?.paid_profile_ids]);
+
   if (seriesQ.isLoading) return <PageShell><LoadingBlock /></PageShell>;
   if (seriesQ.error) return <PageShell><ErrorBlock error={seriesQ.error} /></PageShell>;
   if (!series || !canManage) return null;
+  const paidBase = new Set(payments.data?.paid_profile_ids ?? []);
+  const isPaid = (profileId: string) => paidOverrides[profileId] ?? paidBase.has(profileId);
+  const participantsList = participants.data?.items ?? [];
+  const paidParticipants = participantsList.filter((p) => isPaid(p.id));
+  const unpaidParticipants = participantsList.filter((p) => !isPaid(p.id));
 
   const save = async () => {
     setSaving(true);
@@ -118,6 +139,16 @@ function SeriesManagePage() {
       toast.error(e instanceof ApiError ? e.message : "Ошибка");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const setPaid = async (profileId: string, paid: boolean) => {
+    try {
+      await seriesApi.setPayment(id, profileId, paid);
+      setPaidOverrides((prev) => ({ ...prev, [profileId]: paid }));
+      toast.success(paid ? "Оплата отмечена" : "Оплата снята");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Ошибка");
     }
   };
 
@@ -168,6 +199,61 @@ function SeriesManagePage() {
             </div>
           </div>
         </section>
+
+        {Number(series.price_rub ?? 0) > 0 && (
+          <section className="mt-8 rounded-2xl border border-border/60 bg-card/60 p-6">
+            <h2 className="mb-2 font-display text-lg font-semibold">Оплаты участников</h2>
+            <p className="mb-4 text-sm text-muted-foreground">Отмечайте тех, кто оплатил участие в серии.</p>
+            <div className="mb-4 flex flex-wrap items-center gap-4 text-sm">
+              <span>Оплатили: {paidParticipants.length}</span>
+              <span>Не оплатили: {unpaidParticipants.length}</span>
+            </div>
+            {!participantsList.length ? (
+              <p className="text-sm text-muted-foreground">Участников пока нет.</p>
+            ) : (
+              <Tabs defaultValue="paid" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="paid">Оплатили</TabsTrigger>
+                  <TabsTrigger value="unpaid">Не оплатили</TabsTrigger>
+                </TabsList>
+                <TabsContent value="paid" className="mt-3">
+                  {!paidParticipants.length ? (
+                    <p className="text-sm text-muted-foreground">Пока никто не оплатил.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {paidParticipants.map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 px-3 py-2">
+                          <span className="truncate text-sm">{p.nickname || p.name || p.email || p.id}</span>
+                          <label className="flex items-center gap-2 text-sm">
+                            <Checkbox checked onCheckedChange={(v) => void setPaid(p.id, !!v)} />
+                            Оплачено
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </TabsContent>
+                <TabsContent value="unpaid" className="mt-3">
+                  {!unpaidParticipants.length ? (
+                    <p className="text-sm text-muted-foreground">Все участники оплатили.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {unpaidParticipants.map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 px-3 py-2">
+                          <span className="truncate text-sm">{p.nickname || p.name || p.email || p.id}</span>
+                          <label className="flex items-center gap-2 text-sm">
+                            <Checkbox checked={false} onCheckedChange={(v) => void setPaid(p.id, !!v)} />
+                            Оплачено
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
+          </section>
+        )}
 
         <section className="mt-8 rounded-2xl border border-destructive/40 bg-card/60 p-6">
           <h2 className="mb-2 font-display text-lg font-semibold text-destructive">Опасные действия</h2>

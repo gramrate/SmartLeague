@@ -20,12 +20,15 @@ type clubService interface {
 	DeleteByManager(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteClubRequest) error
 	GetMembers(ctx context.Context, req *dto.GetClubMembersRequest) (*dto.GetClubMembersResponse, error)
 	GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error)
+	GetBans(ctx context.Context, requesterID uuid.UUID, req *dto.GetClubBansRequest) (*dto.GetClubBansResponse, error)
 	Join(ctx context.Context, req *dto.JoinClubRequest) error
 	Leave(ctx context.Context, req *dto.LeaveClubRequest) error
 	SetLeader(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 	SetMemberRole(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID, state types.ClubState) error
 	KickMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 	BlockMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
+	UnbanMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
+	BlockProfile(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) error
 }
 
 func (s *ServiceProvider) ClubService() clubService {

@@ -21,6 +21,8 @@ type clubRepo interface {
 	SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *uuid.UUID, state types.ClubState) error
 	ListMembers(ctx context.Context, clubID uuid.UUID, query *string, clubState *types.ClubState, limit, offset int) ([]*model.User, int, error)
 	ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error)
+	ListBannedProfiles(ctx context.Context, clubID uuid.UUID, query *string, limit, offset int) ([]*model.User, int, error)
+	UnbanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) error
 
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
 	SetMemberState(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID, state types.ClubState) error
@@ -256,6 +258,71 @@ func (s *service) GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*
 	}, nil
 }
 
+func (s *service) GetBans(ctx context.Context, requesterID uuid.UUID, req *dto.GetClubBansRequest) (*dto.GetClubBansResponse, error) {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return nil, err
+	}
+	if requesterClubID == nil || *requesterClubID != req.ClubID || !canManageClub(requesterState) {
+		return nil, errorz.Unauthorized
+	}
+
+	limit := 10
+	offset := 0
+	if req.Limit != nil {
+		limit = *req.Limit
+	}
+	if req.Offset != nil {
+		offset = *req.Offset
+	}
+
+	items, total, err := s.repo.ListBannedProfiles(ctx, req.ClubID, req.Query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	outItems := make([]*dto.User, 0, len(items))
+	for _, it := range items {
+		outItems = append(outItems, &dto.User{
+			ID:          it.ID,
+			Nickname:    it.Nickname,
+			Name:        it.Name,
+			ShowName:    it.ShowName,
+			Description: it.Description,
+			Email:       it.Email,
+			ClubID:      it.ClubID,
+			ClubState:   it.ClubState,
+			Role:        it.Role,
+		})
+	}
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+	currentPage := (offset / limit) + 1
+	if totalPages == 0 {
+		totalPages = 1
+		currentPage = 1
+	}
+	return &dto.GetClubBansResponse{
+		Items: outItems,
+		Pagination: dto.PaginationInfo{
+			TotalItems:  total,
+			TotalPages:  totalPages,
+			CurrentPage: currentPage,
+			HasNext:     offset+limit < total,
+			HasPrevious: offset > 0,
+		},
+	}, nil
+}
+
+func (s *service) UnbanMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
+		return errorz.Unauthorized
+	}
+	return s.repo.UnbanProfileInClub(ctx, memberID, clubID)
+}
+
 func (s *service) Join(ctx context.Context, req *dto.JoinClubRequest) error {
 	banned, err := s.repo.IsProfileBannedInClub(ctx, req.ProfileID, req.ClubID)
 	if err != nil {
@@ -378,4 +445,30 @@ func (s *service) BlockMember(ctx context.Context, requesterID uuid.UUID, clubID
 		return err
 	}
 	return s.repo.BanProfileInClub(ctx, memberID, clubID)
+}
+
+func (s *service) BlockProfile(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) error {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
+		return errorz.Unauthorized
+	}
+	targetClubID, targetState, err := s.repo.GetProfileClubState(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	if targetClubID != nil && *targetClubID == clubID && targetState != types.ClubStateNone {
+		if requesterID == profileID {
+			return errorz.ClubSelfAction
+		}
+		if requesterState == types.ClubStateLeader && !canLeaderManageTarget(targetState) {
+			return errorz.ClubRoleRestricted
+		}
+		if err := s.repo.SetProfileClub(ctx, profileID, nil, types.ClubStateNone); err != nil {
+			return err
+		}
+	}
+	return s.repo.BanProfileInClub(ctx, profileID, clubID)
 }

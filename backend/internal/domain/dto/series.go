@@ -89,7 +89,7 @@ type GetAllSeriesRequest struct {
 	Limit      *int    `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
 	Offset     *int    `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
 	Query      *string `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200"`
-	ClubQuery  *string `json:"club,omitempty" form:"club" validate:"omitempty,min=1,max=200"`
+	ClubQuery  *string `json:"club,omitempty" form:"club" validate:"omitempty,uuid"`
 	From       *string `json:"from,omitempty" form:"from" validate:"omitempty,len=10"`
 	To         *string `json:"to,omitempty" form:"to" validate:"omitempty,len=10"`
 	IsRating   *bool   `json:"is_rating,omitempty" form:"is_rating"`
@@ -131,6 +131,20 @@ type GetSeriesParticipantsRequest struct {
 type GetSeriesParticipantsResponse struct {
 	Items      []*User        `json:"items"`
 	Pagination PaginationInfo `json:"pagination"`
+}
+
+type GetSeriesPaymentsRequest struct {
+	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+}
+
+type GetSeriesPaymentsResponse struct {
+	PaidProfileIDs []uuid.UUID `json:"paid_profile_ids"`
+}
+
+type SetSeriesPaymentRequest struct {
+	SeriesID  uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	ProfileID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Paid      bool      `json:"paid"`
 }
 
 type JoinSeriesRequest struct {

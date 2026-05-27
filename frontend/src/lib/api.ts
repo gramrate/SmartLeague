@@ -5,7 +5,7 @@ import type {
   Club, Paged, User, Series, AllSeriesItem, Game, GameFull, LeaderboardRow,
   SeriesFull, PlayerGame, PlayerSeries, LoginRequest, RegisterRequest,
   CreateClubRequest, UpdateClubRequest, CreateSeriesRequest, CreateGameRequest,
-  UpdateCurrentUserRequest, GameResultRow, UpdateSeriesRequest, ManageGameRow,
+  UpdateCurrentUserRequest, GameResultRow, UpdateSeriesRequest, ManageGameRow, SeriesPayments,
 } from "@/types/api";
 
 export const API_BASE_URL =
@@ -169,6 +169,12 @@ export const clubsApi = {
     apiFetch<void>(`/api/v1/club/${id}/member/${memberId}/kick`, { method: "POST" }),
   block: (id: string, memberId: string) =>
     apiFetch<void>(`/api/v1/club/${id}/member/${memberId}/block`, { method: "POST" }),
+  bans: (id: string, params?: { q?: string; limit?: number; offset?: number }) =>
+    apiFetch<Paged<User>>(`/api/v1/club/${id}/bans`, { query: params }),
+  unban: (id: string, memberId: string) =>
+    apiFetch<void>(`/api/v1/club/${id}/member/${memberId}/unban`, { method: "POST" }),
+  blockProfile: (id: string, profileId: string) =>
+    apiFetch<void>(`/api/v1/club/${id}/profile/${profileId}/block`, { method: "POST" }),
 };
 
 // ---------- Series ----------
@@ -200,6 +206,10 @@ export const seriesApi = {
     apiFetch<Paged<Game>>(`/api/v1/series/${id}/games`, { query: { limit, offset } }),
   participants: (id: string, limit = 100, offset = 0) =>
     apiFetch<Paged<User>>(`/api/v1/series/${id}/participants`, { query: { limit, offset } }),
+  payments: (id: string) =>
+    apiFetch<SeriesPayments>(`/api/v1/series/${id}/payments`),
+  setPayment: (id: string, profileId: string, paid: boolean) =>
+    apiFetch<void>(`/api/v1/series/${id}/payment/${profileId}`, { method: "POST", body: { paid } }),
   leaderboard: (id: string, limit = 100, offset = 0) =>
     apiFetch<Paged<LeaderboardRow>>(`/api/v1/series/${id}/leaderboard`, { query: { limit, offset } }),
   join: (id: string) => apiFetch<void>(`/api/v1/series/${id}/join`, { method: "POST" }),

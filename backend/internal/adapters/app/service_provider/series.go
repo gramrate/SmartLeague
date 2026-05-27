@@ -17,6 +17,8 @@ type seriesService interface {
 	UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *dto.UpdateSeriesRequest) (*dto.UpdateSeriesResponse, error)
 	DeleteSeries(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteSeriesRequest) error
 	GetParticipants(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesParticipantsRequest) (*dto.GetSeriesParticipantsResponse, error)
+	GetPayments(ctx context.Context, requesterID uuid.UUID, req *dto.GetSeriesPaymentsRequest) (*dto.GetSeriesPaymentsResponse, error)
+	SetPayment(ctx context.Context, requesterID uuid.UUID, req *dto.SetSeriesPaymentRequest) error
 	Join(ctx context.Context, req *dto.JoinSeriesRequest) error
 	Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error
 	GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error)

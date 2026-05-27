@@ -15,7 +15,7 @@ function PlayersPage() {
   const [q, setQ] = useState("");
   const [club, setClub] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 21;
   const debouncedQ = useDebouncedValue(q, 150);
   const debouncedClub = useDebouncedValue(club, 150);
   const { data, isLoading, error } = useQuery({
