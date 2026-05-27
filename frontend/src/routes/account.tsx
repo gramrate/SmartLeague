@@ -95,7 +95,7 @@ function AccountPage() {
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Клуб</p>
             {me.club_id ? (
               <div className="mt-2 space-y-3">
-                <Link to="/clubs/$id" params={{ id: me.club_id }} className="block font-semibold text-primary hover:underline">
+                <Link to="/clubs/$id" params={{ id: me.club_id }} className="block break-words font-semibold text-primary hover:underline">
                   {club.data?.name ?? "Ваш клуб"}
                 </Link>
                 <RoleBadge state={(me.club_state ?? ClubState.None) as ClubState} />

@@ -11,7 +11,7 @@ export function UserLink({ userId, className }: { userId: string; className?: st
     retry: 0,
   });
   return (
-    <Link to="/user/$id" params={{ id: userId }} className={className ?? "text-primary hover:underline"}>
+    <Link to="/user/$id" params={{ id: userId }} className={className ?? "inline-block max-w-[220px] truncate text-primary hover:underline"}>
       {displayUserName(data ?? { id: userId })}
     </Link>
   );

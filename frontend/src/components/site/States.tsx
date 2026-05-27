@@ -50,8 +50,8 @@ export function EmptyBlock({ title, description, action }:
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
       <Inbox className="h-8 w-8 text-muted-foreground" />
       <div>
-        <p className="font-medium text-foreground">{title}</p>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        <p className="break-words font-medium text-foreground">{title}</p>
+        {description && <p className="mt-1 break-words text-sm text-muted-foreground">{description}</p>}
       </div>
       {action}
     </div>

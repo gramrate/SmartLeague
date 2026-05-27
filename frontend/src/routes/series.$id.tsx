@@ -114,7 +114,7 @@ function SeriesPage() {
         actions={
           <>
             {club.data && (
-              <Button variant="outline" asChild><Link to="/clubs/$id" params={{ id: series.club_id }}>{club.data.name}</Link></Button>
+              <Button variant="outline" asChild><Link to="/clubs/$id" params={{ id: series.club_id }} className="max-w-[220px] truncate">{club.data.name}</Link></Button>
             )}
             {canManage && (
               <Button asChild>
@@ -225,7 +225,7 @@ function SeriesPage() {
                   <li key={r.profile_id} className="flex items-center justify-between py-3">
                     <span className="flex items-center gap-3">
                       <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">{i + 1}</span>
-                      <Link to="/user/$id" params={{ id: r.profile_id }} className="hover:text-primary">
+                      <Link to="/user/$id" params={{ id: r.profile_id }} className="max-w-[220px] truncate hover:text-primary">
                         {displayUserName(participantsById.get(r.profile_id) ?? { id: r.profile_id })}
                       </Link>
                     </span>
@@ -257,7 +257,7 @@ function SeriesPage() {
               <ul className="space-y-2 text-sm">
                 {full.data!.participants.items.map((p) => (
                   <li key={p.id} className="flex items-center justify-between gap-2">
-                    <Link to="/user/$id" params={{ id: p.id }} className="truncate hover:text-primary">{displayUserName(p)}</Link>
+                    <Link to="/user/$id" params={{ id: p.id }} className="min-w-0 flex-1 truncate hover:text-primary">{displayUserName(p)}</Link>
                     {p.club_id === series.club_id && (p.club_state ?? ClubState.None) !== ClubState.None ? (
                       <RoleBadge state={(p.club_state ?? ClubState.None) as ClubState} />
                     ) : (

@@ -249,7 +249,7 @@ function ManageClubPage() {
               <Crown className="h-6 w-6 text-primary" />
               <div>
                 <p className="text-xs uppercase tracking-widest text-primary">Президент</p>
-                <Link to="/user/$id" params={{ id: president.id }} className="font-display text-xl font-bold hover:underline">
+                <Link to="/user/$id" params={{ id: president.id }} className="break-words font-display text-xl font-bold hover:underline">
                   {displayUserName(president)}
                 </Link>
               </div>
@@ -273,8 +273,8 @@ function ManageClubPage() {
               const state = (m.club_state ?? ClubState.Member) as ClubState;
               return (
                 <li key={m.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <Link to="/user/$id" params={{ id: m.id }} className="font-medium hover:text-primary">{displayUserName(m)}</Link>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Link to="/user/$id" params={{ id: m.id }} className="min-w-0 truncate font-medium hover:text-primary">{displayUserName(m)}</Link>
                     <RoleBadge state={state} />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -305,9 +305,9 @@ function ManageClubPage() {
         {!series.data?.items?.length ? <p className="text-sm text-muted-foreground">Серий нет.</p> : (
           <ul className="divide-y divide-border/40">
             {series.data.items.map((s) => (
-              <li key={s.id} className="flex items-center justify-between py-3">
-                <div>
-                  <Link to="/series/$id" params={{ id: s.id }} className="hover:text-primary">{s.name}</Link>
+              <li key={s.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <Link to="/series/$id" params={{ id: s.id }} className="block break-words hover:text-primary">{s.name}</Link>
                   <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                   <p className="text-xs text-muted-foreground">{s.is_rating ? "На рейтинг" : "Без рейтинга"}</p>
                 </div>
@@ -325,12 +325,12 @@ function ManageClubPage() {
         ) : (
           <ul className="divide-y divide-border/40">
             {games.data.map((g) => (
-              <li key={g.id} className="flex items-center justify-between py-3">
-                <div>
-                  <Link to="/game/$id" params={{ id: g.id }} className="hover:text-primary">
+              <li key={g.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <Link to="/game/$id" params={{ id: g.id }} className="block break-words hover:text-primary">
                     {g.name || `Игра #${g.number}`}
                   </Link>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="break-words text-xs text-muted-foreground">
                     Серия:
                     {" "}
                     <Link to="/series/$id" params={{ id: g._seriesId }} className="hover:underline">
@@ -501,7 +501,7 @@ function ManageClubPage() {
                     <ul className="divide-y divide-border/40">
                       {bans.data.items.map((u) => (
                         <li key={u.id} className="flex items-center justify-between gap-3 py-2">
-                          <Link to="/user/$id" params={{ id: u.id }} className="hover:text-primary">{displayUserName(u)}</Link>
+                          <Link to="/user/$id" params={{ id: u.id }} className="min-w-0 flex-1 truncate hover:text-primary">{displayUserName(u)}</Link>
                           {isBanned(u.id) ? (
                             <Button size="sm" variant="secondary" onClick={() => unban(u.id)}>Разблокировать</Button>
                           ) : (
@@ -573,7 +573,7 @@ function ManageClubPage() {
                       {playerSearch.data.items.map((u) => (
                         <li key={u.id} className="flex items-center justify-between gap-2 text-sm">
                           <div className="min-w-0">
-                            <Link to="/user/$id" params={{ id: u.id }} className="truncate hover:text-primary">{displayUserName(u)}</Link>
+                            <Link to="/user/$id" params={{ id: u.id }} className="min-w-0 flex-1 truncate hover:text-primary">{displayUserName(u)}</Link>
                             {memberRoleById.has(u.id) && (
                               <p className="text-xs text-muted-foreground">
                                 {CLUB_STATE_LABEL[memberRoleById.get(u.id)!]}

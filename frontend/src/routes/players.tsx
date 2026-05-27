@@ -66,8 +66,8 @@ function PlayersPage() {
           {data.items.map((u) => (
             <Link key={u.id} to="/user/$id" params={{ id: u.id }}
               className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50">
-              <p className="font-display text-base font-semibold">{displayUserName(u)}</p>
-              {u.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{u.description}</p>}
+              <p className="break-words font-display text-base font-semibold">{displayUserName(u)}</p>
+              {u.description && <p className="mt-1 line-clamp-2 break-words text-xs text-muted-foreground">{u.description}</p>}
             </Link>
           ))}
         </div>

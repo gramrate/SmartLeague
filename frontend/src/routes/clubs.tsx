@@ -62,7 +62,7 @@ function ClubsPage() {
           {data.items.map((c) => (
             <Link key={c.id} to="/clubs/$id" params={{ id: c.id }}
               className="group rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:bg-card">
-              <h3 className="font-display text-lg font-semibold group-hover:text-primary">{c.name}</h3>
+              <h3 className="break-words font-display text-lg font-semibold group-hover:text-primary">{c.name}</h3>
               {c.description && <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{c.description}</p>}
             </Link>
           ))}

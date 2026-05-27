@@ -62,9 +62,9 @@ export function Header() {
         <div className="hidden items-center gap-2 md:flex">
           {me ? (
             <>
-              <Link to="/account" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+              <Link to="/account" className="flex min-w-0 max-w-[260px] items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
                 <UserIcon className="h-4 w-4" />
-                {displayUserName(me)}
+                <span className="truncate">{displayUserName(me)}</span>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
@@ -104,7 +104,7 @@ export function Header() {
             {me ? (
               <>
                 <Link to="/account" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
-                  Аккаунт ({displayUserName(me)})
+                  <span className="block break-words">Аккаунт ({displayUserName(me)})</span>
                 </Link>
                 <button onClick={handleLogout} className="rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:text-foreground">
                   Выйти

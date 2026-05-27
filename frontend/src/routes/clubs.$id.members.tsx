@@ -98,7 +98,7 @@ function ClubMembersPage() {
                   params={{ id: m.id }}
                   className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-background/40 px-3 py-2 text-sm hover:border-primary/50"
                 >
-                  <span className="truncate hover:text-primary">{displayUserName(m)}</span>
+                  <span className="min-w-0 flex-1 truncate hover:text-primary">{displayUserName(m)}</span>
                   {m.club_id === id && (m.club_state ?? ClubState.None) !== ClubState.None ? (
                     <RoleBadge state={(m.club_state ?? ClubState.None) as ClubState} />
                   ) : (

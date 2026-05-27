@@ -95,17 +95,17 @@ function UserPage() {
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <h2 className="mb-3 font-display text-lg font-semibold">Профиль</h2>
             {user.data.name && user.data.show_name && (
-              <p className="text-sm"><span className="text-muted-foreground">Имя: </span>{user.data.name}</p>
+              <p className="break-words text-sm"><span className="text-muted-foreground">Имя: </span>{user.data.name}</p>
             )}
             {user.data.nickname && (
-              <p className="text-sm"><span className="text-muted-foreground">Никнейм: </span>{user.data.nickname}</p>
+              <p className="break-words text-sm"><span className="text-muted-foreground">Никнейм: </span>{user.data.nickname}</p>
             )}
           </div>
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <h2 className="mb-3 font-display text-lg font-semibold">Клуб</h2>
             {user.data.club_id ? (
               <div className="space-y-2">
-                <Link to="/clubs/$id" params={{ id: user.data.club_id }} className="block font-semibold text-primary hover:underline">
+                <Link to="/clubs/$id" params={{ id: user.data.club_id }} className="block break-words font-semibold text-primary hover:underline">
                   {club.data?.name ?? "Открыть клуб"}
                 </Link>
                 <RoleBadge state={(user.data.club_state ?? ClubState.None) as ClubState} />
@@ -129,8 +129,8 @@ function UserPage() {
                 {recentGames.map((g) => (
                   <div key={g.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/40 p-3">
                     <Link to="/game/$id" params={{ id: g.id }} className="min-w-0 flex-1 hover:text-primary">
-                      <p className="font-medium">{g.name || `Игра #${g.number}`}</p>
-                      <p className="text-xs text-muted-foreground">{g.series_name}</p>
+                      <p className="break-words font-medium">{g.name || `Игра #${g.number}`}</p>
+                      <p className="break-words text-xs text-muted-foreground">{g.series_name}</p>
                       <p className="text-xs text-muted-foreground">{fmtDate(g.created_at)}</p>
                     </Link>
                   </div>
@@ -151,7 +151,7 @@ function UserPage() {
                 {visibleSeries.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/40 p-3">
                     <Link to="/series/$id" params={{ id: s.id }} className="min-w-0 flex-1 hover:text-primary">
-                      <p className="font-medium">{s.name}</p>
+                      <p className="break-words font-medium">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {s.is_rating && (

@@ -105,7 +105,7 @@ function AllSeriesPage() {
               className="group flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border/60 bg-card/50 p-5 hover:border-primary/50 hover:bg-card"
             >
               <div>
-                <h3 className="font-display text-lg font-semibold group-hover:text-primary">{s.name}</h3>
+                <h3 className="break-words font-display text-lg font-semibold group-hover:text-primary">{s.name}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                 {s.club_name && (
                   <Link

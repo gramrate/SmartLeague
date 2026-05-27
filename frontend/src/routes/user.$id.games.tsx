@@ -41,7 +41,7 @@ function UserGamesPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{g.name || `Игра #${g.number}`}</p>
-                  <p className="text-xs text-muted-foreground">{g.series_name}</p>
+                  <p className="break-words text-xs text-muted-foreground">{g.series_name}</p>
                 </div>
                 <span className="shrink-0 text-xs text-muted-foreground">{fmtDate(g.created_at)}</span>
               </Link>

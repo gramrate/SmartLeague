@@ -31,9 +31,9 @@ function ClubGamesPage() {
           {visibleGames.map((g) => (
             <Link key={g.id} to="/game/$id" params={{ id: g.id }}
               className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50">
-              <p className="font-medium">{g.name || `Игра #${g.number}`}</p>
+              <p className="break-words font-medium">{g.name || `Игра #${g.number}`}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                <Link to="/series/$id" params={{ id: g.series_id }} className="hover:underline" onClick={(e) => e.stopPropagation()}>
+                <Link to="/series/$id" params={{ id: g.series_id }} className="break-words hover:underline" onClick={(e) => e.stopPropagation()}>
                   {g.series_name}
                 </Link>
                 {" · #"}

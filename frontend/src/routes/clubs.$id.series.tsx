@@ -76,7 +76,7 @@ function ClubSeriesPage() {
           {series.data.items.map((s) => (
             <Link key={s.id} to="/series/$id" params={{ id: s.id }}
               className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50">
-              <p className="font-medium">{s.name}</p>
+              <p className="break-words font-medium">{s.name}</p>
               <p className="mt-1 text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">

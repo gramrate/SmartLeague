@@ -24,7 +24,7 @@ function Index() {
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-widest text-primary">
             <Trophy className="h-3 w-3" /> Лига спортивной мафии
           </p>
-          <h1 className="font-display text-4xl font-bold leading-tight sm:text-6xl">
+          <h1 className="break-words font-display text-4xl font-bold leading-tight sm:text-6xl">
             Клубы. Серии. <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">Слава.</span>
           </h1>
           <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
@@ -56,8 +56,8 @@ function Index() {
           {clubs.data?.items?.slice(0, 6).map((c) => (
             <Link key={c.id} to="/clubs/$id" params={{ id: c.id }}
               className="group rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:bg-card hover:shadow-[var(--shadow-glow)]">
-              <h3 className="font-display text-lg font-semibold group-hover:text-primary">{c.name}</h3>
-              {c.description && <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{c.description}</p>}
+              <h3 className="break-words font-display text-lg font-semibold group-hover:text-primary">{c.name}</h3>
+              {c.description && <p className="mt-2 line-clamp-2 break-words text-sm text-muted-foreground">{c.description}</p>}
             </Link>
           ))}
           {clubs.data?.items?.length === 0 && (
@@ -74,7 +74,7 @@ function Index() {
             <Link key={s.id} to="/series/$id" params={{ id: s.id }}
               className="group flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:bg-card">
               <div>
-                <h3 className="font-display text-lg font-semibold group-hover:text-primary">{s.name}</h3>
+                <h3 className="break-words font-display text-lg font-semibold group-hover:text-primary">{s.name}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                 {s.club_name && <p className="mt-1 text-xs text-accent">{s.club_name}</p>}
               </div>

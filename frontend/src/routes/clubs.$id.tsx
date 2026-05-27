@@ -102,7 +102,7 @@ function ClubPage() {
                 {series.data.items.slice(0, 3).map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/40 p-3">
                     <Link to="/series/$id" params={{ id: s.id }} className="min-w-0 flex-1 hover:text-primary">
-                      <p className="font-medium">{s.name}</p>
+                      <p className="break-words font-medium">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {s.is_rating && (
@@ -138,10 +138,10 @@ function ClubPage() {
               <div className="space-y-2">
                 {games.data.items.map((g) => (
                   <Link key={g.id} to="/game/$id" params={{ id: g.id }}
-                    className="flex items-center justify-between rounded-lg border border-border/40 bg-background/40 p-3 hover:border-primary/50">
-                    <div>
-                      <p className="font-medium">{g.name || `Игра #${g.number}`}</p>
-                      <p className="text-xs text-muted-foreground">{g.series_name}</p>
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-background/40 p-3 hover:border-primary/50">
+                    <div className="min-w-0">
+                      <p className="break-words font-medium">{g.name || `Игра #${g.number}`}</p>
+                      <p className="break-words text-xs text-muted-foreground">{g.series_name}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">#{g.number}</span>
                   </Link>
@@ -173,7 +173,7 @@ function ClubPage() {
                           <Crown className="h-6 w-6 text-primary" />
                           <div>
                             <p className="text-xs uppercase tracking-widest text-primary">Президент</p>
-                            <Link to="/user/$id" params={{ id: president.id }} className="font-display text-xl font-bold hover:underline">
+                            <Link to="/user/$id" params={{ id: president.id }} className="break-words font-display text-xl font-bold hover:underline">
                               {displayUserName(president)}
                             </Link>
                           </div>
@@ -188,7 +188,7 @@ function ClubPage() {
                     .filter((m) => !((m.club_state ?? ClubState.None) === ClubState.President && m.club_id === club.data?.id))
                     .map((m) => (
                       <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-                        <Link to="/user/$id" params={{ id: m.id }} className="truncate hover:text-primary">
+                        <Link to="/user/$id" params={{ id: m.id }} className="min-w-0 flex-1 truncate hover:text-primary">
                           {displayUserName(m)}
                         </Link>
                         {m.club_id === club.data?.id && (m.club_state ?? ClubState.None) !== ClubState.None ? (

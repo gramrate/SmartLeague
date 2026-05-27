@@ -28,7 +28,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">{title}</h1>
+        <h1 className="break-words font-display text-3xl font-bold sm:text-4xl">{title}</h1>
         {description && (
           <p className="mt-2 max-w-2xl whitespace-pre-wrap break-words text-sm text-muted-foreground">{description}</p>
         )}
