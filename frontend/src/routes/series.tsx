@@ -24,8 +24,8 @@ function AllSeriesPage() {
 
   const [q, setQ] = useState("");
   const [club, setClub] = useState("");
-  const qLimit = 200;
-  const clubLimit = 200;
+  const qLimit = 100;
+  const clubLimit = 100;
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [showPast, setShowPast] = useState(false);
@@ -61,8 +61,8 @@ function AllSeriesPage() {
         actions={canCreate ? <Button asChild><Link to="/series/create">Создать серию</Link></Button> : null}
       />
       <div className="mb-6 grid gap-3 rounded-xl border border-border/60 bg-card/40 p-4 sm:grid-cols-2 lg:grid-cols-7">
-        <div className="space-y-1"><Label className="text-xs">Название</Label><Input value={q} maxLength={qLimit} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Поиск…" /><p className="text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p></div>
-        <div className="space-y-1"><Label className="text-xs">Клуб</Label><Input value={club} maxLength={clubLimit} onChange={(e) => { setClub(e.target.value); setPage(1); }} placeholder="Название клуба…" /><p className="text-xs text-muted-foreground">{club.length}/{clubLimit} · осталось {clubLimit - club.length}</p></div>
+        <div className="space-y-1"><Label className="text-xs">Название</Label><Input value={q} maxLength={qLimit} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Поиск…" /><p className="text-xs text-muted-foreground">{q.length}/{qLimit}</p></div>
+        <div className="space-y-1"><Label className="text-xs">Клуб</Label><Input value={club} maxLength={clubLimit} onChange={(e) => { setClub(e.target.value); setPage(1); }} placeholder="Название клуба…" /><p className="text-xs text-muted-foreground">{club.length}/{clubLimit}</p></div>
         <div className="space-y-1"><Label className="text-xs">С</Label><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></div>
         <div className="space-y-1"><Label className="text-xs">По</Label><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></div>
         <div className="space-y-1">

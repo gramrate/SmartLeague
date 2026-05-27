@@ -146,10 +146,10 @@ function ManageClubPage() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [deletingClub, setDeletingClub] = useState(false);
-  const clubNameLimit = 200;
-  const clubDescriptionLimit = 2000;
-  const genericSearchLimit = 200;
-  const userSearchLimit = 100;
+  const clubNameLimit = 100;
+  const clubDescriptionLimit = 1000;
+  const genericSearchLimit = 50;
+  const userSearchLimit = 50;
   useEffect(() => {
     if (!transferOpen) return;
     setPresidentTargetId("");
@@ -230,13 +230,13 @@ function ManageClubPage() {
           <div className="space-y-1.5">
             <Label>Название</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={clubNameLimit} />
-            <p className="text-xs text-muted-foreground">{name.length}/{clubNameLimit} · осталось {clubNameLimit - name.length}</p>
+            <p className="text-xs text-muted-foreground">{name.length}/{clubNameLimit}</p>
           </div>
         </div>
         <div className="mt-4 space-y-1.5">
           <Label>Описание</Label>
           <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={clubDescriptionLimit} />
-          <p className="text-xs text-muted-foreground">{description.length}/{clubDescriptionLimit} · осталось {clubDescriptionLimit - description.length}</p>
+          <p className="text-xs text-muted-foreground">{description.length}/{clubDescriptionLimit}</p>
         </div>
         <Button className="mt-4" onClick={saveClub} disabled={name.length > clubNameLimit || description.length > clubDescriptionLimit}>Сохранить</Button>
       </section>
@@ -420,7 +420,7 @@ function ManageClubPage() {
                 placeholder="Введите или выберите участника"
                 className="h-9"
               />
-              <p className="mt-1 text-xs text-muted-foreground">{presidentTargetQuery.length}/{userSearchLimit} · осталось {userSearchLimit - presidentTargetQuery.length}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{presidentTargetQuery.length}/{userSearchLimit}</p>
               {presidentDropdownOpen && (
                 <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
                   {others
@@ -479,7 +479,7 @@ function ManageClubPage() {
                     }}
                     placeholder="Никнейм..."
                   />
-                  <p className="text-xs text-muted-foreground">{banQ.length}/{genericSearchLimit} · осталось {genericSearchLimit - banQ.length}</p>
+                  <p className="text-xs text-muted-foreground">{banQ.length}/{genericSearchLimit}</p>
                 </div>
                 <Button
                   variant="outline"
@@ -551,7 +551,7 @@ function ManageClubPage() {
                     }}
                     placeholder="Никнейм..."
                   />
-                  <p className="text-xs text-muted-foreground">{banSearchQ.length}/{userSearchLimit} · осталось {userSearchLimit - banSearchQ.length}</p>
+                  <p className="text-xs text-muted-foreground">{banSearchQ.length}/{userSearchLimit}</p>
                 </div>
                 <Button
                   variant="outline"

@@ -23,8 +23,8 @@ type Series struct {
 }
 
 type CreateSeriesRequest struct {
-	Name        string         `json:"name" validate:"required,min=1,max=200"`
-	Description string         `json:"description" validate:"required,min=1,max=10000"`
+	Name        string         `json:"name" validate:"required,min=1,max=100"`
+	Description string         `json:"description" validate:"required,min=1,max=1000"`
 	StartAt     time.Time      `json:"start_at" validate:"required"`
 	EndAt       time.Time      `json:"end_at" validate:"required"`
 	PriceRub    int            `json:"price_rub" validate:"min=0,max=100000000"`
@@ -88,7 +88,7 @@ type AllSeriesItem struct {
 type GetAllSeriesRequest struct {
 	Limit      *int    `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
 	Offset     *int    `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
-	Query      *string `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200"`
+	Query      *string `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
 	ClubQuery  *string `json:"club,omitempty" form:"club" validate:"omitempty,uuid"`
 	From       *string `json:"from,omitempty" form:"from" validate:"omitempty,len=10"`
 	To         *string `json:"to,omitempty" form:"to" validate:"omitempty,len=10"`
@@ -104,8 +104,8 @@ type GetAllSeriesResponse struct {
 
 type UpdateSeriesRequest struct {
 	ID          uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string         `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	Description *string         `json:"description,omitempty" validate:"omitempty,min=1,max=10000"`
+	Name        *string         `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Description *string         `json:"description,omitempty" validate:"omitempty,min=1,max=1000"`
 	StartAt     *time.Time      `json:"start_at,omitempty"`
 	EndAt       *time.Time      `json:"end_at,omitempty"`
 	PriceRub    *int            `json:"price_rub,omitempty" validate:"omitempty,min=0,max=100000000"`
@@ -125,7 +125,7 @@ type GetSeriesParticipantsRequest struct {
 	SeriesID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Limit    *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
 	Offset   *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
-	Query    *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
+	Query    *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=50"`
 }
 
 type GetSeriesParticipantsResponse struct {

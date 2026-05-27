@@ -18,7 +18,7 @@ export const Route = createFileRoute("/clubs/$id/members")({ component: ClubMemb
 function ClubMembersPage() {
   const { id } = Route.useParams();
   const [q, setQ] = useState("");
-  const qLimit = 200;
+  const qLimit = 50;
   const [clubStateFilter, setClubStateFilter] = useState<"all" | "leader" | "resident" | "member">("all");
   const [page, setPage] = useState(1);
   const limit = 15;
@@ -64,7 +64,7 @@ function ClubMembersPage() {
             }}
             placeholder="Имя или никнейм..."
           />
-          <p className="text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p>
+          <p className="text-xs text-muted-foreground">{q.length}/{qLimit}</p>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Роль</Label>

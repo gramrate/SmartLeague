@@ -14,8 +14,8 @@ export const Route = createFileRoute("/players")({ component: PlayersPage });
 function PlayersPage() {
   const [q, setQ] = useState("");
   const [club, setClub] = useState("");
-  const qLimit = 100;
-  const clubLimit = 200;
+  const qLimit = 50;
+  const clubLimit = 100;
   const [page, setPage] = useState(1);
   const pageSize = 15;
   const debouncedQ = useDebouncedValue(q, 150);
@@ -44,7 +44,7 @@ function PlayersPage() {
               setPage(1);
             }}
           />
-          <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit}</p>
         </div>
         <div>
           <Input
@@ -56,7 +56,7 @@ function PlayersPage() {
               setPage(1);
             }}
           />
-          <p className="mt-1 text-xs text-muted-foreground">{club.length}/{clubLimit} · осталось {clubLimit - club.length}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{club.length}/{clubLimit}</p>
         </div>
       </div>
       {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :

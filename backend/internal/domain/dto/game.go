@@ -18,8 +18,8 @@ type Game struct {
 
 type CreateGameRequest struct {
 	SeriesID    uuid.UUID        `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string          `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	Description *string          `json:"description,omitempty" validate:"omitempty,max=5000"`
+	Name        *string          `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Description *string          `json:"description,omitempty" validate:"omitempty,max=500"`
 	HostID      *uuid.UUID       `json:"host_id,omitempty" validate:"omitempty,uuid"`
 	Status      types.GameStatus `json:"status" validate:"min=0,max=2"`
 }
@@ -61,8 +61,8 @@ type GetSeriesGamesResponse struct {
 
 type UpdateGameRequest struct {
 	ID          uuid.UUID         `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string           `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
-	Description *string           `json:"description,omitempty" validate:"omitempty,max=5000"`
+	Name        *string           `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Description *string           `json:"description,omitempty" validate:"omitempty,max=500"`
 	HostID      *uuid.UUID        `json:"host_id,omitempty" validate:"omitempty,uuid"`
 	Status      *types.GameStatus `json:"status,omitempty" validate:"omitempty,min=0,max=2"`
 }
@@ -98,15 +98,15 @@ type GameResultRow struct {
 }
 
 type ManageGameRow struct {
-	Slot        int               `json:"slot"`
-	ProfileID   *uuid.UUID        `json:"profile_id,omitempty"`
-	Role        *types.MafiaRole  `json:"role,omitempty"`
-	BestMove    *string           `json:"best_move,omitempty"`
+	Slot         int              `json:"slot"`
+	ProfileID    *uuid.UUID       `json:"profile_id,omitempty"`
+	Role         *types.MafiaRole `json:"role,omitempty"`
+	BestMove     *string          `json:"best_move,omitempty"`
 	Compensation float64          `json:"compensation"`
-	YellowCards float64           `json:"yellow_cards"`
-	Removed     float64           `json:"removed"`
-	ExtraPoints float64           `json:"extra_points"`
-	TotalPoints float64           `json:"total_points"`
+	YellowCards  float64          `json:"yellow_cards"`
+	Removed      float64          `json:"removed"`
+	ExtraPoints  float64          `json:"extra_points"`
+	TotalPoints  float64          `json:"total_points"`
 }
 
 type SaveGameDraftRequest struct {

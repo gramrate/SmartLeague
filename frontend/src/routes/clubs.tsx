@@ -16,7 +16,7 @@ function ClubsPage() {
   const location = useLocation();
   const me = useAuthStore((s) => s.me);
   const [q, setQ] = useState("");
-  const qLimit = 200;
+  const qLimit = 100;
   const debouncedQ = useDebouncedValue(q, 150);
   const [page, setPage] = useState(1);
   const pageSize = 15;
@@ -53,7 +53,7 @@ function ClubsPage() {
             setPage(1);
           }}
         />
-        <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit}</p>
       </div>
       {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :
         !data?.items?.length ? <EmptyBlock title="Клубы не найдены" /> : (

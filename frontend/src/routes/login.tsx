@@ -48,13 +48,13 @@ function LoginPage() {
             <div className="space-y-1.5">
               <Label htmlFor="email">Почта</Label>
               <Input id="email" type="email" autoComplete="email" {...form.register("email")} maxLength={254} />
-              <p className="text-xs text-muted-foreground">{(form.watch("email") || "").length}/254 · осталось {254 - (form.watch("email") || "").length}</p>
+              <p className="text-xs text-muted-foreground">{(form.watch("email") || "").length}/254</p>
               {form.formState.errors.email && <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Пароль</Label>
               <Input id="password" type="password" autoComplete="current-password" {...form.register("password")} maxLength={100} />
-              <p className="text-xs text-muted-foreground">{(form.watch("password") || "").length}/100 · осталось {100 - (form.watch("password") || "").length}</p>
+              <p className="text-xs text-muted-foreground">{(form.watch("password") || "").length}/100</p>
               {form.formState.errors.password && <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>}
             </div>
             {serverError && (

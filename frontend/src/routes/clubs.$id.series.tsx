@@ -22,7 +22,7 @@ function ClubSeriesPage() {
   const [showPast, setShowPast] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const [ratingFilter, setRatingFilter] = useState<"all" | "rating" | "non_rating">("all");
-  const qLimit = 200;
+  const qLimit = 100;
   const [page, setPage] = useState(1);
   const limit = 10;
   const offset = (page - 1) * limit;
@@ -47,7 +47,7 @@ function ClubSeriesPage() {
     <PageShell>
       <PageHeader eyebrow={club.data?.name ?? "Клуб"} title="Все серии" />
       <div className="mb-6 grid gap-3 rounded-xl border border-border/60 bg-card/40 p-4 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="space-y-1"><Label className="text-xs">Название</Label><Input value={q} maxLength={qLimit} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Поиск…" /><p className="text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p></div>
+        <div className="space-y-1"><Label className="text-xs">Название</Label><Input value={q} maxLength={qLimit} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Поиск…" /><p className="text-xs text-muted-foreground">{q.length}/{qLimit}</p></div>
         <div className="space-y-1"><Label className="text-xs">С</Label><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></div>
         <div className="space-y-1"><Label className="text-xs">По</Label><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></div>
         <div className="space-y-1">

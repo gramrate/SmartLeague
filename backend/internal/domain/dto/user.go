@@ -20,12 +20,12 @@ type User struct {
 }
 
 type RegisterUserRequest struct {
-	Nickname    *string     `json:"nickname,omitempty" validate:"omitempty,min=1,max=100" example:"mishmish"`
-	Name        string      `json:"name" validate:"required,min=1,max=100" example:"Ivan"`
-	ShowName    *bool       `json:"show_name,omitempty" validate:"omitempty" example:"true"`
-	Email       string      `json:"email" validate:"required,email,min=6,max=254" example:"user@example.com"`
-	Password    string      `json:"password" validate:"required,min=8,max=100" example:"SecurePass123!" format:"password"`
-	Role        *types.Role `json:"role,omitempty" validate:"omitempty,role" swaggerignore:"true"`
+	Nickname *string     `json:"nickname,omitempty" validate:"omitempty,min=1,max=50" example:"mishmish"`
+	Name     string      `json:"name" validate:"required,min=1,max=50" example:"Ivan"`
+	ShowName *bool       `json:"show_name,omitempty" validate:"omitempty" example:"true"`
+	Email    string      `json:"email" validate:"required,email,min=6,max=254" example:"user@example.com"`
+	Password string      `json:"password" validate:"required,min=8,max=100" example:"SecurePass123!" format:"password"`
+	Role     *types.Role `json:"role,omitempty" validate:"omitempty,role" swaggerignore:"true"`
 }
 
 type RegisterUserResponse struct {
@@ -44,8 +44,8 @@ type GetAllByFilterUsersRequest struct {
 	Offset    *int             `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 	Role      *types.Role      `json:"role,omitempty" form:"role" validate:"omitempty,role" example:"0"`
 	ClubState *types.ClubState `json:"club_state,omitempty" form:"club_state" validate:"omitempty,min=1,max=3" example:"2"`
-	ClubQuery *string          `json:"club,omitempty" form:"club" validate:"omitempty,min=1,max=200" example:"smart"`
-	Query     *string          `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100" example:"mishmish"`
+	ClubQuery *string          `json:"club,omitempty" form:"club" validate:"omitempty,min=1,max=100" example:"smart"`
+	Query     *string          `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=50" example:"mishmish"`
 }
 
 type PaginationInfo struct {
@@ -96,7 +96,7 @@ type GetUserSeriesRequest struct {
 	UserID     uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	Limit      *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
 	Offset     *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
-	Query      *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200"`
+	Query      *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
 	From       *string   `json:"from,omitempty" form:"from" validate:"omitempty,len=10"`
 	To         *string   `json:"to,omitempty" form:"to" validate:"omitempty,len=10"`
 	IsRating   *bool     `json:"is_rating,omitempty" form:"is_rating"`
@@ -125,10 +125,10 @@ type LogoutRequest struct {
 
 type UpdateCurrentUserRequest struct {
 	ID          uuid.UUID  `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Nickname    *string    `json:"nickname,omitempty" validate:"omitempty,min=1,max=100" example:"mishmish"`
-	Name        *string    `json:"name,omitempty" validate:"omitempty,min=1,max=100" example:"Ivan"`
+	Nickname    *string    `json:"nickname,omitempty" validate:"omitempty,min=1,max=50" example:"mishmish"`
+	Name        *string    `json:"name,omitempty" validate:"omitempty,min=1,max=50" example:"Ivan"`
 	ShowName    *bool      `json:"show_name,omitempty" validate:"omitempty" example:"true"`
-	Description *string    `json:"description,omitempty" validate:"omitempty,max=2000" example:"About me"`
+	Description *string    `json:"description,omitempty" validate:"omitempty,max=500" example:"About me"`
 	ClubID      *uuid.UUID `json:"club_id,omitempty" validate:"omitempty,uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
@@ -137,10 +137,10 @@ type UpdateCurrentUserResponse User
 type UpdateEachUserRequest struct {
 	ID            uuid.UUID        `json:"-" validate:"required,uuid" swaggerignore:"true"`
 	RequesterRole types.Role       `json:"-" validate:"required,role" swaggerignore:"true"`
-	Nickname      *string          `json:"nickname,omitempty" validate:"omitempty,min=1,max=100" example:"mishmish"`
-	Name          *string          `json:"name,omitempty" validate:"omitempty,min=1,max=100" example:"Ivan"`
+	Nickname      *string          `json:"nickname,omitempty" validate:"omitempty,min=1,max=50" example:"mishmish"`
+	Name          *string          `json:"name,omitempty" validate:"omitempty,min=1,max=50" example:"Ivan"`
 	ShowName      *bool            `json:"show_name,omitempty" validate:"omitempty" example:"true"`
-	Description   *string          `json:"description,omitempty" validate:"omitempty,max=2000" example:"About me"`
+	Description   *string          `json:"description,omitempty" validate:"omitempty,max=500" example:"About me"`
 	ClubID        *uuid.UUID       `json:"club_id,omitempty" validate:"omitempty,uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Email         *string          `json:"email,omitempty" validate:"omitempty,email,min=6,max=254" example:"user@example.com"`
 	Password      *string          `json:"password,omitempty" validate:"omitempty,min=8,max=100" example:"SecurePass123!" format:"password"`

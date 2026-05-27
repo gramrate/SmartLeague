@@ -61,8 +61,8 @@ function SeriesManagePage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [paidOverrides, setPaidOverrides] = useState<Record<string, boolean>>({});
-  const nameLimit = 200;
-  const descriptionLimit = 10000;
+  const nameLimit = 100;
+  const descriptionLimit = 1000;
 
   useEffect(() => {
     if (!series) return;
@@ -169,12 +169,12 @@ function SeriesManagePage() {
             <div className="space-y-1.5">
               <Label>Название</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={nameLimit} />
-              <p className="text-xs text-muted-foreground">{name.length}/{nameLimit} · осталось {nameLimit - name.length}</p>
+              <p className="text-xs text-muted-foreground">{name.length}/{nameLimit}</p>
             </div>
             <div className="space-y-1.5">
               <Label>Описание</Label>
               <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={descriptionLimit} />
-              <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit} · осталось {descriptionLimit - description.length}</p>
+              <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5"><Label>Начало</Label><Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} /></div>

@@ -15,9 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 const schema = z.object({
   email: z.string().email("Некорректный email").max(254),
   password: z.string().min(8, "Минимум 8 символов").max(100),
-  name: z.string().min(1, "Обязательно").max(100),
-  nickname: z.string().max(100).optional().or(z.literal("")),
-  description: z.string().max(2000).optional().or(z.literal("")),
+  name: z.string().min(1, "Обязательно").max(50),
+  nickname: z.string().max(50).optional().or(z.literal("")),
+  description: z.string().max(500).optional().or(z.literal("")),
   show_name: z.boolean(),
 });
 type Form = z.infer<typeof schema>;
@@ -63,25 +63,25 @@ function RegisterPage() {
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Имя" error={form.formState.errors.name?.message}>
-                <Input {...form.register("name")} maxLength={100} />
-                <p className="text-xs text-muted-foreground">{(form.watch("name") || "").length}/100 · осталось {100 - (form.watch("name") || "").length}</p>
+                <Input {...form.register("name")} maxLength={50} />
+                <p className="text-xs text-muted-foreground">{(form.watch("name") || "").length}/50</p>
               </Field>
               <Field label="Никнейм" error={form.formState.errors.nickname?.message}>
-                <Input {...form.register("nickname")} maxLength={100} />
-                <p className="text-xs text-muted-foreground">{(form.watch("nickname") || "").length}/100 · осталось {100 - (form.watch("nickname") || "").length}</p>
+                <Input {...form.register("nickname")} maxLength={50} />
+                <p className="text-xs text-muted-foreground">{(form.watch("nickname") || "").length}/50</p>
               </Field>
             </div>
             <Field label="Почта" error={form.formState.errors.email?.message}>
               <Input type="email" autoComplete="email" {...form.register("email")} maxLength={254} />
-              <p className="text-xs text-muted-foreground">{(form.watch("email") || "").length}/254 · осталось {254 - (form.watch("email") || "").length}</p>
+              <p className="text-xs text-muted-foreground">{(form.watch("email") || "").length}/254</p>
             </Field>
             <Field label="Пароль" error={form.formState.errors.password?.message}>
               <Input type="password" autoComplete="new-password" {...form.register("password")} maxLength={100} />
-              <p className="text-xs text-muted-foreground">{(form.watch("password") || "").length}/100 · осталось {100 - (form.watch("password") || "").length}</p>
+              <p className="text-xs text-muted-foreground">{(form.watch("password") || "").length}/100</p>
             </Field>
             <Field label="О себе" error={form.formState.errors.description?.message}>
-              <Textarea rows={3} {...form.register("description")} maxLength={2000} />
-              <p className="text-xs text-muted-foreground">{(form.watch("description") || "").length}/2000 · осталось {2000 - (form.watch("description") || "").length}</p>
+              <Textarea rows={3} {...form.register("description")} maxLength={500} />
+              <p className="text-xs text-muted-foreground">{(form.watch("description") || "").length}/500</p>
             </Field>
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <Checkbox
@@ -93,7 +93,7 @@ function RegisterPage() {
             {serverError && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</div>
             )}
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || (form.watch("email") || "").length > 254 || (form.watch("password") || "").length > 100 || (form.watch("name") || "").length > 100 || (form.watch("nickname") || "").length > 100 || (form.watch("description") || "").length > 2000}>
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || (form.watch("email") || "").length > 254 || (form.watch("password") || "").length > 100 || (form.watch("name") || "").length > 50 || (form.watch("nickname") || "").length > 50 || (form.watch("description") || "").length > 500}>
               {form.formState.isSubmitting ? "Создаем…" : "Создать аккаунт"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">

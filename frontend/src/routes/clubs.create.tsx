@@ -19,8 +19,8 @@ function CreateClubPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
-  const nameLimit = 200;
-  const descriptionLimit = 2000;
+  const nameLimit = 100;
+  const descriptionLimit = 1000;
 
   useEffect(() => {
     if (status === "ready" && !me) navigate({ to: "/login" });
@@ -51,12 +51,12 @@ function CreateClubPage() {
           <div className="space-y-1.5">
             <Label>Название</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={nameLimit} />
-            <p className="text-xs text-muted-foreground">{name.length}/{nameLimit} · осталось {nameLimit - name.length}</p>
+            <p className="text-xs text-muted-foreground">{name.length}/{nameLimit}</p>
           </div>
           <div className="space-y-1.5">
             <Label>Описание</Label>
             <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={descriptionLimit} />
-            <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit} · осталось {descriptionLimit - description.length}</p>
+            <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit}</p>
           </div>
           <Button type="submit" disabled={busy || !name.trim() || name.length > nameLimit || description.length > descriptionLimit}>{busy ? "Создаем…" : "Создать клуб"}</Button>
         </form>

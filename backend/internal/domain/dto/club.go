@@ -13,8 +13,8 @@ type Club struct {
 }
 
 type CreateClubRequest struct {
-	Name        string  `json:"name" validate:"required,min=1,max=200" example:"Smart League"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=2000" example:"Best club"`
+	Name        string  `json:"name" validate:"required,min=1,max=100" example:"Smart League"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=1000" example:"Best club"`
 }
 
 type CreateClubResponse Club
@@ -26,7 +26,7 @@ type GetClubRequest struct {
 type GetClubResponse Club
 
 type GetAllClubsRequest struct {
-	Query  *string `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200" example:"лига"`
+	Query  *string `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100" example:"лига"`
 	Limit  *int    `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
 	Offset *int    `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 }
@@ -38,8 +38,8 @@ type GetAllClubsResponse struct {
 
 type UpdateClubRequest struct {
 	ID          uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string   `json:"name,omitempty" validate:"omitempty,min=1,max=200" example:"Smart League"`
-	Description *string   `json:"description,omitempty" validate:"omitempty,max=2000" example:"Best club"`
+	Name        *string   `json:"name,omitempty" validate:"omitempty,min=1,max=100" example:"Smart League"`
+	Description *string   `json:"description,omitempty" validate:"omitempty,max=1000" example:"Best club"`
 }
 
 type UpdateClubResponse Club
@@ -49,11 +49,11 @@ type DeleteClubRequest struct {
 }
 
 type GetClubMembersRequest struct {
-	ClubID    uuid.UUID         `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Query     *string           `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200" example:"иван"`
-	ClubState *types.ClubState  `json:"club_state,omitempty" form:"club_state" validate:"omitempty,min=1,max=3" example:"2"`
-	Limit     *int              `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
-	Offset    *int              `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
+	ClubID    uuid.UUID        `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Query     *string          `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=50" example:"иван"`
+	ClubState *types.ClubState `json:"club_state,omitempty" form:"club_state" validate:"omitempty,min=1,max=3" example:"2"`
+	Limit     *int             `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200" example:"10"`
+	Offset    *int             `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000" example:"0"`
 }
 
 type GetClubMembersResponse struct {
@@ -74,7 +74,7 @@ type GetClubGamesResponse struct {
 
 type GetClubBansRequest struct {
 	ClubID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Query  *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=200"`
+	Query  *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=50"`
 	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
 	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
 }

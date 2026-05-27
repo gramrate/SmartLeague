@@ -34,9 +34,9 @@ function AccountPage() {
   const [description, setDescription] = useState(me?.description ?? "");
   const [showName, setShowName] = useState(me?.show_name ?? true);
   const [saving, setSaving] = useState(false);
-  const nameLimit = 100;
-  const nicknameLimit = 100;
-  const descriptionLimit = 2000;
+  const nameLimit = 50;
+  const nicknameLimit = 50;
+  const descriptionLimit = 500;
 
   useEffect(() => {
     if (me) {
@@ -66,14 +66,14 @@ function AccountPage() {
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <h2 className="mb-4 font-display text-lg font-semibold">Данные профиля</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Имя" hint={`${name.length}/${nameLimit} · осталось ${nameLimit - name.length}`}>
+              <Field label="Имя" hint={`${name.length}/${nameLimit}`}>
                 <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={nameLimit} />
               </Field>
-              <Field label="Никнейм" hint={`${nickname.length}/${nicknameLimit} · осталось ${nicknameLimit - nickname.length}`}>
+              <Field label="Никнейм" hint={`${nickname.length}/${nicknameLimit}`}>
                 <Input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={nicknameLimit} />
               </Field>
             </div>
-            <Field label="О себе" className="mt-4" hint={`${description.length}/${descriptionLimit} · осталось ${descriptionLimit - description.length}`}>
+            <Field label="О себе" className="mt-4" hint={`${description.length}/${descriptionLimit}`}>
               <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={descriptionLimit} />
             </Field>
             <label className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
