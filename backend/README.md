@@ -1,112 +1,92 @@
 # SmartLeague Backend
 
-Бэкенд для SmartLeague.
+Go backend для SmartLeague: авторизация, клубы, серии, игры, участники, лидерборд и модерация.
 
-Что есть сейчас:
-- cookie-based авторизация (HttpOnly access/refresh cookies);
-- CRUD профиля;
-- клубы + участники (1 человек = 1 клуб) + роли в клубе (member/leader/president);
-- серии игр от клуба + игры + участники/результаты + лидерборд;
-- PostgreSQL (основные данные), Valkey (access token blacklist), MinIO (хранилище файлов/картинок — по мере надобности).
+## Текущее покрытие
 
-## Публичный доступ (без регистрации/логина)
+- cookie-based auth (`HttpOnly` access/refresh cookies);
+- пользователи и профиль;
+- клубы: роли (`member/resident/leader/president`), бан-лист, управление участниками;
+- серии: рейтинг/нерейтинг, club-only, платные серии, закрытие регистрации;
+- игры в серии, участники игр, результаты, leaderboard;
+- платежный статус участников **платной серии** (для лидеров/президента).
 
-Следующие ручки доступны без cookies:
+## Swagger и комментарии
 
-- `GET /api/v1/club/all`
-- `GET /api/v1/club/{id}`
-- `GET /api/v1/club/{id}/members`
-- `GET /api/v1/club/{id}/series`
-- `GET /api/v1/series/{id}`
-- `GET /api/v1/series/all`
-- `GET /api/v1/series/{id}/full`
-- `GET /api/v1/series/{id}/participants`
-- `GET /api/v1/series/{id}/games`
-- `GET /api/v1/series/{id}/leaderboard`
-- `GET /api/v1/game/{id}`
-- `GET /api/v1/game/{id}/full`
-- `GET /api/v1/user/{id}` (просмотр аккаунта/профиля)
+- Swagger UI: `http://localhost:8000/api/v1/swagger/index.html`
+- Исходники swagger: `backend/docs/swagger.{yaml,json}`
+- Комментарии для новых ручек оплат добавлены:
+  - `GET /api/v1/series/{id}/payments`
+  - `POST /api/v1/series/{id}/payment/{profile_id}`
 
-Остальные ручки на создание/изменение/удаление требуют авторизацию.
+Если после изменений API нужно пересобрать swagger, запусти генерацию в проекте (по вашему принятому процессу).
 
-Техническая документация: `DEV.md`.
+## Доступ без авторизации
 
-## Быстрый запуск через Docker
+Публичные `GET`-ручки:
 
-Все команды ниже выполняй из папки `backend/`.
+- `/api/v1/club/all`
+- `/api/v1/club/{id}`
+- `/api/v1/club/{id}/members`
+- `/api/v1/club/{id}/series`
+- `/api/v1/series/all`
+- `/api/v1/series/{id}`
+- `/api/v1/series/{id}/full`
+- `/api/v1/series/{id}/participants`
+- `/api/v1/series/{id}/games`
+- `/api/v1/series/{id}/leaderboard`
+- `/api/v1/game/{id}`
+- `/api/v1/game/{id}/full`
+- `/api/v1/user/{id}`
 
-### 1. Подготовить окружение
+Остальные mutating endpoints требуют auth и проверку прав.
 
-Скопируйте `.env.example` в `.env`:
+## Валидация полей
 
+Все основные DTO-строки ограничены `min/max` через теги `validate`.
+Дополнительно закрыт обход в `CreateGameDraft`: теперь валидация `CreateGameRequest` вызывается и для draft-ручки.
+
+## Быстрый запуск (Docker)
+
+Все команды выполняются из `backend/`.
+
+1. Подготовка:
 ```bash
 cp .env.example .env
-```
-
-Скопируйте `config.yaml.example` в `config.yaml`:
-
-```bash
 cp config.yaml.example config.yaml
 ```
 
-Для запуска через `docker compose` в `config.yaml` должны быть хосты сервисов: `postgres`, `valkey`, `minio` (в `config.yaml.example` уже так).
-
-### 2. Сгенерировать RSA-ключи (обязательно)
-
-Сервис использует JWT с RSA-ключами. До сборки контейнера создайте ключи:
-
+2. RSA-ключи:
 ```bash
 openssl genpkey -algorithm RSA -out keys/private.pem -pkeyopt rsa_keygen_bits:2048
 openssl rsa -pubout -in keys/private.pem -out keys/public.pem
 ```
 
-### 3. Запустить проект
-
+3. Старт:
 ```bash
 docker compose up --build -d
 ```
 
-### 4. Проверить, что сервис поднялся
-
-API: `http://localhost:8000`  
-Swagger: `http://localhost:8000/api/v1/swagger/index.html`
-
-## Как обновлять токены
-
-Токены живут в HttpOnly cookies, руками их дергать не надо.
-
-- В системе **один refresh-токен на пользователя** (на все устройства). Если залогиниться на другом устройстве — refresh-токен на предыдущем будет перезаписан.
-- Когда access-токен истёк — дергай `POST /api/v1/auth/refresh`.
-- Эндпоинт читает `user_auth_refresh_token` из cookies и в ответ выставляет новые cookies:
-  - `user_auth_access_token`
-  - `user_auth_refresh_token`
-
-Практика для клиента:
-- Если любой защищенный запрос вернул `401` — сначала дерни refresh, потом повтори исходный запрос.
-
-Проверка статуса контейнеров:
-
+4. Проверка:
 ```bash
 docker compose ps
-```
-
-Логи приложения:
-
-```bash
 docker compose logs -f app
 ```
 
-### 5. Остановить проект
-
+5. Остановка:
 ```bash
 docker compose down
 ```
 
-## Локальный запуск (без Docker)
+## Локальный запуск
 
-1) Подними Postgres/Valkey/MinIO как тебе удобно и пропиши их в `config.yaml`.
-2) Запусти:
+Подними Postgres/Valkey/MinIO и запусти:
 
 ```bash
 GOCACHE=/tmp/gocache go run ./cmd
 ```
+
+## Полезно
+
+- Технические детали: `backend/DEV.md`
+- Миграции: `backend/internal/adapters/repository/sql/migrate/migrations`

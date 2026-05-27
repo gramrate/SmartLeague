@@ -24,9 +24,9 @@ function ClubPage() {
   const club = useQuery({ queryKey: ["club", id], queryFn: () => clubsApi.get(id) });
   const members = useQuery({
     queryKey: ["club", id, "members", "preview"],
-    queryFn: () => clubsApi.members(id, { limit: 20, offset: 0 }),
+    queryFn: () => clubsApi.members(id, { limit: 15, offset: 0 }),
   });
-  const series = useQuery({ queryKey: ["club", id, "series"], queryFn: () => clubsApi.series(id) });
+  const series = useQuery({ queryKey: ["club", id, "series"], queryFn: () => clubsApi.series(id, 10, 0) });
   const games = useQuery({
     queryKey: ["club", id, "games", "preview"],
     queryFn: () => clubsApi.games(id, { limit: 3, offset: 0 }),

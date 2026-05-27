@@ -91,6 +91,9 @@ func (h *handler) CreateGameDraft(c echo.Context) error {
 		HostID:      req.HostID,
 		Status:      status,
 	}
+	if err := h.validator.ValidateData(createReq); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
+	}
 
 	resp, err := h.gameService.Create(c.Request().Context(), requesterID, &createReq)
 	if err != nil {

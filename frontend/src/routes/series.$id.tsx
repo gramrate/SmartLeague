@@ -38,6 +38,8 @@ function SeriesPage() {
 
   const [gameName, setGameName] = useState("");
   const [gameDescription, setGameDescription] = useState("");
+  const gameNameLimit = 200;
+  const gameDescriptionLimit = 5000;
   const [creatingGame, setCreatingGame] = useState(false);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -195,14 +197,19 @@ function SeriesPage() {
               <form className="mt-6 border-t border-border/40 pt-4">
                 <Label className="text-xs">Новая игра</Label>
                 <div className="mt-2 space-y-3">
-                  <Input placeholder="Название игры" value={gameName} onChange={(e) => setGameName(e.target.value)} />
+                  <div className="space-y-1">
+                    <Input placeholder="Название игры" value={gameName} onChange={(e) => setGameName(e.target.value)} maxLength={gameNameLimit} />
+                    <p className="text-xs text-muted-foreground">{gameName.length}/{gameNameLimit} · осталось {gameNameLimit - gameName.length}</p>
+                  </div>
                   <Textarea
                     rows={3}
                     placeholder="Описание игры"
                     value={gameDescription}
                     onChange={(e) => setGameDescription(e.target.value)}
+                    maxLength={gameDescriptionLimit}
                   />
-                  <Button type="button" disabled={creatingGame} onClick={() => void createGame()}>
+                  <p className="text-xs text-muted-foreground">{gameDescription.length}/{gameDescriptionLimit} · осталось {gameDescriptionLimit - gameDescription.length}</p>
+                  <Button type="button" disabled={creatingGame || gameName.length > gameNameLimit || gameDescription.length > gameDescriptionLimit} onClick={() => void createGame()}>
                     {creatingGame ? "Создание..." : "Создать"}
                   </Button>
                 </div>

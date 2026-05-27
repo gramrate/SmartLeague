@@ -113,6 +113,12 @@ const docTemplate = `{
                 "summary": "Get clubs list",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "search by club name/description",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "limit",
                         "name": "limit",
@@ -326,6 +332,133 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/bans": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Get club bans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "search by nickname",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetClubBansResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/games": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Get club games",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetClubGamesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -660,6 +793,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/club/{id}/member/{member_id}/unban": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Unban profile in club",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Member Profile ID",
+                        "name": "member_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/club/{id}/members": {
             "get": {
                 "produces": [
@@ -676,6 +870,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "search by nickname or name",
+                        "name": "q",
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -699,6 +899,67 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/club/{id}/profile/{profile_id}/block": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "club"
+                ],
+                "summary": "Block profile in club",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Club ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Profile ID",
+                        "name": "profile_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.HTTPStatus"
                         }
@@ -929,6 +1190,72 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/game/{id}/draft": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Save game draft",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Draft table",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SaveGameDraftRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/game/{id}/full": {
             "get": {
                 "produces": [
@@ -1007,6 +1334,72 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/dto.SetGameParticipantsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/game/{id}/publish": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Publish game",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Publish table",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PublishGameRequest"
                         }
                     }
                 ],
@@ -1189,6 +1582,48 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "offset",
                         "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search by series name",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search by club name",
+                        "name": "club",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "filter start boundary, YYYY-MM-DD",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "filter end boundary, YYYY-MM-DD",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "filter by rating flag (true/false)",
+                        "name": "is_rating",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "show past series (end_at \u003c now)",
+                        "name": "show_past",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "show closed registration series (is_closed = true)",
+                        "name": "show_closed",
                         "in": "query"
                     }
                 ],
@@ -1574,6 +2009,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/series/{id}/games/draft": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Create draft game in series",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Draft game data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateGameDraftRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateGameResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/series/{id}/join": {
             "post": {
                 "security": [
@@ -1792,6 +2296,141 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/series/{id}/payment/{profile_id}": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Set participant payment status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Profile ID",
+                        "name": "profile_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Payment status",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "paid": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/series/{id}/payments": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "series"
+                ],
+                "summary": "Get series payments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Series ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GetSeriesPaymentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.HTTPStatus"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user": {
             "get": {
                 "security": [
@@ -1906,7 +2545,7 @@ const docTemplate = `{
         },
         "/api/v1/user/all": {
             "get": {
-                "description": "Retrieves a list of users filtered by role, one-line full name query, and email prefix.",
+                "description": "Retrieves a list of users filtered by role, club_state, club name and nickname query.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1948,17 +2587,29 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "example": "\"Иван Дима\"",
-                        "description": "One-line search by name, nickname and email tokens",
-                        "name": "q",
+                        "enum": [
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "example": 2,
+                        "description": "Club state (1=member,2=resident,3=leader+president)",
+                        "name": "club_state",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "example": "\"user@\"",
-                        "description": "Filter by email prefix",
-                        "name": "email_prefix",
+                        "example": "\"smart\"",
+                        "description": "Filter by club name",
+                        "name": "club",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "\"mishmish\"",
+                        "description": "Search by nickname",
+                        "name": "q",
                         "in": "query"
                     }
                 ],
@@ -2433,6 +3084,42 @@ const docTemplate = `{
                         "description": "offset",
                         "name": "offset",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search by series name",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "filter start boundary, YYYY-MM-DD",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "filter end boundary, YYYY-MM-DD",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "filter by rating flag (true/false)",
+                        "name": "is_rating",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "show past series (end_at \u003c now)",
+                        "name": "show_past",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "show closed registration series (is_closed = true)",
+                        "name": "show_closed",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2503,8 +3190,20 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "is_closed": {
+                    "type": "boolean"
+                },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
+                },
+                "price_rub": {
+                    "type": "integer"
                 },
                 "start_at": {
                     "type": "string"
@@ -2595,6 +3294,23 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CreateGameDraftRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "host_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.GameStatus"
+                }
+            }
+        },
         "dto.CreateGameRequest": {
             "type": "object",
             "properties": {
@@ -2670,6 +3386,12 @@ const docTemplate = `{
                 "is_closed": {
                     "type": "boolean"
                 },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 200,
@@ -2682,15 +3404,6 @@ const docTemplate = `{
                 },
                 "start_at": {
                     "type": "string"
-                },
-                "status": {
-                    "maximum": 3,
-                    "minimum": 0,
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.SeriesStatus"
-                        }
-                    ]
                 }
             }
         },
@@ -2718,6 +3431,12 @@ const docTemplate = `{
                 "is_closed": {
                     "type": "boolean"
                 },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2726,9 +3445,6 @@ const docTemplate = `{
                 },
                 "start_at": {
                     "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
@@ -2790,7 +3506,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "removed": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 1000000,
                     "minimum": -1000000
                 },
@@ -2808,7 +3524,7 @@ const docTemplate = `{
                     "minimum": -1000000
                 },
                 "yellow_cards": {
-                    "type": "integer",
+                    "type": "number",
                     "maximum": 1000000,
                     "minimum": -1000000
                 }
@@ -2849,6 +3565,34 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.AllSeriesItem"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetClubBansResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.User"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationInfo"
+                }
+            }
+        },
+        "dto.GetClubGamesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlayerGame"
                     }
                 },
                 "pagination": {
@@ -3028,6 +3772,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.GetSeriesPaymentsResponse": {
+            "type": "object",
+            "properties": {
+                "paid_profile_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "dto.GetSeriesResponse": {
             "type": "object",
             "properties": {
@@ -3052,6 +3807,12 @@ const docTemplate = `{
                 "is_closed": {
                     "type": "boolean"
                 },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3060,9 +3821,6 @@ const docTemplate = `{
                 },
                 "start_at": {
                     "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
@@ -3236,6 +3994,38 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ManageGameRow": {
+            "type": "object",
+            "properties": {
+                "best_move": {
+                    "type": "string"
+                },
+                "compensation": {
+                    "type": "number"
+                },
+                "extra_points": {
+                    "type": "number"
+                },
+                "profile_id": {
+                    "type": "string"
+                },
+                "removed": {
+                    "type": "number"
+                },
+                "role": {
+                    "$ref": "#/definitions/types.MafiaRole"
+                },
+                "slot": {
+                    "type": "integer"
+                },
+                "total_points": {
+                    "type": "number"
+                },
+                "yellow_cards": {
+                    "type": "number"
+                }
+            }
+        },
         "dto.PaginationInfo": {
             "type": "object",
             "properties": {
@@ -3305,11 +4095,36 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "is_closed": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
+                "price_rub": {
+                    "type": "integer"
+                },
                 "start_at": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PublishGameRequest": {
+            "type": "object",
+            "required": [
+                "rows"
+            ],
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 10,
+                    "items": {
+                        "$ref": "#/definitions/dto.ManageGameRow"
+                    }
                 }
             }
         },
@@ -3321,15 +4136,6 @@ const docTemplate = `{
                 "password"
             ],
             "properties": {
-                "club_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "description": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "example": "About me"
-                },
                 "email": {
                     "type": "string",
                     "maxLength": 254,
@@ -3410,6 +4216,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.SaveGameDraftRequest": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ManageGameRow"
+                    }
+                }
+            }
+        },
         "dto.Series": {
             "type": "object",
             "properties": {
@@ -3434,6 +4251,12 @@ const docTemplate = `{
                 "is_closed": {
                     "type": "boolean"
                 },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3442,9 +4265,6 @@ const docTemplate = `{
                 },
                 "start_at": {
                     "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
@@ -3753,6 +4573,12 @@ const docTemplate = `{
                 "is_closed": {
                     "type": "boolean"
                 },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 200,
@@ -3765,15 +4591,6 @@ const docTemplate = `{
                 },
                 "start_at": {
                     "type": "string"
-                },
-                "status": {
-                    "maximum": 3,
-                    "minimum": 0,
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/types.SeriesStatus"
-                        }
-                    ]
                 }
             }
         },
@@ -3801,6 +4618,12 @@ const docTemplate = `{
                 "is_closed": {
                     "type": "boolean"
                 },
+                "is_club_only": {
+                    "type": "boolean"
+                },
+                "is_rating": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3809,9 +4632,6 @@ const docTemplate = `{
                 },
                 "start_at": {
                     "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/types.SeriesStatus"
                 }
             }
         },
@@ -3947,21 +4767,6 @@ const docTemplate = `{
                 "RoleModerator",
                 "RoleAdmin",
                 "RoleSuperAdmin"
-            ]
-        },
-        "types.SeriesStatus": {
-            "type": "integer",
-            "enum": [
-                0,
-                1,
-                2,
-                3
-            ],
-            "x-enum-varnames": [
-                "SeriesStatusClosed",
-                "SeriesStatusRegistration",
-                "SeriesStatusClosedRegistration",
-                "SeriesStatusGames"
             ]
         }
     },

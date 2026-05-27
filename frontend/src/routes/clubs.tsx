@@ -16,9 +16,10 @@ function ClubsPage() {
   const location = useLocation();
   const me = useAuthStore((s) => s.me);
   const [q, setQ] = useState("");
+  const qLimit = 200;
   const debouncedQ = useDebouncedValue(q, 150);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 15;
   const offset = (page - 1) * pageSize;
   const { data, isLoading, error } = useQuery({
     queryKey: ["clubs", "all", debouncedQ, page],
@@ -46,11 +47,13 @@ function ClubsPage() {
         <Input
           placeholder="Поиск клубов…"
           value={q}
+          maxLength={qLimit}
           onChange={(e) => {
             setQ(e.target.value);
             setPage(1);
           }}
         />
+        <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p>
       </div>
       {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :
         !data?.items?.length ? <EmptyBlock title="Клубы не найдены" /> : (

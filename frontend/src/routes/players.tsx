@@ -14,8 +14,10 @@ export const Route = createFileRoute("/players")({ component: PlayersPage });
 function PlayersPage() {
   const [q, setQ] = useState("");
   const [club, setClub] = useState("");
+  const qLimit = 100;
+  const clubLimit = 200;
   const [page, setPage] = useState(1);
-  const pageSize = 21;
+  const pageSize = 15;
   const debouncedQ = useDebouncedValue(q, 150);
   const debouncedClub = useDebouncedValue(club, 150);
   const { data, isLoading, error } = useQuery({
@@ -32,22 +34,30 @@ function PlayersPage() {
     <PageShell>
       <PageHeader eyebrow="Игроки" title="Поиск игрока" description="Поиск по никнейму." />
       <div className="mb-6 grid max-w-3xl gap-3 sm:grid-cols-2">
-        <Input
-          placeholder="Поиск игроков…"
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setPage(1);
-          }}
-        />
-        <Input
-          placeholder="Клуб…"
-          value={club}
-          onChange={(e) => {
-            setClub(e.target.value);
-            setPage(1);
-          }}
-        />
+        <div>
+          <Input
+            placeholder="Поиск игроков…"
+            value={q}
+            maxLength={qLimit}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(1);
+            }}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit} · осталось {qLimit - q.length}</p>
+        </div>
+        <div>
+          <Input
+            placeholder="Клуб…"
+            value={club}
+            maxLength={clubLimit}
+            onChange={(e) => {
+              setClub(e.target.value);
+              setPage(1);
+            }}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{club.length}/{clubLimit} · осталось {clubLimit - club.length}</p>
+        </div>
       </div>
       {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :
         !data?.items?.length ? <EmptyBlock title="Игроки не найдены" /> : (

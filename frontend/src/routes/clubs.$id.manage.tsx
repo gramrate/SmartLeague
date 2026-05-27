@@ -43,9 +43,9 @@ function ManageClubPage() {
   const [banSearchQ, setBanSearchQ] = useState("");
   const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [banPage, setBanPage] = useState(1);
-  const banPageSize = 8;
+  const banPageSize = 15;
   const [banSearchPage, setBanSearchPage] = useState(1);
-  const banSearchPageSize = 8;
+  const banSearchPageSize = 15;
   const [banOverrides, setBanOverrides] = useState<Record<string, boolean>>({});
   const debouncedBanQ = useDebouncedValue(banQ, 150);
   const debouncedBanSearchQ = useDebouncedValue(banSearchQ, 150);
@@ -146,6 +146,10 @@ function ManageClubPage() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [deletingClub, setDeletingClub] = useState(false);
+  const clubNameLimit = 200;
+  const clubDescriptionLimit = 2000;
+  const genericSearchLimit = 200;
+  const userSearchLimit = 100;
   useEffect(() => {
     if (!transferOpen) return;
     setPresidentTargetId("");
@@ -223,10 +227,18 @@ function ManageClubPage() {
       <section className="mb-8 rounded-2xl border border-border/60 bg-card/60 p-6">
         <h2 className="mb-4 font-display text-lg font-semibold">Данные клуба</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5"><Label>Название</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="space-y-1.5">
+            <Label>Название</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={clubNameLimit} />
+            <p className="text-xs text-muted-foreground">{name.length}/{clubNameLimit} · осталось {clubNameLimit - name.length}</p>
+          </div>
         </div>
-        <div className="mt-4 space-y-1.5"><Label>Описание</Label><Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-        <Button className="mt-4" onClick={saveClub}>Сохранить</Button>
+        <div className="mt-4 space-y-1.5">
+          <Label>Описание</Label>
+          <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={clubDescriptionLimit} />
+          <p className="text-xs text-muted-foreground">{description.length}/{clubDescriptionLimit} · осталось {clubDescriptionLimit - description.length}</p>
+        </div>
+        <Button className="mt-4" onClick={saveClub} disabled={name.length > clubNameLimit || description.length > clubDescriptionLimit}>Сохранить</Button>
       </section>
 
       {/* President */}
@@ -395,6 +407,7 @@ function ManageClubPage() {
             <div className="relative">
               <Input
                 value={presidentTargetQuery}
+                maxLength={userSearchLimit}
                 onChange={(e) => {
                   const value = e.target.value;
                   setPresidentTargetQuery(value);
@@ -407,6 +420,7 @@ function ManageClubPage() {
                 placeholder="Введите или выберите участника"
                 className="h-9"
               />
+              <p className="mt-1 text-xs text-muted-foreground">{presidentTargetQuery.length}/{userSearchLimit} · осталось {userSearchLimit - presidentTargetQuery.length}</p>
               {presidentDropdownOpen && (
                 <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
                   {others
@@ -458,12 +472,14 @@ function ManageClubPage() {
                   <Label>Поиск в бан-листе</Label>
                   <Input
                     value={banQ}
+                    maxLength={genericSearchLimit}
                     onChange={(e) => {
                       setBanQ(e.target.value);
                       setBanPage(1);
                     }}
                     placeholder="Никнейм..."
                   />
+                  <p className="text-xs text-muted-foreground">{banQ.length}/{genericSearchLimit} · осталось {genericSearchLimit - banQ.length}</p>
                 </div>
                 <Button
                   variant="outline"
@@ -528,12 +544,14 @@ function ManageClubPage() {
                   <Label>Поиск игрока</Label>
                   <Input
                     value={banSearchQ}
+                    maxLength={userSearchLimit}
                     onChange={(e) => {
                       setBanSearchQ(e.target.value);
                       setBanSearchPage(1);
                     }}
                     placeholder="Никнейм..."
                   />
+                  <p className="text-xs text-muted-foreground">{banSearchQ.length}/{userSearchLimit} · осталось {userSearchLimit - banSearchQ.length}</p>
                 </div>
                 <Button
                   variant="outline"

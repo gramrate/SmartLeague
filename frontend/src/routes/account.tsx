@@ -34,6 +34,9 @@ function AccountPage() {
   const [description, setDescription] = useState(me?.description ?? "");
   const [showName, setShowName] = useState(me?.show_name ?? true);
   const [saving, setSaving] = useState(false);
+  const nameLimit = 100;
+  const nicknameLimit = 100;
+  const descriptionLimit = 2000;
 
   useEffect(() => {
     if (me) {
@@ -63,18 +66,22 @@ function AccountPage() {
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <h2 className="mb-4 font-display text-lg font-semibold">Данные профиля</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Имя"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
-              <Field label="Никнейм"><Input value={nickname} onChange={(e) => setNickname(e.target.value)} /></Field>
+              <Field label="Имя" hint={`${name.length}/${nameLimit} · осталось ${nameLimit - name.length}`}>
+                <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={nameLimit} />
+              </Field>
+              <Field label="Никнейм" hint={`${nickname.length}/${nicknameLimit} · осталось ${nicknameLimit - nickname.length}`}>
+                <Input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={nicknameLimit} />
+              </Field>
             </div>
-            <Field label="О себе" className="mt-4">
-              <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Field label="О себе" className="mt-4" hint={`${description.length}/${descriptionLimit} · осталось ${descriptionLimit - description.length}`}>
+              <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={descriptionLimit} />
             </Field>
             <label className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Checkbox checked={showName} onCheckedChange={(v) => setShowName(!!v)} />
               Показывать мое настоящее имя публично
             </label>
             <div className="mt-6">
-              <Button onClick={save} disabled={saving}>{saving ? "Сохранение…" : "Сохранить изменения"}</Button>
+              <Button onClick={save} disabled={saving || name.length > nameLimit || nickname.length > nicknameLimit || description.length > descriptionLimit}>{saving ? "Сохранение…" : "Сохранить изменения"}</Button>
             </div>
           </div>
         </div>
@@ -107,11 +114,12 @@ function AccountPage() {
   );
 }
 
-function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+function Field({ label, children, className = "", hint }: { label: string; children: React.ReactNode; className?: string; hint?: string }) {
   return (
     <div className={`space-y-1.5 ${className}`}>
       <Label>{label}</Label>
       {children}
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

@@ -13,8 +13,16 @@ definitions:
         type: integer
       id:
         type: string
+      is_closed:
+        type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         type: string
+      price_rub:
+        type: integer
       start_at:
         type: string
     type: object
@@ -80,6 +88,17 @@ definitions:
         example: Smart League
         type: string
     type: object
+  dto.CreateGameDraftRequest:
+    properties:
+      description:
+        type: string
+      host_id:
+        type: string
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/types.GameStatus'
+    type: object
   dto.CreateGameRequest:
     properties:
       description:
@@ -126,6 +145,10 @@ definitions:
         $ref: '#/definitions/types.GameType'
       is_closed:
         type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         maxLength: 200
         minLength: 1
@@ -136,11 +159,6 @@ definitions:
         type: integer
       start_at:
         type: string
-      status:
-        allOf:
-        - $ref: '#/definitions/types.SeriesStatus'
-        maximum: 3
-        minimum: 0
     required:
     - description
     - end_at
@@ -163,14 +181,16 @@ definitions:
         type: string
       is_closed:
         type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         type: string
       price_rub:
         type: integer
       start_at:
         type: string
-      status:
-        $ref: '#/definitions/types.SeriesStatus'
     type: object
   dto.Game:
     properties:
@@ -213,7 +233,7 @@ definitions:
       removed:
         maximum: 1000000
         minimum: -1000000
-        type: integer
+        type: number
       role:
         $ref: '#/definitions/types.MafiaRole'
       total_points:
@@ -227,7 +247,7 @@ definitions:
       yellow_cards:
         maximum: 1000000
         minimum: -1000000
-        type: integer
+        type: number
     required:
     - profile_id
     type: object
@@ -254,6 +274,24 @@ definitions:
       items:
         items:
           $ref: '#/definitions/dto.AllSeriesItem'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetClubBansResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.User'
+        type: array
+      pagination:
+        $ref: '#/definitions/dto.PaginationInfo'
+    type: object
+  dto.GetClubGamesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.PlayerGame'
         type: array
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
@@ -371,6 +409,13 @@ definitions:
       pagination:
         $ref: '#/definitions/dto.PaginationInfo'
     type: object
+  dto.GetSeriesPaymentsResponse:
+    properties:
+      paid_profile_ids:
+        items:
+          type: string
+        type: array
+    type: object
   dto.GetSeriesResponse:
     properties:
       club_id:
@@ -387,14 +432,16 @@ definitions:
         type: string
       is_closed:
         type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         type: string
       price_rub:
         type: integer
       start_at:
         type: string
-      status:
-        $ref: '#/definitions/types.SeriesStatus'
     type: object
   dto.GetUserGamesResponse:
     properties:
@@ -509,6 +556,27 @@ definitions:
         example: true
         type: boolean
     type: object
+  dto.ManageGameRow:
+    properties:
+      best_move:
+        type: string
+      compensation:
+        type: number
+      extra_points:
+        type: number
+      profile_id:
+        type: string
+      removed:
+        type: number
+      role:
+        $ref: '#/definitions/types.MafiaRole'
+      slot:
+        type: integer
+      total_points:
+        type: number
+      yellow_cards:
+        type: number
+    type: object
   dto.PaginationInfo:
     properties:
       current_page:
@@ -556,10 +624,27 @@ definitions:
         type: string
       id:
         type: string
+      is_closed:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         type: string
+      price_rub:
+        type: integer
       start_at:
         type: string
+    type: object
+  dto.PublishGameRequest:
+    properties:
+      rows:
+        items:
+          $ref: '#/definitions/dto.ManageGameRow'
+        maxItems: 10
+        minItems: 10
+        type: array
+    required:
+    - rows
     type: object
   dto.RegisterUserRequest:
     properties:
@@ -624,6 +709,13 @@ definitions:
         example: true
         type: boolean
     type: object
+  dto.SaveGameDraftRequest:
+    properties:
+      rows:
+        items:
+          $ref: '#/definitions/dto.ManageGameRow'
+        type: array
+    type: object
   dto.Series:
     properties:
       club_id:
@@ -640,14 +732,16 @@ definitions:
         type: string
       is_closed:
         type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         type: string
       price_rub:
         type: integer
       start_at:
         type: string
-      status:
-        $ref: '#/definitions/types.SeriesStatus'
     type: object
   dto.SetGameParticipantsRequest:
     properties:
@@ -861,6 +955,10 @@ definitions:
         $ref: '#/definitions/types.GameType'
       is_closed:
         type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         maxLength: 200
         minLength: 1
@@ -871,11 +969,6 @@ definitions:
         type: integer
       start_at:
         type: string
-      status:
-        allOf:
-        - $ref: '#/definitions/types.SeriesStatus'
-        maximum: 3
-        minimum: 0
     type: object
   dto.UpdateSeriesResponse:
     properties:
@@ -893,14 +986,16 @@ definitions:
         type: string
       is_closed:
         type: boolean
+      is_club_only:
+        type: boolean
+      is_rating:
+        type: boolean
       name:
         type: string
       price_rub:
         type: integer
       start_at:
         type: string
-      status:
-        $ref: '#/definitions/types.SeriesStatus'
     type: object
   dto.UpsertGameResultsRequest:
     properties:
@@ -999,18 +1094,6 @@ definitions:
     - RoleModerator
     - RoleAdmin
     - RoleSuperAdmin
-  types.SeriesStatus:
-    enum:
-    - 0
-    - 1
-    - 2
-    - 3
-    type: integer
-    x-enum-varnames:
-    - SeriesStatusClosed
-    - SeriesStatusRegistration
-    - SeriesStatusClosedRegistration
-    - SeriesStatusGames
 host: localhost:8000
 info:
   contact:
@@ -1175,6 +1258,88 @@ paths:
       security:
       - CookieAuth: []
       summary: Update club by id
+      tags:
+      - club
+  /api/v1/club/{id}/bans:
+    get:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: search by nickname
+        in: query
+        name: q
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetClubBansResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Get club bans
+      tags:
+      - club
+  /api/v1/club/{id}/games:
+    get:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetClubGamesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      summary: Get club games
       tags:
       - club
   /api/v1/club/{id}/join:
@@ -1382,6 +1547,45 @@ paths:
       summary: Set club member role
       tags:
       - club
+  /api/v1/club/{id}/member/{member_id}/unban:
+    post:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Member Profile ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Unban profile in club
+      tags:
+      - club
   /api/v1/club/{id}/members:
     get:
       parameters:
@@ -1389,6 +1593,10 @@ paths:
         in: path
         name: id
         required: true
+        type: string
+      - description: search by nickname or name
+        in: query
+        name: q
         type: string
       - description: limit
         in: query
@@ -1414,6 +1622,45 @@ paths:
           schema:
             $ref: '#/definitions/dto.HTTPStatus'
       summary: Get club members
+      tags:
+      - club
+  /api/v1/club/{id}/profile/{profile_id}/block:
+    post:
+      parameters:
+      - description: Club ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Profile ID
+        in: path
+        name: profile_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Block profile in club
       tags:
       - club
   /api/v1/club/{id}/series:
@@ -1453,6 +1700,10 @@ paths:
   /api/v1/club/all:
     get:
       parameters:
+      - description: search by club name/description
+        in: query
+        name: q
+        type: string
       - description: limit
         in: query
         name: limit
@@ -1605,6 +1856,48 @@ paths:
       summary: Update game by id
       tags:
       - game
+  /api/v1/game/{id}/draft:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Draft table
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SaveGameDraftRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Save game draft
+      tags:
+      - game
   /api/v1/game/{id}/full:
     get:
       parameters:
@@ -1675,6 +1968,48 @@ paths:
       security:
       - CookieAuth: []
       summary: Set game participants
+      tags:
+      - game
+  /api/v1/game/{id}/publish:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Publish table
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PublishGameRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Publish game
       tags:
       - game
   /api/v1/game/{id}/results:
@@ -1991,6 +2326,50 @@ paths:
       summary: Create game in series
       tags:
       - game
+  /api/v1/series/{id}/games/draft:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Draft game data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateGameDraftRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateGameResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Create draft game in series
+      tags:
+      - game
   /api/v1/series/{id}/join:
     post:
       parameters:
@@ -2131,6 +2510,92 @@ paths:
       summary: Get series participants
       tags:
       - series
+  /api/v1/series/{id}/payment/{profile_id}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Profile ID
+        in: path
+        name: profile_id
+        required: true
+        type: string
+      - description: Payment status
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            paid:
+              type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Set participant payment status
+      tags:
+      - series
+  /api/v1/series/{id}/payments:
+    get:
+      parameters:
+      - description: Series ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetSeriesPaymentsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.HTTPStatus'
+      security:
+      - CookieAuth: []
+      summary: Get series payments
+      tags:
+      - series
   /api/v1/series/all:
     get:
       parameters:
@@ -2142,6 +2607,34 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: search by series name
+        in: query
+        name: q
+        type: string
+      - description: search by club name
+        in: query
+        name: club
+        type: string
+      - description: filter start boundary, YYYY-MM-DD
+        in: query
+        name: from
+        type: string
+      - description: filter end boundary, YYYY-MM-DD
+        in: query
+        name: to
+        type: string
+      - description: filter by rating flag (true/false)
+        in: query
+        name: is_rating
+        type: boolean
+      - description: show past series (end_at < now)
+        in: query
+        name: show_past
+        type: boolean
+      - description: show closed registration series (is_closed = true)
+        in: query
+        name: show_closed
+        type: boolean
       produces:
       - application/json
       responses:
@@ -2363,6 +2856,30 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: search by series name
+        in: query
+        name: q
+        type: string
+      - description: filter start boundary, YYYY-MM-DD
+        in: query
+        name: from
+        type: string
+      - description: filter end boundary, YYYY-MM-DD
+        in: query
+        name: to
+        type: string
+      - description: filter by rating flag (true/false)
+        in: query
+        name: is_rating
+        type: boolean
+      - description: show past series (end_at < now)
+        in: query
+        name: show_past
+        type: boolean
+      - description: show closed registration series (is_closed = true)
+        in: query
+        name: show_closed
+        type: boolean
       produces:
       - application/json
       responses:
@@ -2385,8 +2902,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a list of users filtered by role, one-line full name
-        query, and email prefix.
+      description: Retrieves a list of users filtered by role, club_state, club name
+        and nickname query.
       parameters:
       - description: Max number of users to return
         example: 10
@@ -2410,15 +2927,24 @@ paths:
         in: query
         name: role
         type: integer
-      - description: One-line search by name, nickname and email tokens
-        example: '"Иван Дима"'
+      - description: Club state (1=member,2=resident,3=leader+president)
+        enum:
+        - 1
+        - 2
+        - 3
+        example: 2
+        in: query
+        name: club_state
+        type: integer
+      - description: Filter by club name
+        example: '"smart"'
+        in: query
+        name: club
+        type: string
+      - description: Search by nickname
+        example: '"mishmish"'
         in: query
         name: q
-        type: string
-      - description: Filter by email prefix
-        example: '"user@"'
-        in: query
-        name: email_prefix
         type: string
       produces:
       - application/json

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/user/$id/games")({ component: UserGamesPa
 function UserGamesPage() {
   const { id } = Route.useParams();
   const [page, setPage] = useState(1);
-  const limit = 20;
+  const limit = 15;
   const offset = (page - 1) * limit;
 
   const user = useQuery({ queryKey: ["user", id], queryFn: () => usersApi.get(id) });

@@ -61,6 +61,8 @@ function SeriesManagePage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [paidOverrides, setPaidOverrides] = useState<Record<string, boolean>>({});
+  const nameLimit = 200;
+  const descriptionLimit = 10000;
 
   useEffect(() => {
     if (!series) return;
@@ -164,8 +166,16 @@ function SeriesManagePage() {
         <section className="rounded-2xl border border-border/60 bg-card/60 p-6">
           <h2 className="mb-4 font-display text-lg font-semibold">Параметры серии</h2>
           <div className="space-y-4">
-            <div className="space-y-1.5"><Label>Название</Label><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={200} /></div>
-            <div className="space-y-1.5"><Label>Описание</Label><Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={10000} /></div>
+            <div className="space-y-1.5">
+              <Label>Название</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={nameLimit} />
+              <p className="text-xs text-muted-foreground">{name.length}/{nameLimit} · осталось {nameLimit - name.length}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Описание</Label>
+              <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={descriptionLimit} />
+              <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit} · осталось {descriptionLimit - description.length}</p>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5"><Label>Начало</Label><Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} /></div>
               <div className="space-y-1.5"><Label>Конец</Label><Input type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} /></div>
@@ -193,7 +203,7 @@ function SeriesManagePage() {
               Только для участников клуба
             </label>
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              <Button onClick={() => void save()} disabled={saving || !dirty || !name.trim() || !description.trim() || !startAt || !endAt}>
+              <Button onClick={() => void save()} disabled={saving || !dirty || !name.trim() || !description.trim() || !startAt || !endAt || name.length > nameLimit || description.length > descriptionLimit}>
                 {saving ? "Сохранение..." : "Сохранить"}
               </Button>
             </div>

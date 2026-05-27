@@ -11,7 +11,7 @@ export const Route = createFileRoute("/clubs/$id/games")({ component: ClubGamesP
 function ClubGamesPage() {
   const { id } = Route.useParams();
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 15;
   const offset = (page - 1) * pageSize;
   const club = useQuery({ queryKey: ["club", id], queryFn: () => clubsApi.get(id) });
   const games = useQuery({

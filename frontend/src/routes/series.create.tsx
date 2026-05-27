@@ -32,6 +32,8 @@ function CreateSeriesPage() {
   const [isRating, setIsRating] = useState(false);
   const [isClubOnly, setIsClubOnly] = useState(false);
   const [busy, setBusy] = useState(false);
+  const nameLimit = 200;
+  const descriptionLimit = 10000;
 
   if (!canCreate) return null;
 
@@ -60,8 +62,16 @@ function CreateSeriesPage() {
       <div className="mx-auto max-w-xl">
         <PageHeader eyebrow="Серии" title="Создание серии" />
         <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-border/60 bg-card/60 p-6">
-          <div className="space-y-1.5"><Label>Название</Label><Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} /></div>
-          <div className="space-y-1.5"><Label>Описание</Label><Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} required maxLength={10000} /></div>
+          <div className="space-y-1.5">
+            <Label>Название</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={nameLimit} />
+            <p className="text-xs text-muted-foreground">{name.length}/{nameLimit} · осталось {nameLimit - name.length}</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Описание</Label>
+            <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} required maxLength={descriptionLimit} />
+            <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit} · осталось {descriptionLimit - description.length}</p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Начало</Label><Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} required /></div>
             <div className="space-y-1.5"><Label>Конец</Label><Input type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} required /></div>
@@ -78,7 +88,7 @@ function CreateSeriesPage() {
             <Checkbox checked={isClubOnly} onCheckedChange={(v) => setIsClubOnly(!!v)} />
             Только для участников клуба
           </label>
-          <Button type="submit" disabled={busy || !name || !description || !startAt || !endAt}>
+          <Button type="submit" disabled={busy || !name || !description || !startAt || !endAt || name.length > nameLimit || description.length > descriptionLimit}>
             {busy ? "Создание…" : "Создать серию"}
           </Button>
         </form>
