@@ -6,7 +6,6 @@ import (
 	"database/sql"
 
 	"github.com/go-playground/form"
-	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,10 +16,8 @@ type ServiceProvider struct {
 	httpConfig   ServerConfig
 	jwtConfig    JWTConfig
 	mailConfig   MailConfig
-	minioConfig  MinIOConfig
 
 	redis *redis.Client
-	minio *minio.Client
 	sqlDB *sql.DB
 
 	logger      *logger.Logger

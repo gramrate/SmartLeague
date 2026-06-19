@@ -43,12 +43,3 @@ type MailConfig interface {
 	Mail() string
 	Password() string
 }
-
-type MinIOConfig interface {
-	Endpoint() string
-	AccessKey() string
-	SecretKey() string
-	BucketName() string
-	SSL() bool
-	Timeout() time.Duration
-}

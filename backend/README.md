@@ -80,7 +80,7 @@ docker compose down
 
 ## Локальный запуск
 
-Подними Postgres/Valkey/MinIO и запусти:
+Подними Postgres/Valkey и запусти:
 
 ```bash
 GOCACHE=/tmp/gocache go run ./cmd

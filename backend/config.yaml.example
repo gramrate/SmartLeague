@@ -13,15 +13,6 @@ service:
     password: "valkeypass"
     db: 0
 
-  minio:
-    host: "minio"
-    port: 9000
-    access-key: "minioadmin"
-    secret-key: "minioadmin"
-    bucket-name: "test-bucket"
-    ssl: false
-    timeout: 10
-
   jwt:
     path-to-private-key: "keys/private.pem"
     refresh-token-expires: "720h"

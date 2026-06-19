@@ -278,7 +278,7 @@ LIMIT $%d OFFSET $%d
 	return out, total, nil
 }
 
-func (r *Repo) ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error) {
+func (r *Repo) ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int, requesterID *uuid.UUID, includeDrafts bool) ([]*model.Game, []string, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -286,24 +286,54 @@ func (r *Repo) ListGames(ctx context.Context, clubID uuid.UUID, limit, offset in
 		offset = 0
 	}
 
+	where := "s.club_id=$1 AND s.deleted_at IS NULL AND g.deleted_at IS NULL"
+	args := []any{clubID}
+
+	if !includeDrafts {
+		where += " AND g.status <> 0"
+	}
+	if !includeDrafts {
+		if requesterID == nil {
+			where += " AND s.is_club_only = false"
+		} else {
+			args = append(args, *requesterID)
+			where += fmt.Sprintf(`
+AND (
+  s.is_club_only = false
+  OR EXISTS (
+    SELECT 1
+    FROM series_participants sp
+    WHERE sp.series_id = s.id AND sp.profile_id = $%d
+  )
+)`, len(args))
+		}
+	}
+
 	var total int
-	if err := r.db.QueryRowContext(ctx, `
+	countSQL := fmt.Sprintf(`
 SELECT count(*)
 FROM games g
 JOIN series s ON s.id = g.series_id
-WHERE s.club_id=$1 AND s.deleted_at IS NULL AND g.deleted_at IS NULL
-`, clubID).Scan(&total); err != nil {
+WHERE %s
+`, where)
+	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
+	listArgs := append([]any{}, args...)
+	limitArg := len(listArgs) + 1
+	offsetArg := len(listArgs) + 2
+	listArgs = append(listArgs, limit, offset)
+
+	listSQL := fmt.Sprintf(`
 SELECT g.id, g.series_id, s.name, g.name, g.number, g.description, g.host_id, g.status, g.created_at, g.updated_at
 FROM games g
 JOIN series s ON s.id = g.series_id
-WHERE s.club_id=$1 AND s.deleted_at IS NULL AND g.deleted_at IS NULL
+WHERE %s
 ORDER BY g.created_at DESC
-LIMIT $2 OFFSET $3
-`, clubID, limit, offset)
+LIMIT $%d OFFSET $%d
+`, where, limitArg, offsetArg)
+	rows, err := r.db.QueryContext(ctx, listSQL, listArgs...)
 	if err != nil {
 		return nil, nil, 0, err
 	}

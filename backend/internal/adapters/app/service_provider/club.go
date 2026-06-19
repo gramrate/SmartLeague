@@ -19,7 +19,7 @@ type clubService interface {
 	Delete(ctx context.Context, req *dto.DeleteClubRequest) error
 	DeleteByManager(ctx context.Context, requesterID uuid.UUID, req *dto.DeleteClubRequest) error
 	GetMembers(ctx context.Context, req *dto.GetClubMembersRequest) (*dto.GetClubMembersResponse, error)
-	GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error)
+	GetGames(ctx context.Context, requesterID *uuid.UUID, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error)
 	GetBans(ctx context.Context, requesterID uuid.UUID, req *dto.GetClubBansRequest) (*dto.GetClubBansResponse, error)
 	Join(ctx context.Context, req *dto.JoinClubRequest) error
 	Leave(ctx context.Context, req *dto.LeaveClubRequest) error

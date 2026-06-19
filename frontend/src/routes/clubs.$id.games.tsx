@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { clubsApi } from "@/lib/api";
 import { LoadingBlock, EmptyBlock } from "@/components/site/States";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ListPagination } from "@/components/site/ListPagination";
 
 export const Route = createFileRoute("/clubs/$id/games")({ component: ClubGamesPage });
 
@@ -19,21 +19,32 @@ function ClubGamesPage() {
     queryFn: () => clubsApi.games(id, { limit: pageSize, offset }),
   });
 
-  const totalPages = games.data?.pagination.total_pages ?? 1;
   const visibleGames = games.data?.items ?? [];
 
   return (
     <PageShell>
       <PageHeader eyebrow={club.data?.name ?? "Клуб"} title="Все игры" />
-      {games.isLoading ? <LoadingBlock /> :
-        !visibleGames.length ? <EmptyBlock title="Игр нет" /> : (
+      {games.isLoading ? (
+        <LoadingBlock />
+      ) : !visibleGames.length ? (
+        <EmptyBlock title="Игр нет" />
+      ) : (
         <ul className="grid gap-2 sm:grid-cols-2">
           {visibleGames.map((g) => (
-            <Link key={g.id} to="/game/$id" params={{ id: g.id }}
-              className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50">
+            <Link
+              key={g.id}
+              to="/game/$id"
+              params={{ id: g.id }}
+              className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50"
+            >
               <p className="break-words font-medium">{g.name || `Игра #${g.number}`}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                <Link to="/series/$id" params={{ id: g.series_id }} className="break-words hover:underline" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  to="/series/$id"
+                  params={{ id: g.series_id }}
+                  className="break-words hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {g.series_name}
                 </Link>
                 {" · #"}
@@ -44,27 +55,12 @@ function ClubGamesPage() {
         </ul>
       )}
       {!!visibleGames.length && (
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!games.data?.pagination.has_previous}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Назад
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Страница {page} из {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!games.data?.pagination.has_next}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Далее
-          </Button>
-        </div>
+        <ListPagination
+          pagination={games.data!.pagination}
+          isLoading={games.isLoading}
+          onPrevious={() => setPage((p) => Math.max(1, p - 1))}
+          onNext={() => setPage((p) => p + 1)}
+        />
       )}
     </PageShell>
   );

@@ -6,6 +6,7 @@ import { EmptyBlock, LoadingBlock } from "@/components/site/States";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { fmtDate } from "@/lib/format";
+import { ListPagination } from "@/components/site/ListPagination";
 
 export const Route = createFileRoute("/user/$id/games")({ component: UserGamesPage });
 
@@ -26,51 +27,47 @@ function UserGamesPage() {
       <PageHeader
         eyebrow={user.data?.nickname ?? "Игрок"}
         title="Все игры игрока"
-        actions={<Button variant="outline" asChild><Link to="/user/$id" params={{ id }}>К профилю</Link></Button>}
+        actions={
+          <Button variant="outline" asChild>
+            <Link to="/user/$id" params={{ id }}>
+              К профилю
+            </Link>
+          </Button>
+        }
       />
 
-      {games.isLoading ? <LoadingBlock /> :
-        !games.data?.items?.length ? <EmptyBlock title="Игр нет" /> : (
-          <ul className="space-y-2">
-            {games.data.items.map((g) => (
-              <Link
-                key={g.id}
-                to="/game/$id"
-                params={{ id: g.id }}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{g.name || `Игра #${g.number}`}</p>
-                  <p className="break-words text-xs text-muted-foreground">{g.series_name}</p>
-                </div>
-                <span className="shrink-0 text-xs text-muted-foreground">{fmtDate(g.created_at)}</span>
-              </Link>
-            ))}
-          </ul>
+      {games.isLoading ? (
+        <LoadingBlock />
+      ) : !games.data?.items?.length ? (
+        <EmptyBlock title="Игр нет" />
+      ) : (
+        <ul className="space-y-2">
+          {games.data.items.map((g) => (
+            <Link
+              key={g.id}
+              to="/game/$id"
+              params={{ id: g.id }}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium">{g.name || `Игра #${g.number}`}</p>
+                <p className="break-words text-xs text-muted-foreground">{g.series_name}</p>
+              </div>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {fmtDate(g.created_at)}
+              </span>
+            </Link>
+          ))}
+        </ul>
       )}
 
       {games.data?.pagination && (
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!games.data.pagination.has_previous}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Назад
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Страница {games.data.pagination.current_page} из {games.data.pagination.total_pages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!games.data.pagination.has_next}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Далее
-          </Button>
-        </div>
+        <ListPagination
+          pagination={games.data.pagination}
+          isLoading={games.isLoading}
+          onPrevious={() => setPage((p) => Math.max(1, p - 1))}
+          onNext={() => setPage((p) => p + 1)}
+        />
       )}
     </PageShell>
   );

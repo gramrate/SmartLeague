@@ -12,7 +12,7 @@
 - `internal/domain/service`  
   Бизнес-логика use-case уровня. Здесь не должно быть HTTP-деталей.
 
-- `internal/adapters/repository/sql` / `.../valkey` / `.../minio`  
+- `internal/adapters/repository/sql` / `.../valkey`  
   Доступ к хранилищам и внешним системам.
 
 - `internal/domain/dto`  
@@ -47,7 +47,7 @@
 
 Он нужен, чтобы:
 - создавать зависимости в одном месте;
-- лениво инициализировать тяжелые ресурсы (DB, Redis, MinIO, сервисы);
+- лениво инициализировать тяжелые ресурсы (DB, Redis, сервисы);
 - не размазывать `new(...)` по хендлерам и `server.Setup`.
 
 Как работать правильно:

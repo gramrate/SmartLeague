@@ -20,7 +20,7 @@ type clubRepo interface {
 
 	SetProfileClub(ctx context.Context, profileID uuid.UUID, clubID *uuid.UUID, state types.ClubState) error
 	ListMembers(ctx context.Context, clubID uuid.UUID, query *string, clubState *types.ClubState, limit, offset int) ([]*model.User, int, error)
-	ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error)
+	ListGames(ctx context.Context, clubID uuid.UUID, limit, offset int, requesterID *uuid.UUID, includeDrafts bool) ([]*model.Game, []string, int, error)
 	ListBannedProfiles(ctx context.Context, clubID uuid.UUID, query *string, limit, offset int) ([]*model.User, int, error)
 	UnbanProfileInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) error
 
@@ -211,7 +211,7 @@ func (s *service) GetMembers(ctx context.Context, req *dto.GetClubMembersRequest
 	}, nil
 }
 
-func (s *service) GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error) {
+func (s *service) GetGames(ctx context.Context, requesterID *uuid.UUID, req *dto.GetClubGamesRequest) (*dto.GetClubGamesResponse, error) {
 	limit := 10
 	offset := 0
 	if req.Limit != nil {
@@ -221,7 +221,12 @@ func (s *service) GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*
 		offset = *req.Offset
 	}
 
-	games, seriesNames, totalItems, err := s.repo.ListGames(ctx, req.ClubID, limit, offset)
+	includeDrafts, err := s.canManageClub(ctx, requesterID, req.ClubID)
+	if err != nil {
+		return nil, err
+	}
+
+	games, seriesNames, totalItems, err := s.repo.ListGames(ctx, req.ClubID, limit, offset, requesterID, includeDrafts)
 	if err != nil {
 		return nil, err
 	}
@@ -256,6 +261,17 @@ func (s *service) GetGames(ctx context.Context, req *dto.GetClubGamesRequest) (*
 			HasPrevious: offset > 0,
 		},
 	}, nil
+}
+
+func (s *service) canManageClub(ctx context.Context, requesterID *uuid.UUID, clubID uuid.UUID) (bool, error) {
+	if requesterID == nil {
+		return false, nil
+	}
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if err != nil {
+		return false, err
+	}
+	return requesterClubID != nil && *requesterClubID == clubID && canManageClub(requesterState), nil
 }
 
 func (s *service) GetBans(ctx context.Context, requesterID uuid.UUID, req *dto.GetClubBansRequest) (*dto.GetClubBansResponse, error) {

@@ -41,18 +41,6 @@ func (s *ServiceProvider) RedisConfig() RedisConfig {
 	return s.redisConfig
 }
 
-func (s *ServiceProvider) MinIOConfig() MinIOConfig {
-	if s.minioConfig == nil {
-		var err error
-		s.minioConfig, err = config.NewMinIOConfig()
-		if err != nil {
-			panic(fmt.Errorf("failed to get minIO config: %w", err))
-		}
-	}
-
-	return s.minioConfig
-}
-
 func (s *ServiceProvider) ServerConfig() ServerConfig {
 	if s.httpConfig == nil {
 		cfg, err := config.NewHTTPConfig()

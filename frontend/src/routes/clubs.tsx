@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { ListPagination } from "@/components/site/ListPagination";
 
 export const Route = createFileRoute("/clubs")({ component: ClubsPage });
 
@@ -33,13 +34,23 @@ function ClubsPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Клубы" title="Все клубы"
+        eyebrow="Клубы"
+        title="Все клубы"
         description="Открывайте клубы, смотрите участников, серии и игры."
         actions={
           me && !me.club_id ? (
-            <Button asChild><Link to="/clubs/create"><Plus className="mr-1 h-4 w-4" />Создать клуб</Link></Button>
+            <Button asChild>
+              <Link to="/clubs/create">
+                <Plus className="mr-1 h-4 w-4" />
+                Создать клуб
+              </Link>
+            </Button>
           ) : me?.club_id ? (
-            <Button variant="outline" asChild><Link to="/clubs/$id" params={{ id: me.club_id }}>Мой клуб</Link></Button>
+            <Button variant="outline" asChild>
+              <Link to="/clubs/$id" params={{ id: me.club_id }}>
+                Мой клуб
+              </Link>
+            </Button>
           ) : null
         }
       />
@@ -53,27 +64,41 @@ function ClubsPage() {
             setPage(1);
           }}
         />
-        <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {q.length}/{qLimit}
+        </p>
       </div>
-      {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :
-        !data?.items?.length ? <EmptyBlock title="Клубы не найдены" /> : (
+      {isLoading ? (
+        <LoadingBlock />
+      ) : error ? (
+        <ErrorBlock error={error} />
+      ) : !data?.items?.length ? (
+        <EmptyBlock title="Клубы не найдены" />
+      ) : (
         <>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {data.items.map((c) => (
-            <Link key={c.id} to="/clubs/$id" params={{ id: c.id }}
-              className="group rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:bg-card">
-              <h3 className="break-words font-display text-lg font-semibold group-hover:text-primary">{c.name}</h3>
-              {c.description && <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{c.description}</p>}
-            </Link>
-          ))}
-        </div>
-        <div className="mt-5 flex items-center justify-between text-sm text-muted-foreground">
-          <span>Страница {data.pagination.current_page} из {data.pagination.total_pages}</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={!data.pagination.has_previous || isLoading} onClick={() => setPage((p) => Math.max(1, p - 1))}>Назад</Button>
-            <Button variant="outline" size="sm" disabled={!data.pagination.has_next || isLoading} onClick={() => setPage((p) => p + 1)}>Далее</Button>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {data.items.map((c) => (
+              <Link
+                key={c.id}
+                to="/clubs/$id"
+                params={{ id: c.id }}
+                className="group rounded-xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:bg-card"
+              >
+                <h3 className="break-words font-display text-lg font-semibold group-hover:text-primary">
+                  {c.name}
+                </h3>
+                {c.description && (
+                  <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{c.description}</p>
+                )}
+              </Link>
+            ))}
           </div>
-        </div>
+          <ListPagination
+            pagination={data.pagination}
+            isLoading={isLoading}
+            onPrevious={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+          />
         </>
       )}
     </PageShell>

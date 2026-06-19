@@ -36,9 +36,17 @@ func (h *handler) GetGames(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	resp, err := h.clubService.GetGames(c.Request().Context(), &req)
+	resp, err := h.clubService.GetGames(c.Request().Context(), maybeRequesterID(c.Get("user_id")), &req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, resp)
+}
+
+func maybeRequesterID(v any) *uuid.UUID {
+	id, ok := v.(uuid.UUID)
+	if !ok || id == uuid.Nil {
+		return nil
+	}
+	return &id
 }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { displayUserName } from "@/lib/roles";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
-import { Button } from "@/components/ui/button";
+import { ListPagination } from "@/components/site/ListPagination";
 
 export const Route = createFileRoute("/players")({ component: PlayersPage });
 
@@ -22,12 +22,13 @@ function PlayersPage() {
   const debouncedClub = useDebouncedValue(club, 150);
   const { data, isLoading, error } = useQuery({
     queryKey: ["players", debouncedQ, debouncedClub, page],
-    queryFn: () => usersApi.search({
-      q: debouncedQ || undefined,
-      club: debouncedClub || undefined,
-      limit: pageSize,
-      offset: (page - 1) * pageSize,
-    }),
+    queryFn: () =>
+      usersApi.search({
+        q: debouncedQ || undefined,
+        club: debouncedClub || undefined,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      }),
   });
 
   return (
@@ -44,7 +45,9 @@ function PlayersPage() {
               setPage(1);
             }}
           />
-          <p className="mt-1 text-xs text-muted-foreground">{q.length}/{qLimit}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {q.length}/{qLimit}
+          </p>
         </div>
         <div>
           <Input
@@ -56,28 +59,44 @@ function PlayersPage() {
               setPage(1);
             }}
           />
-          <p className="mt-1 text-xs text-muted-foreground">{club.length}/{clubLimit}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {club.length}/{clubLimit}
+          </p>
         </div>
       </div>
-      {isLoading ? <LoadingBlock /> : error ? <ErrorBlock error={error} /> :
-        !data?.items?.length ? <EmptyBlock title="Игроки не найдены" /> : (
+      {isLoading ? (
+        <LoadingBlock />
+      ) : error ? (
+        <ErrorBlock error={error} />
+      ) : !data?.items?.length ? (
+        <EmptyBlock title="Игроки не найдены" />
+      ) : (
         <>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {data.items.map((u) => (
-            <Link key={u.id} to="/user/$id" params={{ id: u.id }}
-              className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50">
-              <p className="break-words font-display text-base font-semibold">{displayUserName(u)}</p>
-              {u.description && <p className="mt-1 line-clamp-2 break-words text-xs text-muted-foreground">{u.description}</p>}
-            </Link>
-          ))}
-        </div>
-        <div className="mt-5 flex items-center justify-between text-sm text-muted-foreground">
-          <span>Страница {data.pagination.current_page} из {data.pagination.total_pages}</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={!data.pagination.has_previous || isLoading} onClick={() => setPage((p) => Math.max(1, p - 1))}>Назад</Button>
-            <Button variant="outline" size="sm" disabled={!data.pagination.has_next || isLoading} onClick={() => setPage((p) => p + 1)}>Далее</Button>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {data.items.map((u) => (
+              <Link
+                key={u.id}
+                to="/user/$id"
+                params={{ id: u.id }}
+                className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50"
+              >
+                <p className="break-words font-display text-base font-semibold">
+                  {displayUserName(u)}
+                </p>
+                {u.description && (
+                  <p className="mt-1 line-clamp-2 break-words text-xs text-muted-foreground">
+                    {u.description}
+                  </p>
+                )}
+              </Link>
+            ))}
           </div>
-        </div>
+          <ListPagination
+            pagination={data.pagination}
+            isLoading={isLoading}
+            onPrevious={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+          />
         </>
       )}
     </PageShell>
