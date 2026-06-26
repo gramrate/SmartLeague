@@ -62,7 +62,7 @@ export function Header() {
         <div className="hidden items-center gap-2 md:flex">
           {me ? (
             <>
-              <Link to="/account" className="flex min-w-0 max-w-[260px] items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+              <Link to="/user/$id" params={{ id: me.id }} className="flex min-w-0 max-w-[260px] items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
                 <UserIcon className="h-4 w-4" />
                 <span className="truncate">{displayUserName(me)}</span>
               </Link>
@@ -103,8 +103,8 @@ export function Header() {
             <div className="my-2 border-t border-border/60" />
             {me ? (
               <>
-                <Link to="/account" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
-                  <span className="block break-words">Аккаунт ({displayUserName(me)})</span>
+                <Link to="/user/$id" params={{ id: me.id }} onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+                  <span className="block break-words">Мой профиль ({displayUserName(me)})</span>
                 </Link>
                 <button onClick={handleLogout} className="rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:text-foreground">
                   Выйти

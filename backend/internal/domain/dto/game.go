@@ -2,18 +2,23 @@ package dto
 
 import (
 	"SmartLeague/internal/domain/types"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
 
 type Game struct {
-	ID          uuid.UUID        `json:"id"`
-	SeriesID    uuid.UUID        `json:"series_id"`
-	Name        string           `json:"name"`
-	Number      int              `json:"number"`
-	Description *string          `json:"description,omitempty"`
-	HostID      *uuid.UUID       `json:"host_id,omitempty"`
-	Status      types.GameStatus `json:"status"`
+	ID                 uuid.UUID        `json:"id"`
+	SeriesID           uuid.UUID        `json:"series_id"`
+	Name               string           `json:"name"`
+	Number             int              `json:"number"`
+	Description        *string          `json:"description,omitempty"`
+	HostID             *uuid.UUID       `json:"host_id,omitempty"`
+	Status             types.GameStatus `json:"status"`
+	IsTournament       bool             `json:"is_tournament"`
+	GameJudgeID        *uuid.UUID       `json:"game_judge_id,omitempty"`
+	GameJudgeConfirmed bool             `json:"game_judge_confirmed"`
+	GameJudgeNickname  string           `json:"game_judge_nickname,omitempty"`
 }
 
 type CreateGameRequest struct {
@@ -40,10 +45,17 @@ type GetGameRequest struct {
 
 type GetGameResponse Game
 
+type GameDraftData struct {
+	Rows           []ManageGameRow `json:"rows"`
+	JudgeID        *uuid.UUID      `json:"judge_id,omitempty"`
+	JudgeConfirmed bool            `json:"judge_confirmed"`
+}
+
 type GameFull struct {
 	Game
 	ParticipantIDs []uuid.UUID     `json:"participant_ids"`
 	Results        []GameResultRow `json:"results"`
+	Draft          *GameDraftData  `json:"draft,omitempty"`
 }
 
 type GetGameFullResponse GameFull
@@ -84,7 +96,9 @@ type UpsertGameResultsRequest struct {
 }
 
 type GameResultRow struct {
-	ProfileID     uuid.UUID        `json:"profile_id" validate:"required,uuid"`
+	ProfileID     *uuid.UUID       `json:"profile_id,omitempty"`
+	GuestID       *uuid.UUID       `json:"guest_id,omitempty"`
+	GuestNickname *string          `json:"guest_nickname,omitempty"`
 	Place         *int             `json:"place,omitempty" validate:"omitempty,min=1,max=10"`
 	Role          *types.MafiaRole `json:"role,omitempty"`
 	BestMove      *string          `json:"best_move,omitempty" validate:"omitempty,max=50"`
@@ -98,30 +112,39 @@ type GameResultRow struct {
 }
 
 type ManageGameRow struct {
-	Slot         int              `json:"slot"`
-	ProfileID    *uuid.UUID       `json:"profile_id,omitempty"`
-	Role         *types.MafiaRole `json:"role,omitempty"`
-	BestMove     *string          `json:"best_move,omitempty"`
-	Compensation float64          `json:"compensation"`
-	YellowCards  float64          `json:"yellow_cards"`
-	Removed      float64          `json:"removed"`
-	ExtraPoints  float64          `json:"extra_points"`
-	TotalPoints  float64          `json:"total_points"`
+	Slot          int              `json:"slot"`
+	ProfileID     *uuid.UUID       `json:"profile_id,omitempty"`
+	GuestNickname *string          `json:"guest_nickname,omitempty"` // set when no profile_id
+	Role          *types.MafiaRole `json:"role,omitempty"`
+	BestMove      *string          `json:"best_move,omitempty"`
+	Compensation  float64          `json:"compensation"`
+	YellowCards   float64          `json:"yellow_cards"`
+	Removed       float64          `json:"removed"`
+	ExtraPoints   float64          `json:"extra_points"`
+	TotalPoints   float64          `json:"total_points"`
 }
 
 type SaveGameDraftRequest struct {
-	GameID uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Rows   []ManageGameRow `json:"rows"`
+	GameID         uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Rows           []ManageGameRow `json:"rows"`
+	RawRows        json.RawMessage `json:"-" swaggerignore:"true"`
+	JudgeID        *uuid.UUID      `json:"judge_id,omitempty"`
+	JudgeConfirmed bool            `json:"judge_confirmed"`
 }
 
 type PublishGameRequest struct {
-	GameID uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Rows   []ManageGameRow `json:"rows" validate:"required,min=10,max=10"`
+	GameID         uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Rows           []ManageGameRow `json:"rows" validate:"required,min=10,max=10"`
+	RawRows        json.RawMessage `json:"-" swaggerignore:"true"`
+	JudgeID        *uuid.UUID      `json:"judge_id,omitempty"`
+	JudgeConfirmed bool            `json:"judge_confirmed"`
 }
 
 type LeaderboardRow struct {
-	ProfileID uuid.UUID `json:"profile_id"`
-	Points    float64   `json:"points"`
+	ProfileID     *uuid.UUID `json:"profile_id,omitempty"`
+	GuestID       *uuid.UUID `json:"guest_id,omitempty"`
+	GuestNickname *string    `json:"guest_nickname,omitempty"`
+	Points        float64    `json:"points"`
 }
 
 type GetSeriesLeaderboardRequest struct {

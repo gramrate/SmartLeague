@@ -60,11 +60,12 @@ function RegisterPage() {
         <div className="rounded-2xl border border-border/60 bg-card/60 p-8 shadow-[var(--shadow-card)]">
           <h1 className="font-display text-2xl font-bold">Создайте аккаунт</h1>
           <p className="mt-1 text-sm text-muted-foreground">Присоединяйтесь к SmartLeague.</p>
-          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+          <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Имя" error={form.formState.errors.name?.message}>
                 <Input {...form.register("name")} maxLength={50} />
                 <p className="text-xs text-muted-foreground">{(form.watch("name") || "").length}/50</p>
+                {form.formState.touchedFields.name && (form.watch("name") || "").length === 0 && <p className="text-xs text-destructive">Обязательное поле</p>}
               </Field>
               <Field label="Никнейм" error={form.formState.errors.nickname?.message}>
                 <Input {...form.register("nickname")} maxLength={50} />
@@ -78,6 +79,7 @@ function RegisterPage() {
             <Field label="Пароль" error={form.formState.errors.password?.message}>
               <Input type="password" autoComplete="new-password" {...form.register("password")} maxLength={100} />
               <p className="text-xs text-muted-foreground">{(form.watch("password") || "").length}/100</p>
+              {(form.watch("password") || "").length > 0 && (form.watch("password") || "").length < 8 && <p className="text-xs text-destructive">Минимум 8 символов</p>}
             </Field>
             <Field label="О себе" error={form.formState.errors.description?.message}>
               <Textarea rows={3} {...form.register("description")} maxLength={500} />

@@ -222,9 +222,19 @@ function AllSeriesPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  {s.is_rating && (
+                  {s.is_tournament && (
+                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                      Турнир
+                    </span>
+                  )}
+                  {s.is_rating && !s.is_tournament && (
                     <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
                       На рейтинг
+                    </span>
+                  )}
+                  {s.is_club_only && (
+                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+                      Для участников клуба
                     </span>
                   )}
                   {s.price_rub > 0 && (

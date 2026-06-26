@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PageHeader, PageShell } from "@/components/site/PageShell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/lib/api";
 import { EmptyBlock, LoadingBlock } from "@/components/site/States";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { fmtDateRange, fmtRub } from "@/lib/format";
+import { JudgeRole } from "@/types/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +24,8 @@ export const Route = createFileRoute("/user/$id/series")({ component: UserSeries
 
 function UserSeriesPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -68,10 +71,11 @@ function UserSeriesPage() {
         eyebrow={user.data?.nickname ?? "Игрок"}
         title="Все серии игрока"
         actions={
-          <Button variant="outline" asChild>
-            <Link to="/user/$id" params={{ id }}>
-              К профилю
-            </Link>
+          <Button variant="outline" onClick={() => {
+            qc.invalidateQueries({ queryKey: ["user", id] });
+            void navigate({ to: "/user/$id", params: { id } });
+          }}>
+            К профилю
           </Button>
         }
       />
@@ -172,9 +176,24 @@ function UserSeriesPage() {
                 {fmtDateRange(s.start_at, s.end_at)}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {s.is_rating && (
+                {s.is_tournament && (
+                  <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                    Турнир
+                  </span>
+                )}
+                {s.is_judge && (
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${s.judge_role === JudgeRole.Main ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                    {s.judge_role === JudgeRole.Main ? "Главный судья" : "Боковой судья"}
+                  </span>
+                )}
+                {s.is_rating && !s.is_tournament && (
                   <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
                     На рейтинг
+                  </span>
+                )}
+                {s.is_club_only && (
+                  <span className="inline-flex rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+                    Для участников клуба
                   </span>
                 )}
                 {Number(s.price_rub ?? 0) > 0 && (

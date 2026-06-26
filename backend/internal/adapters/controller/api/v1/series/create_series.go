@@ -30,14 +30,16 @@ func (h *handler) CreateSeries(c echo.Context) error {
 	}
 
 	var raw struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-		StartAt     string `json:"start_at"`
-		EndAt       string `json:"end_at"`
-		PriceRub    int    `json:"price_rub"`
-		IsRating    *bool  `json:"is_rating"`
-		IsClubOnly  *bool  `json:"is_club_only"`
-		IsClosed    bool   `json:"is_closed"`
+		Name         string `json:"name"`
+		Description  string `json:"description"`
+		StartAt      string `json:"start_at"`
+		EndAt        string `json:"end_at"`
+		PriceRub     int    `json:"price_rub"`
+		IsRating     *bool  `json:"is_rating"`
+		IsClubOnly   *bool  `json:"is_club_only"`
+		ShowToAll    *bool  `json:"show_to_all"`
+		IsClosed     bool   `json:"is_closed"`
+		IsTournament bool   `json:"is_tournament"`
 	}
 	if err := c.Bind(&raw); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
@@ -52,15 +54,17 @@ func (h *handler) CreateSeries(c echo.Context) error {
 	}
 
 	req := dto.CreateSeriesRequest{
-		Name:        raw.Name,
-		Description: raw.Description,
-		StartAt:     startAt,
-		EndAt:       endAt,
-		PriceRub:    raw.PriceRub,
-		IsRating:    raw.IsRating,
-		IsClubOnly:  raw.IsClubOnly,
-		IsClosed:    raw.IsClosed,
-		GameType:    types.GameTypeSportMafia,
+		Name:         raw.Name,
+		Description:  raw.Description,
+		StartAt:      startAt,
+		EndAt:        endAt,
+		PriceRub:     raw.PriceRub,
+		IsRating:     raw.IsRating,
+		IsClubOnly:   raw.IsClubOnly,
+		ShowToAll:    raw.ShowToAll,
+		IsClosed:     raw.IsClosed,
+		IsTournament: raw.IsTournament,
+		GameType:     types.GameTypeSportMafia,
 	}
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})

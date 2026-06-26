@@ -218,6 +218,12 @@ export const seriesApi = {
     apiFetch<Game>(`/api/v1/series/${seriesId}/games`, { method: "POST", body: data }),
   createGameDraft: (seriesId: string, data: CreateGameRequest) =>
     apiFetch<Game>(`/api/v1/series/${seriesId}/games/draft`, { method: "POST", body: data }),
+  judges: (id: string) =>
+    apiFetch<{ items: import("@/types/api").SeriesJudge[] }>(`/api/v1/series/${id}/judges`),
+  setJudge: (id: string, profile_id: string, role: number) =>
+    apiFetch<void>(`/api/v1/series/${id}/judges`, { method: "POST", body: { profile_id, role } }),
+  removeJudge: (id: string, profileId: string) =>
+    apiFetch<void>(`/api/v1/series/${id}/judges/${profileId}`, { method: "DELETE" }),
 };
 
 // ---------- Games ----------
@@ -231,8 +237,8 @@ export const gamesApi = {
     }),
   setResults: (id: string, rows: GameResultRow[]) =>
     apiFetch<void>(`/api/v1/game/${id}/results`, { method: "POST", body: { rows } }),
-  saveDraft: (id: string, rows: ManageGameRow[]) =>
-    apiFetch<void>(`/api/v1/game/${id}/draft`, { method: "POST", body: { rows } }),
-  publish: (id: string, rows: ManageGameRow[]) =>
-    apiFetch<void>(`/api/v1/game/${id}/publish`, { method: "POST", body: { rows } }),
+  saveDraft: (id: string, rows: ManageGameRow[], judgeId: string | null, judgeConfirmed: boolean) =>
+    apiFetch<void>(`/api/v1/game/${id}/draft`, { method: "POST", body: { rows, judge_id: judgeId ?? undefined, judge_confirmed: judgeConfirmed } }),
+  publish: (id: string, rows: ManageGameRow[], judgeId: string | null, judgeConfirmed: boolean) =>
+    apiFetch<void>(`/api/v1/game/${id}/publish`, { method: "POST", body: { rows, judge_id: judgeId ?? undefined, judge_confirmed: judgeConfirmed } }),
 };

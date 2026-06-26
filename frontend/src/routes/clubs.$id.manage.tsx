@@ -435,7 +435,7 @@ function ManageClubPage() {
                     <p className="text-xs text-muted-foreground">
                       {[
                         s.is_rating ? "На рейтинг" : "Без рейтинга",
-                        s.price_rub > 0 ? `Платно · ${fmtRub(s.price_rub)}` : null,
+                        (s.price_rub ?? 0) > 0 ? `Платно · ${fmtRub(s.price_rub!)}` : null,
                       ]
                         .filter(Boolean)
                         .join(", ")}

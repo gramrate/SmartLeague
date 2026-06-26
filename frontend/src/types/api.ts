@@ -55,6 +55,19 @@ export interface Club {
   creator_id?: string;
 }
 
+export enum JudgeRole {
+  Side = 0,
+  Main = 1,
+}
+
+export interface SeriesJudge {
+  profile_id: string;
+  role: JudgeRole;
+  nickname?: string;
+  name?: string;
+  show_name?: boolean;
+}
+
 export interface Series {
   id: string;
   club_id: string;
@@ -66,7 +79,9 @@ export interface Series {
   game_type?: number;
   is_rating: boolean;
   is_club_only: boolean;
+  show_to_all: boolean;
   is_closed?: boolean;
+  is_tournament?: boolean;
   price_rub?: number;
 }
 
@@ -81,7 +96,9 @@ export interface AllSeriesItem {
   price_rub: number;
   is_rating: boolean;
   is_club_only: boolean;
+  show_to_all: boolean;
   is_closed: boolean;
+  is_tournament?: boolean;
   games_count: number;
 }
 
@@ -93,10 +110,16 @@ export interface Game {
   description?: string;
   number: number;
   status: GameStatus;
+  is_tournament?: boolean;
+  game_judge_id?: string;
+  game_judge_confirmed?: boolean;
+  game_judge_nickname?: string;
 }
 
 export interface GameResultRow {
-  profile_id: string;
+  profile_id?: string;
+  guest_id?: string;
+  guest_nickname?: string;
   place?: number;
   role?: MafiaRole;
   best_move?: string;
@@ -112,6 +135,7 @@ export interface GameResultRow {
 export interface ManageGameRow {
   slot: number;
   profile_id?: string;
+  guest_nickname?: string;
   role?: MafiaRole;
   best_move?: string;
   compensation: number;
@@ -121,13 +145,22 @@ export interface ManageGameRow {
   total_points: number;
 }
 
+export interface GameDraftData {
+  rows: ManageGameRow[];
+  judge_id?: string;
+  judge_confirmed?: boolean;
+}
+
 export interface GameFull extends Game {
   participant_ids: string[] | null;
   results: GameResultRow[] | null;
+  draft?: GameDraftData;
 }
 
 export interface LeaderboardRow {
-  profile_id: string;
+  profile_id?: string;
+  guest_id?: string;
+  guest_nickname?: string;
   points: number;
 }
 
@@ -136,6 +169,8 @@ export interface SeriesFull {
   participants: Paged<User>;
   games: Paged<Game>;
   leaderboard: Paged<LeaderboardRow>;
+  judges: SeriesJudge[];
+  is_banned: boolean;
 }
 
 export interface SeriesPayments {
@@ -159,7 +194,12 @@ export interface PlayerSeries {
   end_at: string;
   price_rub?: number;
   is_rating?: boolean;
+  is_club_only?: boolean;
+  show_to_all?: boolean;
   is_closed?: boolean;
+  is_tournament?: boolean;
+  is_judge?: boolean;
+  judge_role?: number;
 }
 
 export interface LoginRequest {
@@ -194,8 +234,10 @@ export interface CreateSeriesRequest {
   price_rub?: number;
   is_rating?: boolean;
   is_club_only?: boolean;
+  show_to_all?: boolean;
   game_type?: number;
   is_closed?: boolean;
+  is_tournament?: boolean;
 }
 
 export interface UpdateSeriesRequest {
@@ -206,7 +248,9 @@ export interface UpdateSeriesRequest {
   price_rub?: number;
   is_rating?: boolean;
   is_club_only?: boolean;
+  show_to_all?: boolean;
   is_closed?: boolean;
+  is_tournament?: boolean;
 }
 
 export interface CreateGameRequest {

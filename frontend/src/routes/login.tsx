@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/lib/auth-store";
-import { authApi, ApiError } from "@/lib/api";
+import { authApi } from "@/lib/api";
+import { translateError } from "@/lib/errors";
 import { useEffect, useState } from "react";
 
 const schema = z.object({
@@ -25,16 +26,16 @@ function LoginPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const form = useForm<Form>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
 
-  useEffect(() => { if (me) navigate({ to: "/account" }); }, [me, navigate]);
+  useEffect(() => { if (me) navigate({ to: "/user/$id", params: { id: me.id } }); }, [me, navigate]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     setServerError(null);
     try {
       const user = await authApi.login(values);
       setMe(user);
-      navigate({ to: "/account" });
+      navigate({ to: "/user/$id", params: { id: user.id } });
     } catch (e) {
-      setServerError(e instanceof ApiError ? e.message : "Не удалось войти");
+      setServerError(translateError(e, "Не удалось войти"));
     }
   });
 
@@ -44,7 +45,7 @@ function LoginPage() {
         <div className="rounded-2xl border border-border/60 bg-card/60 p-8 shadow-[var(--shadow-card)]">
           <h1 className="font-display text-2xl font-bold">С возвращением</h1>
           <p className="mt-1 text-sm text-muted-foreground">Войдите, чтобы получить доступ к аккаунту.</p>
-          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+          <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
             <div className="space-y-1.5">
               <Label htmlFor="email">Почта</Label>
               <Input id="email" type="email" autoComplete="email" {...form.register("email")} maxLength={254} />
@@ -55,7 +56,7 @@ function LoginPage() {
               <Label htmlFor="password">Пароль</Label>
               <Input id="password" type="password" autoComplete="current-password" {...form.register("password")} maxLength={100} />
               <p className="text-xs text-muted-foreground">{(form.watch("password") || "").length}/100</p>
-              {form.formState.errors.password && <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>}
+              {(form.watch("password") || "").length > 0 && (form.watch("password") || "").length < 8 && <p className="text-xs text-destructive">Минимум 8 символов</p>}
             </div>
             {serverError && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</div>

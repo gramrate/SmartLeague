@@ -8,30 +8,57 @@ import (
 )
 
 type Series struct {
-	ID          uuid.UUID      `json:"id"`
-	ClubID      uuid.UUID      `json:"club_id"`
-	CreatorID   *uuid.UUID     `json:"creator_id,omitempty"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	StartAt     time.Time      `json:"start_at"`
-	EndAt       time.Time      `json:"end_at"`
-	PriceRub    int            `json:"price_rub"`
-	IsRating    bool           `json:"is_rating"`
-	IsClubOnly  bool           `json:"is_club_only"`
-	IsClosed    bool           `json:"is_closed"`
-	GameType    types.GameType `json:"game_type"`
+	ID           uuid.UUID      `json:"id"`
+	ClubID       uuid.UUID      `json:"club_id"`
+	CreatorID    *uuid.UUID     `json:"creator_id,omitempty"`
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	StartAt      time.Time      `json:"start_at"`
+	EndAt        time.Time      `json:"end_at"`
+	PriceRub     int            `json:"price_rub"`
+	IsRating     bool           `json:"is_rating"`
+	IsClubOnly   bool           `json:"is_club_only"`
+	ShowToAll    bool           `json:"show_to_all"`
+	IsClosed     bool           `json:"is_closed"`
+	IsTournament bool           `json:"is_tournament"`
+	GameType     types.GameType `json:"game_type"`
+}
+
+type SeriesJudge struct {
+	ProfileID uuid.UUID `json:"profile_id"`
+	Role      int16     `json:"role"` // 0=side, 1=main
+	Nickname  string    `json:"nickname,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	ShowName  bool      `json:"show_name"`
+}
+
+type GetSeriesJudgesResponse struct {
+	Items []*SeriesJudge `json:"items"`
+}
+
+type SetSeriesJudgeRequest struct {
+	SeriesID  uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	ProfileID uuid.UUID `json:"profile_id" validate:"required,uuid"`
+	Role      int16     `json:"role" validate:"min=0,max=1"`
+}
+
+type RemoveSeriesJudgeRequest struct {
+	SeriesID  uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	ProfileID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
 }
 
 type CreateSeriesRequest struct {
-	Name        string         `json:"name" validate:"required,min=1,max=100"`
-	Description string         `json:"description" validate:"required,min=1,max=1000"`
-	StartAt     time.Time      `json:"start_at" validate:"required"`
-	EndAt       time.Time      `json:"end_at" validate:"required"`
-	PriceRub    int            `json:"price_rub" validate:"min=0,max=100000000"`
-	IsRating    *bool          `json:"is_rating,omitempty"`
-	IsClubOnly  *bool          `json:"is_club_only,omitempty"`
-	IsClosed    bool           `json:"is_closed"`
-	GameType    types.GameType `json:"game_type" validate:"eq=0"`
+	Name         string         `json:"name" validate:"required,min=1,max=100"`
+	Description  string         `json:"description" validate:"omitempty,max=1000"`
+	StartAt      time.Time      `json:"start_at" validate:"required"`
+	EndAt        time.Time      `json:"end_at" validate:"required"`
+	PriceRub     int            `json:"price_rub" validate:"min=0,max=100000000"`
+	IsRating     *bool          `json:"is_rating,omitempty"`
+	IsClubOnly   *bool          `json:"is_club_only,omitempty"`
+	ShowToAll    *bool          `json:"show_to_all,omitempty"`
+	IsClosed     bool           `json:"is_closed"`
+	IsTournament bool           `json:"is_tournament"`
+	GameType     types.GameType `json:"game_type" validate:"eq=0"`
 }
 
 type CreateSeriesResponse Series
@@ -57,6 +84,8 @@ type GetSeriesFullResponse struct {
 	Participants *GetSeriesParticipantsResponse `json:"participants"`
 	Games        *GetSeriesGamesResponse        `json:"games"`
 	Leaderboard  *GetSeriesLeaderboardResponse  `json:"leaderboard"`
+	Judges       []*SeriesJudge                 `json:"judges"`
+	IsBanned     bool                           `json:"is_banned"`
 }
 
 type GetClubSeriesRequest struct {
@@ -71,18 +100,20 @@ type GetClubSeriesResponse struct {
 }
 
 type AllSeriesItem struct {
-	ID          uuid.UUID `json:"id"`
-	ClubID      uuid.UUID `json:"club_id"`
-	ClubName    string    `json:"club_name"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	StartAt     time.Time `json:"start_at"`
-	EndAt       time.Time `json:"end_at"`
-	PriceRub    int       `json:"price_rub"`
-	IsRating    bool      `json:"is_rating"`
-	IsClubOnly  bool      `json:"is_club_only"`
-	IsClosed    bool      `json:"is_closed"`
-	GamesCount  int       `json:"games_count"`
+	ID           uuid.UUID `json:"id"`
+	ClubID       uuid.UUID `json:"club_id"`
+	ClubName     string    `json:"club_name"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	StartAt      time.Time `json:"start_at"`
+	EndAt        time.Time `json:"end_at"`
+	PriceRub     int       `json:"price_rub"`
+	IsRating     bool      `json:"is_rating"`
+	IsClubOnly   bool      `json:"is_club_only"`
+	ShowToAll    bool      `json:"show_to_all"`
+	IsClosed     bool      `json:"is_closed"`
+	IsTournament bool      `json:"is_tournament"`
+	GamesCount   int       `json:"games_count"`
 }
 
 type GetAllSeriesRequest struct {
@@ -103,16 +134,18 @@ type GetAllSeriesResponse struct {
 }
 
 type UpdateSeriesRequest struct {
-	ID          uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Name        *string         `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
-	Description *string         `json:"description,omitempty" validate:"omitempty,min=1,max=1000"`
-	StartAt     *time.Time      `json:"start_at,omitempty"`
-	EndAt       *time.Time      `json:"end_at,omitempty"`
-	PriceRub    *int            `json:"price_rub,omitempty" validate:"omitempty,min=0,max=100000000"`
-	IsRating    *bool           `json:"is_rating,omitempty"`
-	IsClubOnly  *bool           `json:"is_club_only,omitempty"`
-	IsClosed    *bool           `json:"is_closed,omitempty"`
-	GameType    *types.GameType `json:"game_type,omitempty" validate:"omitempty,eq=0"`
+	ID           uuid.UUID       `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Name         *string         `json:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Description  *string         `json:"description,omitempty" validate:"omitempty,max=1000"`
+	StartAt      *time.Time      `json:"start_at,omitempty"`
+	EndAt        *time.Time      `json:"end_at,omitempty"`
+	PriceRub     *int            `json:"price_rub,omitempty" validate:"omitempty,min=0,max=100000000"`
+	IsRating     *bool           `json:"is_rating,omitempty"`
+	IsClubOnly   *bool           `json:"is_club_only,omitempty"`
+	ShowToAll    *bool           `json:"show_to_all,omitempty"`
+	IsClosed     *bool           `json:"is_closed,omitempty"`
+	IsTournament *bool           `json:"is_tournament,omitempty"`
+	GameType     *types.GameType `json:"game_type,omitempty" validate:"omitempty,eq=0"`
 }
 
 type UpdateSeriesResponse Series

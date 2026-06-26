@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -177,7 +178,7 @@ func (r *Repo) GetAllByFilter(
 	return out, total, nil
 }
 
-func (r *Repo) GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error) {
+func (r *Repo) GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int, viewerClubID *uuid.UUID) ([]*model.Game, []string, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -185,24 +186,38 @@ func (r *Repo) GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, lim
 		offset = 0
 	}
 
+	visibilityFilter := " AND (s.is_club_only = false OR s.show_to_all = true)"
+	countArgs := []any{profileID}
+	listArgs := []any{profileID}
+	if viewerClubID != nil {
+		visibilityFilter = " AND (s.is_club_only = false OR s.show_to_all = true OR s.club_id = $2)"
+		countArgs = append(countArgs, *viewerClubID)
+		listArgs = append(listArgs, *viewerClubID)
+	}
+	limitArg := len(listArgs) + 1
+	offsetArg := len(listArgs) + 2
+
 	var total int
 	if err := r.db.QueryRowContext(ctx, `
 SELECT count(*)
 FROM game_participants gp
-WHERE gp.profile_id=$1
-`, profileID).Scan(&total); err != nil {
+JOIN games g ON g.id = gp.game_id
+JOIN series s ON s.id = g.series_id
+WHERE gp.profile_id=$1 AND g.deleted_at IS NULL AND s.deleted_at IS NULL`+visibilityFilter,
+		countArgs...).Scan(&total); err != nil {
 		return nil, nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
+	listArgs = append(listArgs, limit, offset)
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(`
 SELECT g.id, g.series_id, s.name, g.name, g.number, g.description, g.host_id, g.status, g.created_at, g.updated_at
 FROM game_participants gp
 JOIN games g ON g.id = gp.game_id
 JOIN series s ON s.id = g.series_id
-WHERE gp.profile_id=$1 AND g.deleted_at IS NULL AND s.deleted_at IS NULL
+WHERE gp.profile_id=$1 AND g.deleted_at IS NULL AND s.deleted_at IS NULL%s
 ORDER BY g.created_at DESC
-LIMIT $2 OFFSET $3
-`, profileID, limit, offset)
+LIMIT $%d OFFSET $%d
+`, visibilityFilter, limitArg, offsetArg), listArgs...)
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -239,7 +254,8 @@ func (r *Repo) GetSeriesByProfileID(
 	query, from, to *string,
 	isRating *bool,
 	showPast, showClosed bool,
-) ([]*model.Series, int, error) {
+	viewerClubID *uuid.UUID,
+) ([]*model.PlayerSeriesItem, int, error) {
 	if limit <= 0 {
 		limit = 50
 	}
@@ -247,59 +263,92 @@ func (r *Repo) GetSeriesByProfileID(
 		offset = 0
 	}
 
-	where := "sp.profile_id=$1 AND s.deleted_at IS NULL"
+	// Filters on series columns only (no sp/sj prefix needed for s.* columns)
+	filters := "s.deleted_at IS NULL"
 	args := []any{profileID}
 	argN := 2
 	if !showPast {
-		where += " AND s.end_at::date >= CURRENT_DATE"
+		filters += " AND s.end_at::date >= CURRENT_DATE"
 	}
 	if !showClosed {
-		where += " AND s.is_closed = false"
+		filters += " AND s.is_closed = false"
 	}
 	if isRating != nil {
-		where += " AND s.is_rating=$" + itoa(argN)
+		filters += " AND s.is_rating=$" + itoa(argN)
 		args = append(args, *isRating)
 		argN++
 	}
 	if query != nil && *query != "" {
-		where += " AND s.name ILIKE $" + itoa(argN)
+		filters += " AND s.name ILIKE $" + itoa(argN)
 		args = append(args, "%"+strings.TrimSpace(*query)+"%")
 		argN++
 	}
 	if from != nil && *from != "" {
-		where += " AND s.end_at >= $" + itoa(argN) + "::date"
+		filters += " AND s.end_at >= $" + itoa(argN) + "::date"
 		args = append(args, *from)
 		argN++
 	}
 	if to != nil && *to != "" {
-		where += " AND s.start_at < ($" + itoa(argN) + "::date + interval '1 day')"
+		filters += " AND s.start_at < ($" + itoa(argN) + "::date + interval '1 day')"
 		args = append(args, *to)
 		argN++
 	}
+	if viewerClubID != nil {
+		filters += " AND (s.is_club_only = false OR s.show_to_all = true OR s.club_id = $" + itoa(argN) + ")"
+		args = append(args, *viewerClubID)
+		argN++
+	} else {
+		filters += " AND (s.is_club_only = false OR s.show_to_all = true)"
+	}
+
+	// JOIN both participants and judges; the user appears if in either table
+	baseFrom := `FROM series s
+LEFT JOIN series_participants sp ON sp.series_id = s.id AND sp.profile_id = $1
+LEFT JOIN series_judges sj ON sj.series_id = s.id AND sj.profile_id = $1`
+	baseWhere := "(sp.profile_id IS NOT NULL OR sj.profile_id IS NOT NULL) AND " + filters
 
 	var total int
-	countSQL := "SELECT count(*) FROM series_participants sp JOIN series s ON s.id = sp.series_id WHERE " + where
+	countSQL := "SELECT count(*) " + baseFrom + " WHERE " + baseWhere
 	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	listSQL := "SELECT s.id, s.club_id, s.creator_id, s.name, s.scoring_rules, s.start_at, s.end_at, s.price_rub, s.is_rating, s.is_club_only, s.is_closed, s.game_type, s.created_at, s.updated_at FROM series_participants sp JOIN series s ON s.id = sp.series_id WHERE " + where + " ORDER BY s.start_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
+	listSQL := `SELECT s.id, s.club_id, s.creator_id, s.name, s.description, s.start_at, s.end_at,
+       s.price_rub, s.is_rating, s.is_club_only, s.show_to_all, s.is_closed, s.is_tournament, s.game_type,
+       s.created_at, s.updated_at,
+       (sj.profile_id IS NOT NULL) AS is_judge, sj.role AS judge_role ` +
+		baseFrom + " WHERE " + baseWhere +
+		" ORDER BY s.start_at DESC LIMIT $" + itoa(argN) + " OFFSET $" + itoa(argN+1)
 	args = append(args, limit, offset)
+
 	rows, err := r.db.QueryContext(ctx, listSQL, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var out []*model.Series
+	var out []*model.PlayerSeriesItem
 	for rows.Next() {
-		var s model.Series
+		var item model.PlayerSeriesItem
+		var desc sql.NullString
 		var gameType int16
-		if err := rows.Scan(&s.ID, &s.ClubID, &s.CreatorID, &s.Name, &s.Description, &s.StartAt, &s.EndAt, &s.PriceRub, &s.IsRating, &s.IsClubOnly, &s.IsClosed, &gameType, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		var judgeRole sql.NullInt16
+		if err := rows.Scan(
+			&item.ID, &item.ClubID, &item.CreatorID, &item.Name, &desc,
+			&item.StartAt, &item.EndAt, &item.PriceRub, &item.IsRating, &item.IsClubOnly, &item.ShowToAll,
+			&item.IsClosed, &item.IsTournament, &gameType,
+			&item.CreatedAt, &item.UpdatedAt,
+			&item.IsJudge, &judgeRole,
+		); err != nil {
 			return nil, 0, err
 		}
-		s.GameType = types.GameType(gameType)
-		out = append(out, &s)
+		item.Description = desc.String
+		item.GameType = types.GameType(gameType)
+		if judgeRole.Valid {
+			r := model.JudgeRole(judgeRole.Int16)
+			item.JudgeRole = &r
+		}
+		out = append(out, &item)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, 0, err

@@ -69,11 +69,22 @@ func (h *handler) GetSeriesFull(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
 	}
+	judgesResp, err := h.seriesService.ListJudges(c.Request().Context(), req.ID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
+	}
+
+	isBanned := false
+	if requesterID != nil {
+		isBanned, _ = h.seriesService.IsProfileBannedInClub(c.Request().Context(), *requesterID, seriesResp.ClubID)
+	}
 
 	return c.JSON(http.StatusOK, &dto.GetSeriesFullResponse{
 		Series:       (*dto.Series)(seriesResp),
 		Participants: participantsResp,
 		Games:        gamesResp,
 		Leaderboard:  leaderboardResp,
+		Judges:       judgesResp.Items,
+		IsBanned:     isBanned,
 	})
 }

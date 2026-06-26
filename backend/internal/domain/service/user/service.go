@@ -20,7 +20,7 @@ type userRepo interface {
 		clubQuery *string,
 		query *string,
 	) ([]*model.User, int, error)
-	GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*model.Game, []string, int, error)
+	GetGamesByProfileID(ctx context.Context, profileID uuid.UUID, limit, offset int, viewerClubID *uuid.UUID) ([]*model.Game, []string, int, error)
 	GetSeriesByProfileID(
 		ctx context.Context,
 		profileID uuid.UUID,
@@ -28,7 +28,8 @@ type userRepo interface {
 		query, from, to *string,
 		isRating *bool,
 		showPast, showClosed bool,
-	) ([]*model.Series, int, error)
+		viewerClubID *uuid.UUID,
+	) ([]*model.PlayerSeriesItem, int, error)
 	Update(ctx context.Context, userEntity model.User) (*model.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }

@@ -6,6 +6,7 @@ import (
 	"SmartLeague/internal/domain/model"
 	"SmartLeague/internal/domain/types"
 	"context"
+	"encoding/json"
 	"math"
 	"strconv"
 	"strings"
@@ -18,6 +19,8 @@ type repo interface {
 
 	GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error)
 	IsSeriesParticipant(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) (bool, error)
+	IsSeriesJudge(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID) (bool, error)
+	FindOrCreateGuest(ctx context.Context, seriesID uuid.UUID, nickname string) (*model.Guest, error)
 
 	CreateGame(ctx context.Context, g model.Game) (*model.Game, error)
 	GetGameByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
@@ -29,6 +32,9 @@ type repo interface {
 	ListGameParticipants(ctx context.Context, gameID uuid.UUID) ([]uuid.UUID, error)
 	ListGameResults(ctx context.Context, gameID uuid.UUID) ([]model.GameResultRow, error)
 	DeleteGame(ctx context.Context, id uuid.UUID) error
+	SetGameJudge(ctx context.Context, gameID uuid.UUID, judgeID *uuid.UUID, confirmed bool) error
+	UpsertGameDraft(ctx context.Context, d *model.GameDraft) error
+	GetGameDraft(ctx context.Context, gameID uuid.UUID) (*model.GameDraft, error)
 }
 
 type Service struct {
@@ -56,8 +62,24 @@ func (s *Service) canManageSeries(ctx context.Context, requesterID *uuid.UUID, c
 	return profileClubID != nil && *profileClubID == clubID && canManageClub(profileClubState), nil
 }
 
+// canEditGame checks if requester is a club manager OR a series judge.
+// Judges can draft/publish games but cannot create or delete them.
+func (s *Service) canEditGame(ctx context.Context, requesterID *uuid.UUID, ser *model.Series) (bool, error) {
+	if requesterID == nil {
+		return false, nil
+	}
+	ok, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
+	if err != nil || ok {
+		return ok, err
+	}
+	return s.repo.IsSeriesJudge(ctx, ser.ID, *requesterID)
+}
+
 func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, series *model.Series) (bool, error) {
 	if !series.IsClubOnly {
+		return true, nil
+	}
+	if series.ShowToAll {
 		return true, nil
 	}
 	if requesterID == nil {
@@ -67,19 +89,33 @@ func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, s
 	if err != nil {
 		return false, err
 	}
-	return isParticipant, nil
+	if isParticipant {
+		return true, nil
+	}
+	clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if err != nil {
+		return false, err
+	}
+	return clubID != nil && *clubID == series.ClubID, nil
 }
 
 func toGameDTO(g *model.Game) *dto.Game {
-	return &dto.Game{
-		ID:          g.ID,
-		SeriesID:    g.SeriesID,
-		Name:        g.Name,
-		Number:      g.Number,
-		Description: g.Description,
-		HostID:      g.HostID,
-		Status:      g.Status,
+	d := &dto.Game{
+		ID:                 g.ID,
+		SeriesID:           g.SeriesID,
+		Name:               g.Name,
+		Number:             g.Number,
+		Description:        g.Description,
+		HostID:             g.HostID,
+		Status:             g.Status,
+		IsTournament:       g.IsTournament,
+		GameJudgeID:        g.JudgeID,
+		GameJudgeConfirmed: g.JudgeConfirmed,
 	}
+	if g.JudgeID != nil {
+		d.GameJudgeNickname = g.JudgeNickname
+	}
+	return d
 }
 
 func (s *Service) Create(ctx context.Context, requesterID uuid.UUID, req *dto.CreateGameRequest) (*dto.CreateGameResponse, error) {
@@ -133,20 +169,11 @@ func (s *Service) Get(ctx context.Context, requesterID *uuid.UUID, req *dto.GetG
 		return nil, errorz.Unauthorized
 	}
 	if game.Status == types.GameStatusDraft {
-		canManage, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
+		canEdit, err := s.canEditGame(ctx, requesterID, ser)
 		if err != nil {
 			return nil, err
 		}
-		if !canManage {
-			return nil, errorz.Unauthorized
-		}
-	}
-	if game.Status == types.GameStatusDraft {
-		canManage, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
-		if err != nil {
-			return nil, err
-		}
-		if !canManage {
+		if !canEdit {
 			return nil, errorz.Unauthorized
 		}
 	}
@@ -176,7 +203,7 @@ func (s *Service) ListBySeries(ctx context.Context, requesterID *uuid.UUID, req 
 		offset = *req.Offset
 	}
 
-	includeDrafts, err := s.canManageSeries(ctx, requesterID, ser.ClubID)
+	includeDrafts, err := s.canEditGame(ctx, requesterID, ser)
 	if err != nil {
 		return nil, err
 	}
@@ -321,6 +348,22 @@ func (s *Service) UpsertResults(ctx context.Context, requesterID uuid.UUID, req 
 	return s.repo.UpsertGameResults(ctx, req.GameID, rows)
 }
 
+// resolveSlotPlayer resolves a ManageGameRow to either a profile UUID or a guest UUID.
+// Returns (profileID, guestID, error).
+func (s *Service) resolveSlotPlayer(ctx context.Context, seriesID uuid.UUID, r dto.ManageGameRow) (*uuid.UUID, *uuid.UUID, error) {
+	if r.ProfileID != nil {
+		return r.ProfileID, nil, nil
+	}
+	if r.GuestNickname != nil && strings.TrimSpace(*r.GuestNickname) != "" {
+		guest, err := s.repo.FindOrCreateGuest(ctx, seriesID, *r.GuestNickname)
+		if err != nil {
+			return nil, nil, err
+		}
+		return nil, &guest.ID, nil
+	}
+	return nil, nil, nil
+}
+
 func isValidBestMove(raw string) bool {
 	parts := strings.FieldsFunc(raw, func(r rune) bool {
 		return r == ',' || r == ';' || r == ' '
@@ -375,6 +418,8 @@ func (s *Service) GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.
 	for _, rr := range results {
 		dtoResults = append(dtoResults, dto.GameResultRow{
 			ProfileID:     rr.ProfileID,
+			GuestID:       rr.GuestID,
+			GuestNickname: rr.GuestNickname,
 			Place:         rr.Place,
 			Role:          rr.Role,
 			BestMove:      rr.BestMove,
@@ -388,10 +433,33 @@ func (s *Service) GetFull(ctx context.Context, requesterID *uuid.UUID, req *dto.
 		})
 	}
 
+	canEdit, err := s.canEditGame(ctx, requesterID, ser)
+	if err != nil {
+		return nil, err
+	}
+
+	var draftData *dto.GameDraftData
+	if canEdit {
+		draft, err := s.repo.GetGameDraft(ctx, req.ID)
+		if err != nil {
+			return nil, err
+		}
+		if draft != nil {
+			var draftRows []dto.ManageGameRow
+			_ = json.Unmarshal(draft.Rows, &draftRows)
+			draftData = &dto.GameDraftData{
+				Rows:           draftRows,
+				JudgeID:        draft.JudgeID,
+				JudgeConfirmed: draft.JudgeConfirmed,
+			}
+		}
+	}
+
 	resp := dto.GetGameFullResponse(dto.GameFull{
 		Game:           *toGameDTO(game),
 		ParticipantIDs: participantIDs,
 		Results:        dtoResults,
+		Draft:          draftData,
 	})
 	return &resp, nil
 }
@@ -424,52 +492,20 @@ func (s *Service) SaveDraft(ctx context.Context, requesterID uuid.UUID, req *dto
 	if err != nil {
 		return err
 	}
-	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	canEdit, err := s.canEditGame(ctx, &requesterID, ser)
 	if err != nil {
 		return err
 	}
-	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+	if !canEdit {
 		return errorz.Unauthorized
 	}
 
-	participantIDs := make([]uuid.UUID, 0, len(req.Rows))
-	resultRows := make([]model.GameResultRow, 0, len(req.Rows))
-	for _, r := range req.Rows {
-		if r.ProfileID == nil {
-			continue
-		}
-		participantIDs = append(participantIDs, *r.ProfileID)
-		place := r.Slot
-		resultRows = append(resultRows, model.GameResultRow{
-			GameID:        req.GameID,
-			ProfileID:     *r.ProfileID,
-			Place:         &place,
-			Role:          r.Role,
-			BestMove:      r.BestMove,
-			FirstKilled:   false,
-			Compensation:  r.Compensation,
-			YellowCards:   r.YellowCards,
-			Removed:       r.Removed,
-			VictoryPoints: 0,
-			ExtraPoints:   r.ExtraPoints,
-			TotalPoints:   r.TotalPoints,
-		})
-	}
-
-	if err := s.repo.ReplaceGameParticipants(ctx, req.GameID, participantIDs); err != nil {
-		return err
-	}
-	if err := s.repo.ClearGameResults(ctx, req.GameID); err != nil {
-		return err
-	}
-	if len(resultRows) > 0 {
-		if err := s.repo.UpsertGameResults(ctx, req.GameID, resultRows); err != nil {
-			return err
-		}
-	}
-	draft := types.GameStatusDraft
-	_, err = s.repo.UpdateGame(ctx, req.GameID, model.GameUpdatePatch{Status: &draft})
-	return err
+	return s.repo.UpsertGameDraft(ctx, &model.GameDraft{
+		GameID:         req.GameID,
+		Rows:           req.RawRows,
+		JudgeID:        req.JudgeID,
+		JudgeConfirmed: req.JudgeConfirmed,
+	})
 }
 
 func (s *Service) Publish(ctx context.Context, requesterID uuid.UUID, req *dto.PublishGameRequest) error {
@@ -485,31 +521,48 @@ func (s *Service) Publish(ctx context.Context, requesterID uuid.UUID, req *dto.P
 	if err != nil {
 		return err
 	}
-	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	canEdit, err := s.canEditGame(ctx, &requesterID, ser)
 	if err != nil {
 		return err
 	}
-	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+	if !canEdit {
 		return errorz.Unauthorized
 	}
 
 	seenSlots := map[int]bool{}
 	bestMoveCount := 0
-	participantIDs := make([]uuid.UUID, 0, len(req.Rows))
-	resultRows := make([]model.GameResultRow, 0, len(req.Rows))
+	participantIDs := make([]uuid.UUID, 0, sportMafiaParticipantsCount)
+	resultRows := make([]model.GameResultRow, 0, sportMafiaParticipantsCount)
+
 	for _, r := range req.Rows {
-		if r.Slot < 1 || r.Slot > 10 || seenSlots[r.Slot] || r.ProfileID == nil || r.Role == nil {
+		if r.Slot < 1 || r.Slot > 10 || seenSlots[r.Slot] || r.Role == nil {
+			return errorz.InvalidRequest
+		}
+		if !isValidMafiaRole(*r.Role) {
 			return errorz.InvalidRequest
 		}
 		seenSlots[r.Slot] = true
 
-		ok, err := s.repo.IsSeriesParticipant(ctx, ser.ID, *r.ProfileID)
+		profileID, guestID, err := s.resolveSlotPlayer(ctx, ser.ID, r)
 		if err != nil {
 			return err
 		}
-		if !ok || !isValidMafiaRole(*r.Role) {
+		// Every slot must have a player (profile or guest)
+		if profileID == nil && guestID == nil {
 			return errorz.InvalidRequest
 		}
+		// Registered profile must be a series participant
+		if profileID != nil {
+			ok, err := s.repo.IsSeriesParticipant(ctx, ser.ID, *profileID)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errorz.InvalidRequest
+			}
+			participantIDs = append(participantIDs, *profileID)
+		}
+
 		if r.BestMove != nil {
 			if !isValidBestMove(*r.BestMove) {
 				return errorz.InvalidRequest
@@ -517,11 +570,11 @@ func (s *Service) Publish(ctx context.Context, requesterID uuid.UUID, req *dto.P
 			bestMoveCount++
 		}
 
-		participantIDs = append(participantIDs, *r.ProfileID)
 		place := r.Slot
 		resultRows = append(resultRows, model.GameResultRow{
 			GameID:        req.GameID,
-			ProfileID:     *r.ProfileID,
+			ProfileID:     profileID,
+			GuestID:       guestID,
 			Place:         &place,
 			Role:          r.Role,
 			BestMove:      r.BestMove,
@@ -547,7 +600,24 @@ func (s *Service) Publish(ctx context.Context, requesterID uuid.UUID, req *dto.P
 	if err := s.repo.UpsertGameResults(ctx, req.GameID, resultRows); err != nil {
 		return err
 	}
+	// Tournament series require judge selection confirmed before publishing
+	if ser.IsTournament && !req.JudgeConfirmed {
+		return errorz.InvalidRequest
+	}
+
+	// Save draft to reflect published state
+	if req.RawRows != nil {
+		_ = s.repo.UpsertGameDraft(ctx, &model.GameDraft{
+			GameID:         req.GameID,
+			Rows:           req.RawRows,
+			JudgeID:        req.JudgeID,
+			JudgeConfirmed: req.JudgeConfirmed,
+		})
+	}
+
 	finished := types.GameStatusFinished
-	_, err = s.repo.UpdateGame(ctx, req.GameID, model.GameUpdatePatch{Status: &finished})
-	return err
+	if _, err = s.repo.UpdateGame(ctx, req.GameID, model.GameUpdatePatch{Status: &finished}); err != nil {
+		return err
+	}
+	return s.repo.SetGameJudge(ctx, req.GameID, req.JudgeID, req.JudgeConfirmed)
 }

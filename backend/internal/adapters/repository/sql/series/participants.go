@@ -159,3 +159,8 @@ WHERE series_id=$1 AND profile_id=$2
 `, seriesID, profileID)
 	return err
 }
+
+func (r *Repo) ClearAllSeriesPayments(ctx context.Context, seriesID uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM series_paid_participants WHERE series_id=$1`, seriesID)
+	return err
+}

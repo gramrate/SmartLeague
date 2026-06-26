@@ -31,6 +31,8 @@ function CreateSeriesPage() {
   const [priceRub, setPriceRub] = useState("0");
   const [isRating, setIsRating] = useState(false);
   const [isClubOnly, setIsClubOnly] = useState(false);
+  const [showToAll, setShowToAll] = useState(true);
+  const [isTournament, setIsTournament] = useState(false);
   const [busy, setBusy] = useState(false);
   const nameLimit = 100;
   const descriptionLimit = 1000;
@@ -49,6 +51,8 @@ function CreateSeriesPage() {
         price_rub: Math.max(0, Number(priceRub || 0)),
         is_rating: isRating,
         is_club_only: isClubOnly,
+        show_to_all: isClubOnly ? showToAll : true,
+        is_tournament: isTournament,
       });
       toast.success("Серия создана");
       navigate({ to: "/series/$id", params: { id: s.id } });
@@ -68,8 +72,8 @@ function CreateSeriesPage() {
             <p className="text-xs text-muted-foreground">{name.length}/{nameLimit}</p>
           </div>
           <div className="space-y-1.5">
-            <Label>Описание</Label>
-            <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} required maxLength={descriptionLimit} />
+            <Label>Описание <span className="text-muted-foreground text-xs">(необязательно)</span></Label>
+            <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={descriptionLimit} />
             <p className="text-xs text-muted-foreground">{description.length}/{descriptionLimit}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -85,10 +89,26 @@ function CreateSeriesPage() {
             На рейтинг
           </label>
           <label className="flex items-center gap-2 text-sm text-foreground">
+            <Checkbox checked={isTournament} onCheckedChange={(v) => { setIsTournament(!!v); if (!!v) setIsRating(true); }} />
+            Турнир
+          </label>
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <Checkbox checked={isClubOnly} onCheckedChange={(v) => setIsClubOnly(!!v)} />
             Только для участников клуба
           </label>
-          <Button type="submit" disabled={busy || !name || !description || !startAt || !endAt || name.length > nameLimit || description.length > descriptionLimit}>
+          {isClubOnly && (
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+              <p className="text-sm font-medium">Показывать серию всем?</p>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <Checkbox checked={showToAll} onCheckedChange={(v) => setShowToAll(!!v)} />
+                Да — серия видна всем, но вступить могут только участники клуба
+              </label>
+              {!showToAll && (
+                <p className="text-xs text-muted-foreground">Серия и её игры будут скрыты от людей не из клуба</p>
+              )}
+            </div>
+          )}
+          <Button type="submit" disabled={busy || !name || !startAt || !endAt || name.length > nameLimit || description.length > descriptionLimit}>
             {busy ? "Создание…" : "Создать серию"}
           </Button>
         </form>

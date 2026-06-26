@@ -72,9 +72,10 @@ type PlayerGame struct {
 }
 
 type GetUserGamesRequest struct {
-	UserID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit  *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
-	Offset *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+	UserID   uuid.UUID  `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	Limit    *int       `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset   *int       `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+	ViewerID *uuid.UUID `json:"-" swaggerignore:"true"`
 }
 
 type GetUserGamesResponse struct {
@@ -83,25 +84,31 @@ type GetUserGamesResponse struct {
 }
 
 type PlayerSeries struct {
-	ID       uuid.UUID `json:"id"`
-	Name     string    `json:"name"`
-	StartAt  time.Time `json:"start_at"`
-	EndAt    time.Time `json:"end_at"`
-	PriceRub int       `json:"price_rub"`
-	IsRating bool      `json:"is_rating"`
-	IsClosed bool      `json:"is_closed"`
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	StartAt      time.Time `json:"start_at"`
+	EndAt        time.Time `json:"end_at"`
+	PriceRub     int       `json:"price_rub"`
+	IsRating     bool      `json:"is_rating"`
+	IsClubOnly   bool      `json:"is_club_only"`
+	ShowToAll    bool      `json:"show_to_all"`
+	IsClosed     bool      `json:"is_closed"`
+	IsTournament bool      `json:"is_tournament"`
+	IsJudge      bool      `json:"is_judge"`
+	JudgeRole    *int16    `json:"judge_role,omitempty"`
 }
 
 type GetUserSeriesRequest struct {
-	UserID     uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
-	Limit      *int      `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
-	Offset     *int      `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
-	Query      *string   `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
-	From       *string   `json:"from,omitempty" form:"from" validate:"omitempty,len=10"`
-	To         *string   `json:"to,omitempty" form:"to" validate:"omitempty,len=10"`
-	IsRating   *bool     `json:"is_rating,omitempty" form:"is_rating"`
-	ShowPast   *bool     `json:"show_past,omitempty" form:"show_past"`
-	ShowClosed *bool     `json:"show_closed,omitempty" form:"show_closed"`
+	UserID       uuid.UUID  `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	ViewerID     *uuid.UUID `json:"-" swaggerignore:"true"`
+	Limit        *int       `json:"limit,omitempty" form:"limit" validate:"omitempty,min=1,max=200"`
+	Offset       *int       `json:"offset,omitempty" form:"offset" validate:"omitempty,min=0,max=10000"`
+	Query        *string    `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100"`
+	From         *string    `json:"from,omitempty" form:"from" validate:"omitempty,len=10"`
+	To           *string    `json:"to,omitempty" form:"to" validate:"omitempty,len=10"`
+	IsRating     *bool      `json:"is_rating,omitempty" form:"is_rating"`
+	ShowPast     *bool      `json:"show_past,omitempty" form:"show_past"`
+	ShowClosed   *bool      `json:"show_closed,omitempty" form:"show_closed"`
 }
 
 type GetUserSeriesResponse struct {

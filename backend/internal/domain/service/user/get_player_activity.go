@@ -3,6 +3,8 @@ package user
 import (
 	"SmartLeague/internal/domain/dto"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 func (s *userService) GetUserGames(ctx context.Context, req *dto.GetUserGamesRequest) (*dto.GetUserGamesResponse, error) {
@@ -15,7 +17,14 @@ func (s *userService) GetUserGames(ctx context.Context, req *dto.GetUserGamesReq
 		offset = *req.Offset
 	}
 
-	games, seriesNames, totalItems, err := s.userRepo.GetGamesByProfileID(ctx, req.UserID, limit, offset)
+	var viewerClubID *uuid.UUID
+	if req.ViewerID != nil {
+		if viewer, err := s.userRepo.GetById(ctx, *req.ViewerID); err == nil && viewer.ClubID != nil {
+			viewerClubID = viewer.ClubID
+		}
+	}
+
+	games, seriesNames, totalItems, err := s.userRepo.GetGamesByProfileID(ctx, req.UserID, limit, offset, viewerClubID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +78,15 @@ func (s *userService) GetUserSeries(ctx context.Context, req *dto.GetUserSeriesR
 		showClosed = *req.ShowClosed
 	}
 
+	var viewerClubID *uuid.UUID
+	if req.ViewerID != nil {
+		if viewer, err := s.userRepo.GetById(ctx, *req.ViewerID); err == nil && viewer.ClubID != nil {
+			viewerClubID = viewer.ClubID
+		}
+	}
+
 	seriesItems, totalItems, err := s.userRepo.GetSeriesByProfileID(
-		ctx, req.UserID, limit, offset, req.Query, req.From, req.To, req.IsRating, showPast, showClosed,
+		ctx, req.UserID, limit, offset, req.Query, req.From, req.To, req.IsRating, showPast, showClosed, viewerClubID,
 	)
 	if err != nil {
 		return nil, err
@@ -78,15 +94,24 @@ func (s *userService) GetUserSeries(ctx context.Context, req *dto.GetUserSeriesR
 
 	items := make([]*dto.PlayerSeries, 0, len(seriesItems))
 	for _, sItem := range seriesItems {
-		items = append(items, &dto.PlayerSeries{
-			ID:       sItem.ID,
-			Name:     sItem.Name,
-			StartAt:  sItem.StartAt,
-			EndAt:    sItem.EndAt,
-			PriceRub: sItem.PriceRub,
-			IsRating: sItem.IsRating,
-			IsClosed: sItem.IsClosed,
-		})
+		ps := &dto.PlayerSeries{
+			ID:           sItem.ID,
+			Name:         sItem.Name,
+			StartAt:      sItem.StartAt,
+			EndAt:        sItem.EndAt,
+			PriceRub:     sItem.PriceRub,
+			IsRating:     sItem.IsRating,
+			IsClubOnly:   sItem.IsClubOnly,
+			ShowToAll:    sItem.ShowToAll,
+			IsClosed:     sItem.IsClosed,
+			IsTournament: sItem.IsTournament,
+			IsJudge:      sItem.IsJudge,
+		}
+		if sItem.JudgeRole != nil {
+			r := int16(*sItem.JudgeRole)
+			ps.JudgeRole = &r
+		}
+		items = append(items, ps)
 	}
 
 	totalPages := 0

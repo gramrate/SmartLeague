@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { PageShell, PageHeader } from "@/components/site/PageShell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { seriesApi, clubsApi, gamesApi, ApiError } from "@/lib/api";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ClubState, GameStatus } from "@/types/api";
+import { ClubState, GameStatus, JudgeRole } from "@/types/api";
 import { RoleBadge } from "@/components/site/RoleBadge";
 import { Settings } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/series/$id")({ component: SeriesPage });
 function SeriesPage() {
   const { id } = Route.useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const me = useAuthStore((s) => s.me);
   const qc = useQueryClient();
   const full = useQuery({ queryKey: ["series", id, "full"], queryFn: () => seriesApi.full(id) });
@@ -35,6 +36,10 @@ function SeriesPage() {
 
   const canManage = !!series && canManageClub(me, series.club_id);
   const isParticipant = !!me && (full.data?.participants.items ?? []).some((p) => p.id === me.id);
+  const isBanned = full.data?.is_banned ?? false;
+  const judges = full.data?.judges ?? [];
+  const myJudge = me ? judges.find((j) => j.profile_id === me.id) : undefined;
+  const isJudge = !!myJudge;
 
   const [gameName, setGameName] = useState("");
   const [gameDescription, setGameDescription] = useState("");
@@ -108,13 +113,20 @@ function SeriesPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow={club.data ? club.data.name : "Серия"}
+        eyebrow={
+          club.data
+            ? <Link to="/clubs/$id" params={{ id: series.club_id }} className="hover:underline">{club.data.name}</Link>
+            : "Серия"
+        }
         title={series.name}
         description={series.description}
         actions={
           <>
             {club.data && (
-              <Button variant="outline" asChild><Link to="/clubs/$id" params={{ id: series.club_id }} className="max-w-[220px] truncate">{club.data.name}</Link></Button>
+              <Button variant="outline" onClick={() => {
+                qc.invalidateQueries({ queryKey: ["club", series.club_id] });
+                void navigate({ to: "/clubs/$id", params: { id: series.club_id } });
+              }}>К клубу</Button>
             )}
             {canManage && (
               <Button asChild>
@@ -138,14 +150,26 @@ function SeriesPage() {
       </div>
       <p className="mb-6 text-sm text-muted-foreground">{fmtDateRange(series.start_at, series.end_at)}</p>
       <div className="mb-6 flex flex-wrap items-center gap-2">
+        {series.is_tournament && (
+          <div className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+            Турнир
+          </div>
+        )}
+        {series.is_club_only && (
+          <div className="inline-flex rounded-full bg-teal-100 px-3 py-1 text-xs font-medium text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+            Для участников клуба
+          </div>
+        )}
         {Number(series.price_rub ?? 0) > 0 && (
           <div className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
             Платно · {fmtRub(series.price_rub)}
           </div>
         )}
-        <div className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
-          {series.is_rating ? "На рейтинг" : "Без рейтинга"}
-        </div>
+        {!series.is_tournament && (
+          <div className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
+            {series.is_rating ? "На рейтинг" : "Без рейтинга"}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -178,7 +202,7 @@ function SeriesPage() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Отмена</AlertDialogCancel>
                               <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                variant="destructive"
                                 onClick={() => void deleteGame(g.id)}
                                 disabled={deletingGameId === g.id}
                               >
@@ -218,16 +242,29 @@ function SeriesPage() {
           </div>
 
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
-            <h2 className="mb-4 font-display text-xl font-semibold">Таблица лидеров</h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-display text-xl font-semibold">Таблица лидеров</h2>
+              {(full.data!.leaderboard.pagination?.total_items ?? 0) > 10 && (
+                <Link to="/series/$id/leaderboard" params={{ id }} className="text-sm text-primary hover:underline">
+                  Все ({full.data!.leaderboard.pagination.total_items})
+                </Link>
+              )}
+            </div>
             {!full.data!.leaderboard.items?.length ? <p className="text-sm text-muted-foreground">Пусто</p> : (
               <ol className="divide-y divide-border/40">
                 {full.data!.leaderboard.items.map((r, i) => (
-                  <li key={r.profile_id} className="flex items-center justify-between py-3">
+                  <li key={r.profile_id ?? r.guest_id ?? i} className="flex items-center justify-between py-3">
                     <span className="flex items-center gap-3">
                       <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">{i + 1}</span>
-                      <Link to="/user/$id" params={{ id: r.profile_id }} className="max-w-[220px] truncate hover:text-primary">
-                        {displayUserName(participantsById.get(r.profile_id) ?? { id: r.profile_id })}
-                      </Link>
+                      {r.profile_id ? (
+                        <Link to="/user/$id" params={{ id: r.profile_id }} className="max-w-[220px] truncate hover:text-primary">
+                          {displayUserName(participantsById.get(r.profile_id) ?? { id: r.profile_id })}
+                        </Link>
+                      ) : (
+                        <span className="max-w-[220px] truncate text-muted-foreground" title="Гость">
+                          {r.guest_nickname ?? "Гость"}
+                        </span>
+                      )}
                     </span>
                     <span className="font-mono text-sm">{r.points.toFixed(2)}</span>
                   </li>
@@ -238,16 +275,38 @@ function SeriesPage() {
         </section>
 
         <aside className="space-y-6">
+          {judges.length > 0 && (
+            <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
+              <h2 className="mb-4 font-display text-lg font-semibold">Судьи</h2>
+              <ul className="space-y-2 text-sm">
+                {judges.map((j) => (
+                  <li key={j.profile_id} className="flex items-center justify-between gap-2">
+                    <Link to="/user/$id" params={{ id: j.profile_id }} className="min-w-0 flex-1 truncate hover:text-primary">
+                      {displayUserName(j)}
+                    </Link>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${j.role === JudgeRole.Main ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                      {j.role === JudgeRole.Main ? "Главный" : "Боковой"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             {me && (
-              <div className="mb-4 flex justify-end">
-                {!isParticipant && !series.is_closed ? (
+              <div className="mb-4 flex flex-col items-end gap-2">
+                {isJudge || isParticipant ? (
+                  <Button variant="outline" onClick={leaveSeries} disabled={leaving || (isParticipant && !!series.is_closed)}>
+                    {leaving ? "Выход..." : "Покинуть серию"}
+                  </Button>
+                ) : isBanned ? (
+                  <>
+                    <Button disabled>Присоединиться к серии</Button>
+                    <p className="text-xs text-destructive">Вы заблокированы в этом клубе</p>
+                  </>
+                ) : !series.is_closed ? (
                   <Button onClick={joinSeries} disabled={joining}>
                     {joining ? "Подключение..." : "Присоединиться к серии"}
-                  </Button>
-                ) : isParticipant ? (
-                  <Button variant="outline" onClick={leaveSeries} disabled={leaving || !!series.is_closed}>
-                    {leaving ? "Выход..." : "Покинуть серию"}
                   </Button>
                 ) : null}
               </div>

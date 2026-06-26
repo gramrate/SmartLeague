@@ -25,6 +25,12 @@ type seriesService interface {
 	Join(ctx context.Context, req *dto.JoinSeriesRequest) error
 	Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error
 	GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error)
+
+	ListJudges(ctx context.Context, seriesID uuid.UUID) (*dto.GetSeriesJudgesResponse, error)
+	SetJudge(ctx context.Context, requesterID uuid.UUID, req *dto.SetSeriesJudgeRequest) error
+	RemoveJudge(ctx context.Context, requesterID uuid.UUID, req *dto.RemoveSeriesJudgeRequest) error
+
+	IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error)
 }
 
 type gameService interface {
@@ -87,6 +93,10 @@ func (h *handler) Setup(router *echo.Group) {
 	router.POST("/series/:id/games/draft", h.CreateGameDraft, h.authMiddleware.RequireAuth)
 	router.GET("/series/:id/games", h.GetSeriesGames, h.authMiddleware.OptionalAuth)
 	router.GET("/series/:id/leaderboard", h.GetLeaderboard, h.authMiddleware.OptionalAuth)
+
+	router.GET("/series/:id/judges", h.GetJudges, h.authMiddleware.OptionalAuth)
+	router.POST("/series/:id/judges", h.SetJudge, h.authMiddleware.RequireAuth)
+	router.DELETE("/series/:id/judges/:profile_id", h.RemoveJudge, h.authMiddleware.RequireAuth)
 
 	router.GET("/game/:id", h.GetGame, h.authMiddleware.OptionalAuth)
 	router.GET("/game/:id/full", h.GetGameFull, h.authMiddleware.OptionalAuth)

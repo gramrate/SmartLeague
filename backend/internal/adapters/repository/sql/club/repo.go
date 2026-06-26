@@ -290,16 +290,22 @@ func (r *Repo) ListGames(ctx context.Context, clubID uuid.UUID, limit, offset in
 	args := []any{clubID}
 
 	if !includeDrafts {
-		where += " AND g.status <> 0"
+		if requesterID == nil {
+			where += " AND g.status <> 0"
+		} else {
+			args = append(args, *requesterID)
+			where += fmt.Sprintf(" AND (g.status <> 0 OR g.game_judge_id = $%d)", len(args))
+		}
 	}
 	if !includeDrafts {
 		if requesterID == nil {
-			where += " AND s.is_club_only = false"
+			where += " AND (s.is_club_only = false OR s.show_to_all = true)"
 		} else {
 			args = append(args, *requesterID)
 			where += fmt.Sprintf(`
 AND (
   s.is_club_only = false
+  OR s.show_to_all = true
   OR EXISTS (
     SELECT 1
     FROM series_participants sp

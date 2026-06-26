@@ -31,3 +31,9 @@ logs/
 
 # Keys (never commit any keys)
 keys/
+
+# ai-agents
+.agents
+.codex
+.claude
+CLAUDE.md

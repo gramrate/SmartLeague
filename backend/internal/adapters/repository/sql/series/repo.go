@@ -33,74 +33,78 @@ func (r *Repo) GetProfileClubState(ctx context.Context, profileID uuid.UUID) (cl
 	return nullStringToUUIDPtr(clubIDRaw), types.ClubState(clubState), nil
 }
 
+func (r *Repo) IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, `SELECT exists(SELECT 1 FROM club_bans WHERE club_id=$1 AND profile_id=$2)`, clubID, profileID).Scan(&exists)
+	return exists, err
+}
+
 func (r *Repo) CreateSeries(ctx context.Context, s model.Series) (*model.Series, error) {
 	if s.ID == uuid.Nil {
 		s.ID = uuid.New()
 	}
 
+	var descArg any
+	if s.Description == "" {
+		descArg = nil
+	} else {
+		descArg = s.Description
+	}
 	row := r.db.QueryRowContext(ctx, `
-INSERT INTO series (id, club_id, creator_id, name, scoring_rules, start_at, end_at, description, price_rub, is_rating, is_club_only, is_closed, game_type)
-VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12)
-RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
+INSERT INTO series (id, club_id, creator_id, name, start_at, end_at, description, price_rub, is_rating, is_club_only, show_to_all, is_closed, is_tournament, game_type)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+RETURNING id, club_id, creator_id, name, start_at, end_at, description, price_rub, is_rating, is_club_only, show_to_all, is_closed, is_tournament, game_type, created_at, updated_at
 `,
-		s.ID, s.ClubID, s.CreatorID, s.Name, s.Description, s.StartAt, s.EndAt,
-		s.PriceRub, s.IsRating, s.IsClubOnly, s.IsClosed, int16(s.GameType),
+		s.ID, s.ClubID, s.CreatorID, s.Name, s.StartAt, s.EndAt,
+		descArg, s.PriceRub, s.IsRating, s.IsClubOnly, s.ShowToAll, s.IsClosed, s.IsTournament, int16(s.GameType),
 	)
 
-	var out model.Series
-	var gameType int16
-	if err := row.Scan(
-		&out.ID,
-		&out.ClubID,
-		&out.CreatorID,
-		&out.Name,
-		&out.Description,
-		&out.StartAt,
-		&out.EndAt,
-		&out.PriceRub,
-		&out.IsRating,
-		&out.IsClubOnly,
-		&out.IsClosed,
-		&gameType,
-		&out.CreatedAt,
-		&out.UpdatedAt,
-	); err != nil {
-		return nil, err
-	}
-	out.GameType = types.GameType(gameType)
-	return &out, nil
+	return scanSeries(row)
 }
 
 func (r *Repo) GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error) {
 	row := r.db.QueryRowContext(ctx, `
-SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
+SELECT id, club_id, creator_id, name, start_at, end_at, description, price_rub, is_rating, is_club_only, show_to_all, is_closed, is_tournament, game_type, created_at, updated_at
 FROM series
 WHERE id=$1 AND deleted_at IS NULL
 `, id)
 
-	var out model.Series
-	var gameType int16
-	if err := row.Scan(
-		&out.ID,
-		&out.ClubID,
-		&out.CreatorID,
-		&out.Name,
-		&out.Description,
-		&out.StartAt,
-		&out.EndAt,
-		&out.PriceRub,
-		&out.IsRating,
-		&out.IsClubOnly,
-		&out.IsClosed,
-		&gameType,
-		&out.CreatedAt,
-		&out.UpdatedAt,
-	); err != nil {
+	s, err := scanSeries(row)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errorz.SeriesNotFound
 		}
 		return nil, err
 	}
+	return s, nil
+}
+
+func scanSeries(row *sql.Row) (*model.Series, error) {
+	var out model.Series
+	var desc sql.NullString
+	var gameType int16
+	err := row.Scan(
+		&out.ID,
+		&out.ClubID,
+		&out.CreatorID,
+		&out.Name,
+		&out.StartAt,
+		&out.EndAt,
+		&desc,
+		&out.PriceRub,
+		&out.IsRating,
+		&out.IsClubOnly,
+		&out.ShowToAll,
+		&out.IsClosed,
+		&out.IsTournament,
+		&gameType,
+		&out.CreatedAt,
+		&out.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	out.Description = desc.String
 	out.GameType = types.GameType(gameType)
 	return &out, nil
 }
@@ -118,7 +122,7 @@ func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeCl
 		where = where + " AND is_closed=false"
 	}
 	if !includeClubOnly {
-		where = where + " AND is_club_only=false"
+		where = where + " AND (is_club_only=false OR show_to_all=true)"
 	}
 	where = where + " AND deleted_at IS NULL"
 
@@ -129,7 +133,7 @@ func (r *Repo) ListSeriesByClub(ctx context.Context, clubID uuid.UUID, includeCl
 	}
 
 	listQuery := fmt.Sprintf(`
-SELECT id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
+SELECT id, club_id, creator_id, name, start_at, end_at, description, price_rub, is_rating, is_club_only, show_to_all, is_closed, is_tournament, game_type, created_at, updated_at
 FROM series
 WHERE %s
 ORDER BY start_at DESC
@@ -145,25 +149,29 @@ LIMIT $2 OFFSET $3
 	var out []*model.Series
 	for rows.Next() {
 		var s model.Series
+		var desc sql.NullString
 		var gameType int16
 		if err := rows.Scan(
 			&s.ID,
 			&s.ClubID,
 			&s.CreatorID,
 			&s.Name,
-			&s.Description,
 			&s.StartAt,
 			&s.EndAt,
+			&desc,
 			&s.PriceRub,
 			&s.IsRating,
 			&s.IsClubOnly,
+			&s.ShowToAll,
 			&s.IsClosed,
+			&s.IsTournament,
 			&gameType,
 			&s.CreatedAt,
 			&s.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
+		s.Description = desc.String
 		s.GameType = types.GameType(gameType)
 		out = append(out, &s)
 	}
@@ -191,11 +199,11 @@ func (r *Repo) ListAllSeries(ctx context.Context, limit, offset int, query, club
 		where += " AND s.end_at::date >= CURRENT_DATE"
 	}
 	if requesterClubID != nil {
-		where += fmt.Sprintf(" AND (s.is_club_only = false OR s.club_id = $%d)", nextArg)
+		where += fmt.Sprintf(" AND (s.is_club_only = false OR s.show_to_all = true OR s.club_id = $%d)", nextArg)
 		args = append(args, *requesterClubID)
 		nextArg++
 	} else {
-		where += " AND s.is_club_only = false"
+		where += " AND (s.is_club_only = false OR s.show_to_all = true)"
 	}
 	if isRating != nil {
 		where += fmt.Sprintf(" AND s.is_rating = $%d", nextArg)
@@ -244,13 +252,15 @@ SELECT
   s.club_id,
   c.name,
   s.name,
-  s.scoring_rules,
+  s.description,
   s.start_at,
   s.end_at,
   s.price_rub,
   s.is_rating,
   s.is_club_only,
+  s.show_to_all,
   s.is_closed,
+  s.is_tournament,
   (
     SELECT count(*)
     FROM games g
@@ -272,22 +282,26 @@ LIMIT $%d OFFSET $%d
 	out := make([]*model.SeriesListItem, 0, limit)
 	for rows.Next() {
 		var item model.SeriesListItem
+		var desc sql.NullString
 		if err := rows.Scan(
 			&item.ID,
 			&item.ClubID,
 			&item.ClubName,
 			&item.Name,
-			&item.Description,
+			&desc,
 			&item.StartAt,
 			&item.EndAt,
 			&item.PriceRub,
 			&item.IsRating,
 			&item.IsClubOnly,
+			&item.ShowToAll,
 			&item.IsClosed,
+			&item.IsTournament,
 			&item.GamesCount,
 		); err != nil {
 			return nil, 0, err
 		}
+		item.Description = desc.String
 		out = append(out, &item)
 	}
 	if err := rows.Err(); err != nil {
@@ -323,65 +337,63 @@ func (r *Repo) UpdateSeries(ctx context.Context, id uuid.UUID, patch model.Serie
 	if patch.IsClubOnly != nil {
 		next.IsClubOnly = *patch.IsClubOnly
 	}
+	if patch.ShowToAll != nil {
+		next.ShowToAll = *patch.ShowToAll
+	}
 	if patch.IsClosed != nil {
 		next.IsClosed = *patch.IsClosed
+	}
+	if patch.IsTournament != nil {
+		next.IsTournament = *patch.IsTournament
 	}
 	if patch.GameType != nil {
 		next.GameType = *patch.GameType
 	}
+	var descArg any
+	if next.Description == "" {
+		descArg = nil
+	} else {
+		descArg = next.Description
+	}
 	row := r.db.QueryRowContext(ctx, `
 UPDATE series
 SET name=$2,
-    scoring_rules=$3,
-    start_at=$4,
-    end_at=$5,
-    description=NULL,
+    start_at=$3,
+    end_at=$4,
+    description=$5,
     price_rub=$6,
     is_rating=$7,
     is_club_only=$8,
-    is_closed=$9,
-    game_type=$10,
+    show_to_all=$9,
+    is_closed=$10,
+    is_tournament=$11,
+    game_type=$12,
     updated_at=now()
 WHERE id=$1
-RETURNING id, club_id, creator_id, name, scoring_rules, start_at, end_at, price_rub, is_rating, is_club_only, is_closed, game_type, created_at, updated_at
+RETURNING id, club_id, creator_id, name, start_at, end_at, description, price_rub, is_rating, is_club_only, show_to_all, is_closed, is_tournament, game_type, created_at, updated_at
 `,
 		id,
 		next.Name,
-		next.Description,
 		next.StartAt,
 		next.EndAt,
+		descArg,
 		next.PriceRub,
 		next.IsRating,
 		next.IsClubOnly,
+		next.ShowToAll,
 		next.IsClosed,
+		next.IsTournament,
 		int16(next.GameType),
 	)
 
-	var out model.Series
-	var gameType int16
-	if err := row.Scan(
-		&out.ID,
-		&out.ClubID,
-		&out.CreatorID,
-		&out.Name,
-		&out.Description,
-		&out.StartAt,
-		&out.EndAt,
-		&out.PriceRub,
-		&out.IsRating,
-		&out.IsClubOnly,
-		&out.IsClosed,
-		&gameType,
-		&out.CreatedAt,
-		&out.UpdatedAt,
-	); err != nil {
+	s, err := scanSeries(row)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errorz.SeriesNotFound
 		}
 		return nil, err
 	}
-	out.GameType = types.GameType(gameType)
-	return &out, nil
+	return s, nil
 }
 
 func (r *Repo) DeleteSeries(ctx context.Context, id uuid.UUID) error {
@@ -403,7 +415,6 @@ func (r *Repo) DeleteSeries(ctx context.Context, id uuid.UUID) error {
 		return errorz.SeriesNotFound
 	}
 
-	// Soft-delete all games linked to the deleted series.
 	if _, err := tx.ExecContext(ctx, `
 UPDATE games
 SET deleted_at=now(), updated_at=now()

@@ -37,7 +37,14 @@ function ClubGamesPage() {
               params={{ id: g.id }}
               className="rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/50"
             >
-              <p className="break-words font-medium">{g.name || `Игра #${g.number}`}</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="break-words font-medium">{g.name || `Игра #${g.number}`}</p>
+                {g.status === 0 && (
+                  <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    Черновик
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 <Link
                   to="/series/$id"

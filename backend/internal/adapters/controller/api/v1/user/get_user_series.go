@@ -38,6 +38,10 @@ func (h *handler) GetUserSeries(c echo.Context) error {
 	}
 	req.UserID = userID
 
+	if viewerID, ok := c.Get("user_id").(uuid.UUID); ok && viewerID != uuid.Nil {
+		req.ViewerID = &viewerID
+	}
+
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}

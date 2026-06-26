@@ -15,6 +15,7 @@ const maxParticipantsSportMafia = 10
 
 type repo interface {
 	GetProfileClubState(ctx context.Context, profileID uuid.UUID) (clubID *uuid.UUID, state types.ClubState, err error)
+	IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error)
 
 	CreateSeries(ctx context.Context, s model.Series) (*model.Series, error)
 	GetSeriesByID(ctx context.Context, id uuid.UUID) (*model.Series, error)
@@ -32,6 +33,15 @@ type repo interface {
 	SetSeriesParticipantPaid(ctx context.Context, seriesID uuid.UUID, profileID uuid.UUID, paid bool) error
 
 	ListSeriesLeaderboard(ctx context.Context, seriesID uuid.UUID, limit, offset int) ([]*model.LeaderboardRow, int, error)
+
+	ListSeriesJudges(ctx context.Context, seriesID uuid.UUID) ([]*model.SeriesJudge, error)
+	SetSeriesJudge(ctx context.Context, seriesID, profileID uuid.UUID, role model.JudgeRole) error
+	RemoveSeriesJudge(ctx context.Context, seriesID, profileID uuid.UUID) error
+	IsSeriesJudge(ctx context.Context, seriesID, profileID uuid.UUID) (bool, error)
+	ClearAllSeriesJudges(ctx context.Context, seriesID uuid.UUID) error
+	ClearAllGameJudgesForSeries(ctx context.Context, seriesID uuid.UUID) error
+	ClearAllGameDraftJudgesForSeries(ctx context.Context, seriesID uuid.UUID) error
+	ClearAllSeriesPayments(ctx context.Context, seriesID uuid.UUID) error
 }
 
 type Service struct {
@@ -54,6 +64,11 @@ func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, s
 	if !series.IsClubOnly {
 		return true, nil
 	}
+	// show_to_all=true means everyone can view (just can't join unless in club)
+	if series.ShowToAll {
+		return true, nil
+	}
+	// show_to_all=false: only participants, judges, and club members can view
 	if requesterID == nil {
 		return false, nil
 	}
@@ -61,24 +76,46 @@ func (s *Service) canAccessSeries(ctx context.Context, requesterID *uuid.UUID, s
 	if err != nil {
 		return false, err
 	}
-	return isParticipant, nil
+	if isParticipant {
+		return true, nil
+	}
+	clubID, _, err := s.repo.GetProfileClubState(ctx, *requesterID)
+	if err != nil {
+		return false, err
+	}
+	return clubID != nil && *clubID == series.ClubID, nil
 }
 
 func seriesToDTO(s *model.Series, creatorID *uuid.UUID) *dto.Series {
 	return &dto.Series{
-		ID:          s.ID,
-		ClubID:      s.ClubID,
-		CreatorID:   creatorID,
-		Name:        s.Name,
-		Description: s.Description,
-		StartAt:     s.StartAt,
-		EndAt:       s.EndAt,
-		PriceRub:    s.PriceRub,
-		IsRating:    s.IsRating,
-		IsClubOnly:  s.IsClubOnly,
-		IsClosed:    s.IsClosed,
-		GameType:    s.GameType,
+		ID:           s.ID,
+		ClubID:       s.ClubID,
+		CreatorID:    creatorID,
+		Name:         s.Name,
+		Description:  s.Description,
+		StartAt:      s.StartAt,
+		EndAt:        s.EndAt,
+		PriceRub:     s.PriceRub,
+		IsRating:     s.IsRating,
+		IsClubOnly:   s.IsClubOnly,
+		ShowToAll:    s.ShowToAll,
+		IsClosed:     s.IsClosed,
+		IsTournament: s.IsTournament,
+		GameType:     s.GameType,
 	}
+}
+
+func judgeToDTO(j *model.SeriesJudge) *dto.SeriesJudge {
+	out := &dto.SeriesJudge{
+		ProfileID: j.ProfileID,
+		Role:      int16(j.Role),
+	}
+	if j.User != nil {
+		out.Nickname = j.User.Nickname
+		out.Name = j.User.Name
+		out.ShowName = j.User.ShowName
+	}
+	return out
 }
 
 func profileToDTO(p *model.User) *dto.User {
@@ -105,18 +142,20 @@ func (s *Service) CreateSeries(ctx context.Context, requesterID uuid.UUID, req *
 	}
 
 	created, err := s.repo.CreateSeries(ctx, model.Series{
-		ID:          uuid.New(),
-		ClubID:      *clubID,
-		CreatorID:   requesterID,
-		Name:        req.Name,
-		Description: req.Description,
-		StartAt:     req.StartAt,
-		EndAt:       req.EndAt,
-		PriceRub:    req.PriceRub,
-		IsRating:    req.IsRating != nil && *req.IsRating,
-		IsClubOnly:  req.IsClubOnly != nil && *req.IsClubOnly,
-		IsClosed:    req.IsClosed,
-		GameType:    types.GameTypeSportMafia,
+		ID:           uuid.New(),
+		ClubID:       *clubID,
+		CreatorID:    requesterID,
+		Name:         req.Name,
+		Description:  req.Description,
+		StartAt:      req.StartAt,
+		EndAt:        req.EndAt,
+		PriceRub:     req.PriceRub,
+		IsRating:     req.IsRating != nil && *req.IsRating,
+		IsClubOnly:   req.IsClubOnly != nil && *req.IsClubOnly,
+		ShowToAll:    req.ShowToAll == nil || *req.ShowToAll,
+		IsClosed:     req.IsClosed,
+		IsTournament: req.IsTournament,
+		GameType:     types.GameTypeSportMafia,
 	})
 	if err != nil {
 		return nil, err
@@ -243,18 +282,20 @@ func (s *Service) GetAllSeries(ctx context.Context, requesterID *uuid.UUID, req 
 	outItems := make([]*dto.AllSeriesItem, 0, len(items))
 	for _, it := range items {
 		outItems = append(outItems, &dto.AllSeriesItem{
-			ID:          it.ID,
-			ClubID:      it.ClubID,
-			ClubName:    it.ClubName,
-			Name:        it.Name,
-			Description: it.Description,
-			StartAt:     it.StartAt,
-			EndAt:       it.EndAt,
-			PriceRub:    it.PriceRub,
-			IsRating:    it.IsRating,
-			IsClubOnly:  it.IsClubOnly,
-			IsClosed:    it.IsClosed,
-			GamesCount:  it.GamesCount,
+			ID:           it.ID,
+			ClubID:       it.ClubID,
+			ClubName:     it.ClubName,
+			Name:         it.Name,
+			Description:  it.Description,
+			StartAt:      it.StartAt,
+			EndAt:        it.EndAt,
+			PriceRub:     it.PriceRub,
+			IsRating:     it.IsRating,
+			IsClubOnly:   it.IsClubOnly,
+			ShowToAll:    it.ShowToAll,
+			IsClosed:     it.IsClosed,
+			IsTournament: it.IsTournament,
+			GamesCount:   it.GamesCount,
 		})
 	}
 
@@ -291,20 +332,44 @@ func (s *Service) UpdateSeries(ctx context.Context, requesterID uuid.UUID, req *
 	}
 
 	patch := model.SeriesUpdatePatch{
-		Name:        req.Name,
-		Description: req.Description,
-		StartAt:     req.StartAt,
-		EndAt:       req.EndAt,
-		PriceRub:    req.PriceRub,
-		IsRating:    req.IsRating,
-		IsClubOnly:  req.IsClubOnly,
-		IsClosed:    req.IsClosed,
+		Name:         req.Name,
+		Description:  req.Description,
+		StartAt:      req.StartAt,
+		EndAt:        req.EndAt,
+		PriceRub:     req.PriceRub,
+		IsRating:     req.IsRating,
+		IsClubOnly:   req.IsClubOnly,
+		ShowToAll:    req.ShowToAll,
+		IsClosed:     req.IsClosed,
+		IsTournament: req.IsTournament,
 	}
+
+	wasTournament := ser.IsTournament
+	wasPaid := ser.PriceRub > 0
 
 	updated, err := s.repo.UpdateSeries(ctx, req.ID, patch)
 	if err != nil {
 		return nil, err
 	}
+
+	if wasTournament && !updated.IsTournament {
+		if err := s.repo.ClearAllSeriesJudges(ctx, req.ID); err != nil {
+			return nil, err
+		}
+		if err := s.repo.ClearAllGameJudgesForSeries(ctx, req.ID); err != nil {
+			return nil, err
+		}
+		if err := s.repo.ClearAllGameDraftJudgesForSeries(ctx, req.ID); err != nil {
+			return nil, err
+		}
+	}
+
+	if wasPaid && updated.PriceRub <= 0 {
+		if err := s.repo.ClearAllSeriesPayments(ctx, req.ID); err != nil {
+			return nil, err
+		}
+	}
+
 	resp := dto.UpdateSeriesResponse(*seriesToDTO(updated, &updated.CreatorID))
 	return &resp, nil
 }
@@ -427,8 +492,22 @@ func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
 	if err != nil {
 		return err
 	}
-	if ser.IsClubOnly {
+	banned, err := s.repo.IsProfileBannedInClub(ctx, req.ProfileID, ser.ClubID)
+	if err != nil {
+		return err
+	}
+	if banned {
 		return errorz.Unauthorized
+	}
+
+	if ser.IsClubOnly {
+		clubID, _, err := s.repo.GetProfileClubState(ctx, req.ProfileID)
+		if err != nil {
+			return err
+		}
+		if clubID == nil || *clubID != ser.ClubID {
+			return errorz.Unauthorized
+		}
 	}
 
 	if ser.IsClosed {
@@ -447,10 +526,79 @@ func (s *Service) Join(ctx context.Context, req *dto.JoinSeriesRequest) error {
 	return s.repo.AddSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
 }
 
+func (s *Service) ListJudges(ctx context.Context, seriesID uuid.UUID) (*dto.GetSeriesJudgesResponse, error) {
+	judges, err := s.repo.ListSeriesJudges(ctx, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*dto.SeriesJudge, 0, len(judges))
+	for _, j := range judges {
+		out = append(out, judgeToDTO(j))
+	}
+	return &dto.GetSeriesJudgesResponse{Items: out}, nil
+}
+
+func (s *Service) SetJudge(ctx context.Context, requesterID uuid.UUID, req *dto.SetSeriesJudgeRequest) error {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
+		return err
+	}
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+		return errorz.Unauthorized
+	}
+	isParticipant, err := s.repo.IsSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
+	if err != nil {
+		return err
+	}
+	isAlreadyJudge, err := s.repo.IsSeriesJudge(ctx, req.SeriesID, req.ProfileID)
+	if err != nil {
+		return err
+	}
+	if !isParticipant && !isAlreadyJudge {
+		return errorz.InvalidRequest
+	}
+	if err := s.repo.SetSeriesJudge(ctx, req.SeriesID, req.ProfileID, model.JudgeRole(req.Role)); err != nil {
+		return err
+	}
+	// Remove from participants — judges manage games and are not counted as participants
+	return s.repo.RemoveSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
+}
+
+func (s *Service) RemoveJudge(ctx context.Context, requesterID uuid.UUID, req *dto.RemoveSeriesJudgeRequest) error {
+	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
+	if err != nil {
+		return err
+	}
+	clubID, clubState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return err
+	}
+	if clubID == nil || *clubID != ser.ClubID || !canManageClub(clubState) {
+		return errorz.Unauthorized
+	}
+	if err := s.repo.RemoveSeriesJudge(ctx, req.SeriesID, req.ProfileID); err != nil {
+		return err
+	}
+	// Add back to participants when judge role is revoked
+	return s.repo.AddSeriesParticipant(ctx, req.SeriesID, req.ProfileID)
+}
+
 func (s *Service) Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error {
 	ser, err := s.repo.GetSeriesByID(ctx, req.SeriesID)
 	if err != nil {
 		return err
+	}
+	isJudge, err := s.repo.IsSeriesJudge(ctx, req.SeriesID, req.ProfileID)
+	if err != nil {
+		return err
+	}
+	if isJudge {
+		// Judges leave by resigning their role; no is_closed restriction applies
+		return s.repo.RemoveSeriesJudge(ctx, req.SeriesID, req.ProfileID)
 	}
 	if ser.IsClosed {
 		return errorz.SeriesJoinClosed
@@ -486,7 +634,12 @@ func (s *Service) GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, re
 
 	outItems := make([]*dto.LeaderboardRow, 0, len(items))
 	for _, it := range items {
-		outItems = append(outItems, &dto.LeaderboardRow{ProfileID: it.ProfileID, Points: it.Points})
+		outItems = append(outItems, &dto.LeaderboardRow{
+			ProfileID:     it.ProfileID,
+			GuestID:       it.GuestID,
+			GuestNickname: it.GuestNickname,
+			Points:        it.Points,
+		})
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
@@ -506,4 +659,8 @@ func (s *Service) GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, re
 			HasPrevious: offset > 0,
 		},
 	}, nil
+}
+
+func (s *Service) IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error) {
+	return s.repo.IsProfileBannedInClub(ctx, profileID, clubID)
 }

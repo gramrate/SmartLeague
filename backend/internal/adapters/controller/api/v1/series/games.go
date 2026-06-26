@@ -3,6 +3,8 @@ package series
 import (
 	"SmartLeague/internal/domain/dto"
 	"SmartLeague/internal/domain/types"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -250,11 +252,22 @@ func (h *handler) SaveGameDraft(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
 	}
 
+	rawBody, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "failed to read body"})
+	}
 	var req dto.SaveGameDraftRequest
-	if err := c.Bind(&req); err != nil {
+	if err := json.Unmarshal(rawBody, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 	req.GameID = gameID
+
+	// Extract raw rows JSON for storage
+	var rawObj struct {
+		Rows json.RawMessage `json:"rows"`
+	}
+	_ = json.Unmarshal(rawBody, &rawObj)
+	req.RawRows = rawObj.Rows
 
 	if err := h.gameService.SaveDraft(c.Request().Context(), requesterID, &req); err != nil {
 		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})
@@ -287,14 +300,23 @@ func (h *handler) PublishGame(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
 	}
 
+	rawBody, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "failed to read body"})
+	}
 	var req dto.PublishGameRequest
-	if err := c.Bind(&req); err != nil {
+	if err := json.Unmarshal(rawBody, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 	req.GameID = gameID
 	if err := h.validator.ValidateData(req); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: err.Error()})
 	}
+	var rawObj struct {
+		Rows json.RawMessage `json:"rows"`
+	}
+	_ = json.Unmarshal(rawBody, &rawObj)
+	req.RawRows = rawObj.Rows
 
 	if err := h.gameService.Publish(c.Request().Context(), requesterID, &req); err != nil {
 		return c.JSON(http.StatusForbidden, dto.HTTPStatus{Code: http.StatusForbidden, Message: err.Error()})

@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PageHeader, PageShell } from "@/components/site/PageShell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/lib/api";
 import { EmptyBlock, LoadingBlock } from "@/components/site/States";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ export const Route = createFileRoute("/user/$id/games")({ component: UserGamesPa
 
 function UserGamesPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const limit = 15;
   const offset = (page - 1) * limit;
@@ -28,10 +30,11 @@ function UserGamesPage() {
         eyebrow={user.data?.nickname ?? "Игрок"}
         title="Все игры игрока"
         actions={
-          <Button variant="outline" asChild>
-            <Link to="/user/$id" params={{ id }}>
-              К профилю
-            </Link>
+          <Button variant="outline" onClick={() => {
+            qc.invalidateQueries({ queryKey: ["user", id] });
+            void navigate({ to: "/user/$id", params: { id } });
+          }}>
+            К профилю
           </Button>
         }
       />

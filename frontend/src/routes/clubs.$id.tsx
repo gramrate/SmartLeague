@@ -9,8 +9,9 @@ import { displayUserName, canManageClub } from "@/lib/roles";
 import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { fmtDateRange, fmtRub } from "@/lib/format";
-import { Crown, Settings, UserPlus } from "lucide-react";
+import { Crown, LogOut, Settings, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/clubs/$id")({ component: ClubPage });
 
@@ -46,6 +47,18 @@ function ClubPage() {
       toast.success("Вы вступили в клуб");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Не удалось вступить в клуб");
+    }
+  };
+  const onLeave = async () => {
+    try {
+      await clubsApi.leave();
+      const u = await authApi.me();
+      setMe(u);
+      qc.invalidateQueries({ queryKey: ["club", id] });
+      qc.invalidateQueries({ queryKey: ["club", id, "members"] });
+      toast.success("Вы вышли из клуба");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Не удалось выйти из клуба");
     }
   };
   const deleteSeries = async (seriesId: string) => {
@@ -105,9 +118,19 @@ function ClubPage() {
                       <p className="break-words font-medium">{s.name}</p>
                       <p className="text-xs text-muted-foreground">{fmtDateRange(s.start_at, s.end_at)}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        {s.is_rating && (
+                        {s.is_tournament && (
+                          <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                            Турнир
+                          </span>
+                        )}
+                        {s.is_rating && !s.is_tournament && (
                           <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
                             На рейтинг
+                          </span>
+                        )}
+                        {s.is_club_only && (
+                          <span className="inline-flex rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+                            Для участников клуба
                           </span>
                         )}
                         {Number(s.price_rub ?? 0) > 0 && (
@@ -204,6 +227,33 @@ function ClubPage() {
           </div>
         </aside>
       </div>
+
+      {isInClub && (
+        <div className="mt-10 flex justify-center border-t border-border/40 pt-8">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="text-destructive hover:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Выйти из клуба
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Выйти из клуба?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Вы покинете клуб «{club.data.name}». Чтобы вернуться, потребуется снова вступить.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={() => void onLeave()}>
+                  Выйти
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
     </PageShell>
   );
 }

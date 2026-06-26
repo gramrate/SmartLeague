@@ -33,8 +33,14 @@ function GamePage() {
     queryFn: () => seriesApi.participants(game.data!.series_id),
     enabled: !!game.data?.series_id,
   });
+  const judgesQuery = useQuery({
+    queryKey: ["series", game.data?.series_id, "judges"],
+    queryFn: () => seriesApi.judges(game.data!.series_id),
+    enabled: !!game.data?.series_id && !!me,
+  });
 
-  const canManage = !!series.data && canManageClub(me, series.data.club_id);
+  const isJudge = !!me && (judgesQuery.data?.items ?? []).some((j) => j.profile_id === me.id);
+  const canManage = (!!series.data && canManageClub(me, series.data.club_id)) || isJudge;
 
   const byId = useMemo(
     () => new Map((participants.data?.items ?? []).map((u) => [u.id, u])),
@@ -72,6 +78,22 @@ function GamePage() {
       />
 
       <div className="grid gap-6">
+        {game.data.game_judge_confirmed && (
+          <p className="text-sm text-muted-foreground">
+            Главный судья:{" "}
+            {game.data.game_judge_id && game.data.game_judge_nickname ? (
+              <Link
+                to="/user/$id"
+                params={{ id: game.data.game_judge_id }}
+                className="font-medium text-foreground hover:underline"
+              >
+                {game.data.game_judge_nickname}
+              </Link>
+            ) : (
+              <span className="font-medium text-foreground">Не указан</span>
+            )}
+          </p>
+        )}
         <section className="w-full rounded-2xl border border-border/60 bg-card/60 p-6">
           <h2 className="mb-4 font-display text-xl font-semibold">Результаты</h2>
           {results.length === 0 ? (
@@ -93,13 +115,19 @@ function GamePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((r) => (
-                    <tr key={r.profile_id} className="border-b border-border/30">
+                  {results.map((r, i) => (
+                    <tr key={r.profile_id ?? r.guest_id ?? i} className="border-b border-border/30">
                       <td className="py-2 pr-2 font-bold text-primary">{r.place ?? "—"}</td>
                       <td className="py-2 pr-2">
-                        <Link to="/user/$id" params={{ id: r.profile_id }} className="inline-block max-w-[180px] truncate align-bottom hover:text-primary">
-                          {displayUserName(byId.get(r.profile_id) ?? { id: r.profile_id })}
-                        </Link>
+                        {r.profile_id ? (
+                          <Link to="/user/$id" params={{ id: r.profile_id }} className="inline-block max-w-[180px] truncate align-bottom hover:text-primary">
+                            {displayUserName(byId.get(r.profile_id) ?? { id: r.profile_id })}
+                          </Link>
+                        ) : (
+                          <span className="inline-block max-w-[180px] truncate align-bottom text-muted-foreground" title="Гость">
+                            {r.guest_nickname ?? "Гость"}
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 pr-2 text-muted-foreground">{r.role ? (ROLE_LABEL[r.role] ?? r.role) : "—"}</td>
                       <td className="py-2 pr-2">{r.best_move ?? "—"}</td>

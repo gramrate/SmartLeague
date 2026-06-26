@@ -7,10 +7,12 @@ import { canManageClub, displayUserName } from "@/lib/roles";
 import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { MafiaRole, ManageGameRow } from "@/types/api";
+import type { MafiaRole } from "@/types/api";
 import { normalizeSearchText } from "@/lib/search";
 
 export const Route = createFileRoute("/game/$id/manage")({ component: ManageGamePage });
@@ -19,6 +21,7 @@ type RowState = {
   slot: number;
   nickname: string;
   profile_id?: string;
+  guest_id?: string; // populated when loading an existing guest slot
   role?: MafiaRole;
   best_move?: string;
   compensation: string;
@@ -26,10 +29,6 @@ type RowState = {
   removed: string;
   extra_points: string;
   total_points: string;
-};
-
-type PersistedDraft = {
-  rows: RowState[];
 };
 
 const ROLE_OPTIONS: { value: MafiaRole; label: string }[] = [
@@ -69,36 +68,94 @@ function ManageGamePage() {
     queryFn: () => seriesApi.participants(game.data!.series_id),
     enabled: !!game.data?.series_id,
   });
+  const judgesQuery = useQuery({
+    queryKey: ["series", game.data?.series_id, "judges"],
+    queryFn: () => seriesApi.judges(game.data!.series_id),
+    enabled: !!game.data?.series_id && !!me,
+  });
 
-  const canManage = series.data ? canManageClub(me, series.data.club_id) : null;
+  const isJudge = !!me && (judgesQuery.data?.items ?? []).some((j) => j.profile_id === me.id);
+  const canManage = series.data ? (canManageClub(me, series.data.club_id) || isJudge) : null;
+  const queriesReady = status === "ready" && !!series.data && (!me || !judgesQuery.isLoading);
   useEffect(() => {
-    if (status === "ready" && canManage === false) navigate({ to: "/game/$id", params: { id } });
-  }, [canManage, status, navigate, id]);
+    if (queriesReady && canManage === false) navigate({ to: "/game/$id", params: { id } });
+  }, [queriesReady, canManage, navigate, id]);
+
+  // "unset" = not chosen yet (blocks publish in tournament), "none" = Не указан, uuid = specific judge
+  const [judgeSelection, setJudgeSelection] = useState<"unset" | "none" | string>("unset");
 
   const [rows, setRows] = useState<RowState[]>([]);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [backDialogOpen, setBackDialogOpen] = useState(false);
+  const initialSnapshot = useRef<string>("");
 
-  const draftStorageKey = `smartleague:game-manage-draft:${id}`;
-
+  // Load rows: prefer server-side draft, fall back to published results
   useEffect(() => {
     if (!game.data) return;
 
-    const byProfile = new Map((game.data.results ?? []).map((r) => [r.profile_id, r]));
+    const draft = game.data.draft;
+    if (draft?.rows?.length) {
+      const participantMap = new Map((participants.data?.items ?? []).map((p) => [p.id, p]));
+      const draftRows: RowState[] = Array.from({ length: 10 }, (_, i) => {
+        const slot = i + 1;
+        const dr = draft.rows.find((r) => r.slot === slot);
+        const profile = dr?.profile_id ? participantMap.get(dr.profile_id) : undefined;
+        return {
+          slot,
+          nickname: dr?.guest_nickname ?? (profile ? (profile.nickname || profile.name || "") : ""),
+          profile_id: dr?.profile_id ?? undefined,
+          guest_id: undefined,
+          role: (dr?.role as MafiaRole | undefined) ?? "civilian",
+          best_move: dr?.best_move ?? "",
+          compensation: String(dr?.compensation ?? 0),
+          yellow_cards: String(dr?.yellow_cards ?? 0),
+          removed: String(dr?.removed ?? 0),
+          extra_points: String(dr?.extra_points ?? 0),
+          total_points: String(dr?.total_points ?? 0),
+        };
+      });
+      setRows(draftRows);
+      const loadedJudge = draft.judge_id ?? (draft.judge_confirmed ? "none" : "unset");
+      setJudgeSelection(loadedJudge);
+      initialSnapshot.current = JSON.stringify({ rows: draftRows, judge: loadedJudge });
+      return;
+    }
+
+    // Fall back to published results
+    const bySlot = new Map((game.data.results ?? []).filter((r) => r.place != null).map((r) => [r.place!, r]));
+    const byProfile = new Map((game.data.results ?? []).filter((r) => r.profile_id).map((r) => [r.profile_id!, r]));
     const pids = game.data.participant_ids ?? [];
 
     const init: RowState[] = Array.from({ length: 10 }, (_, i) => {
       const slot = i + 1;
-      const pid = pids[i];
-      const rr = pid ? byProfile.get(pid) : undefined;
+      const rr = bySlot.get(slot) ?? (pids[i] ? byProfile.get(pids[i]) : undefined);
+      const legacyPid = !bySlot.size ? pids[i] : undefined;
+
+      if (rr?.guest_id) {
+        return {
+          slot,
+          nickname: rr.guest_nickname ?? "",
+          profile_id: undefined,
+          guest_id: rr.guest_id,
+          role: rr.role ?? "civilian",
+          best_move: rr.best_move ?? "",
+          compensation: String(rr.compensation ?? 0),
+          yellow_cards: String(rr.yellow_cards ?? 0),
+          removed: String(rr.removed ?? 0),
+          extra_points: String(rr.extra_points ?? 0),
+          total_points: String(rr.total_points ?? 0),
+        };
+      }
+
+      const pid = rr?.profile_id ?? legacyPid;
+      const profile = pid ? (participants.data?.items ?? []).find((p) => p.id === pid) : undefined;
       return {
         slot,
-        nickname: pid ? (participants.data?.items ?? []).find((p) => p.id === pid)?.nickname
-          || (participants.data?.items ?? []).find((p) => p.id === pid)?.name
-          || ""
-          : "",
+        nickname: pid ? (profile?.nickname || profile?.name || "") : "",
         profile_id: pid,
+        guest_id: undefined,
         role: rr?.role ?? "civilian",
         best_move: rr?.best_move ?? "",
         compensation: rr ? String(rr.compensation ?? 0) : "0",
@@ -108,58 +165,11 @@ function ManageGamePage() {
         total_points: rr ? String(rr.total_points ?? 0) : "0",
       };
     });
-
-    if (typeof window === "undefined") {
-      setRows(init);
-      return;
-    }
-
-    let persisted: PersistedDraft | null = null;
-    try {
-      const raw = window.localStorage.getItem(draftStorageKey);
-      if (raw) persisted = JSON.parse(raw) as PersistedDraft;
-    } catch {
-      persisted = null;
-    }
-
-    if (!persisted?.rows?.length) {
-      setRows(init);
-      return;
-    }
-
-    const persistedBySlot = new Map(persisted.rows.map((r) => [r.slot, r]));
-    const merged = init.map((r) => {
-      const pr = persistedBySlot.get(r.slot);
-      if (!pr) return r;
-      const persistedNickname = pr.nickname ?? "";
-      const hasManualNickname = persistedNickname.trim().length > 0;
-      return {
-        ...r,
-        nickname: persistedNickname || r.nickname,
-        // If nickname is manually entered without selecting a player, keep profile_id empty.
-        profile_id: hasManualNickname ? pr.profile_id : (pr.profile_id ?? r.profile_id),
-        role: pr.role ?? r.role,
-        best_move: pr.best_move ?? r.best_move,
-        compensation: pr.compensation ?? r.compensation,
-        yellow_cards: pr.yellow_cards ?? r.yellow_cards,
-        removed: pr.removed ?? r.removed,
-        extra_points: pr.extra_points ?? r.extra_points,
-        total_points: pr.total_points ?? r.total_points,
-      };
-    });
-
-    setRows(merged);
-  }, [game.data, participants.data, draftStorageKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const payload: PersistedDraft = { rows };
-      window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
-    } catch {
-      // ignore localStorage errors
-    }
-  }, [rows, draftStorageKey]);
+    setRows(init);
+    const loadedJudge = game.data.game_judge_id ?? (game.data.game_judge_confirmed ? "none" : "unset");
+    setJudgeSelection(loadedJudge);
+    initialSnapshot.current = JSON.stringify({ rows: init, judge: loadedJudge });
+  }, [game.data, participants.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setCell = (slot: number, patch: Partial<RowState>) => {
     setRows((prev) => prev.map((r) => (r.slot === slot ? { ...r, ...patch } : r)));
@@ -180,6 +190,8 @@ function ManageGamePage() {
   const payloadRows: ManageGameRow[] = rows.map((r) => ({
     slot: r.slot,
     profile_id: r.profile_id,
+    // send guest_nickname when there's a typed name but no matched profile
+    guest_nickname: !r.profile_id && r.nickname.trim() ? r.nickname.trim() : undefined,
     role: r.role,
     best_move: normalizeBestMove(r.best_move),
     compensation: toNum(r.compensation),
@@ -189,8 +201,9 @@ function ManageGamePage() {
     total_points: toNum(r.total_points),
   }));
 
-  const draftOnlySlots = rows
-    .filter((r) => r.nickname.trim().length > 0 && !r.profile_id)
+  // Slots with a nickname but no profile_id are guest slots — allowed for both draft and publish.
+  const emptySlots = rows
+    .filter((r) => !r.profile_id && !r.nickname.trim())
     .map((r) => r.slot);
   const slotsByProfile = rows.reduce<Map<string, number[]>>((acc, r) => {
     if (!r.profile_id) return acc;
@@ -203,6 +216,23 @@ function ManageGamePage() {
     .filter((slots) => slots.length > 1)
     .flat()
     .sort((a, b) => a - b);
+  const duplicateSlotSet = new Set(duplicateParticipantSlots);
+
+  const isDirty = initialSnapshot.current !== "" &&
+    JSON.stringify({ rows, judge: judgeSelection }) !== initialSnapshot.current;
+
+  const goBack = () => {
+    qc.invalidateQueries({ queryKey: ["game", id, "full"] });
+    void navigate({ to: "/game/$id", params: { id } });
+  };
+
+  const handleBack = () => {
+    if (isDirty) {
+      setBackDialogOpen(true);
+    } else {
+      goBack();
+    }
+  };
 
   const saveDraft = async () => {
     if (duplicateParticipantSlots.length > 0) {
@@ -211,7 +241,9 @@ function ManageGamePage() {
     }
     setSavingDraft(true);
     try {
-      await gamesApi.saveDraft(id, payloadRows);
+      const judgeId = judgeSelection === "unset" || judgeSelection === "none" ? null : judgeSelection;
+      await gamesApi.saveDraft(id, payloadRows, judgeId, judgeSelection !== "unset");
+      initialSnapshot.current = JSON.stringify({ rows, judge: judgeSelection });
       toast.success("Черновик сохранен");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Ошибка");
@@ -225,16 +257,14 @@ function ManageGamePage() {
       toast.error(`Нельзя опубликовать: один и тот же игрок выбран в нескольких слотах (${duplicateParticipantSlots.join(", ")}).`);
       return;
     }
-    if (draftOnlySlots.length > 0) {
-      toast.error(`Нельзя опубликовать: в слотах ${draftOnlySlots.join(", ")} указан только текстовый никнейм. Выберите игрока из списка.`);
+    if (emptySlots.length > 0) {
+      toast.error(`Нельзя опубликовать: слоты ${emptySlots.join(", ")} пустые. Заполните никнейм или выберите игрока.`);
       return;
     }
     setPublishing(true);
     try {
-      await gamesApi.publish(id, payloadRows);
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem(draftStorageKey);
-      }
+      const judgeId = judgeSelection === "unset" || judgeSelection === "none" ? null : judgeSelection;
+      await gamesApi.publish(id, payloadRows, judgeId, judgeSelection !== "unset");
       qc.invalidateQueries({ queryKey: ["game", id, "full"] });
       toast.success("Игра опубликована");
       navigate({ to: "/game/$id", params: { id } });
@@ -251,11 +281,63 @@ function ManageGamePage() {
 
   return (
     <PageShell>
+      <AlertDialog open={backDialogOpen} onOpenChange={setBackDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Несохранённые изменения</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы изменили данные игры. Сохранить черновик перед выходом?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <Button variant="outline" onClick={() => { setBackDialogOpen(false); goBack(); }}>
+              Не сохранять
+            </Button>
+            <AlertDialogAction onClick={async () => {
+              setBackDialogOpen(false);
+              await saveDraft();
+              goBack();
+            }}>
+              Сохранить черновик
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <PageHeader
         eyebrow="Управление игрой"
         title={game.data.name || `Игра #${game.data.number}`}
-        actions={<Button variant="outline" asChild><Link to="/game/$id" params={{ id }}>Назад к игре</Link></Button>}
+        actions={<Button variant="outline" onClick={handleBack}>Назад к игре</Button>}
       />
+
+      {game.data.is_tournament && (
+        <section className="rounded-2xl border border-border/60 bg-card/60 p-5">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Главный судья игры</Label>
+              <Select value={judgeSelection} onValueChange={setJudgeSelection}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Выбрать судью…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Не указан</SelectItem>
+                  {(judgesQuery.data?.items ?? [])
+                    .filter((j) => j.role === 1)
+                    .map((j) => (
+                      <SelectItem key={j.profile_id} value={j.profile_id}>
+                        {j.nickname || j.name || j.profile_id}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {judgeSelection === "unset" && (
+              <p className="pb-1 text-xs text-amber-600">Выберите судью или «Не указан» перед публикацией.</p>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-border/60 bg-card/60 p-6">
         <div className="overflow-x-auto">
@@ -286,6 +368,10 @@ function ManageGamePage() {
                         onBlur={() => setTimeout(() => setActiveSlot((s) => (s === r.slot ? null : s)), 120)}
                         placeholder="Введите или выберите"
                         className="h-8"
+                        style={duplicateSlotSet.has(r.slot) ? {
+                          borderColor: "oklch(0.62 0.22 25 / 0.9)",
+                          boxShadow: "0 0 0 1px oklch(0.62 0.22 25 / 0.5), 0 0 12px -2px oklch(0.62 0.22 25 / 0.7)",
+                        } : undefined}
                       />
                       {activeSlot === r.slot && (
                         <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
@@ -348,17 +434,26 @@ function ManageGamePage() {
           <Button variant="outline" disabled={savingDraft || publishing} onClick={() => void saveDraft()}>
             {savingDraft ? "Сохранение..." : "Сохранить как черновик"}
           </Button>
-          <Button disabled={savingDraft || publishing || draftOnlySlots.length > 0 || duplicateParticipantSlots.length > 0} onClick={() => void publish()}>
+          <Button
+            disabled={
+              savingDraft || publishing ||
+              emptySlots.length > 0 ||
+              duplicateParticipantSlots.length > 0 ||
+              (!!game.data.is_tournament && judgeSelection === "unset")
+            }
+            onClick={() => void publish()}
+          >
             {publishing ? "Публикация..." : "Опубликовать"}
           </Button>
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground">
-          Черновики видны только лидерам и президентам клуба. После публикации игра становится доступной всем.
+          Черновики видны только судьям и лидерам клуба. После публикации игра становится доступной всем.
+          Незарегистрированных гостей можно добавить просто введя никнейм — без привязки к аккаунту.
         </p>
-        {draftOnlySlots.length > 0 && (
+        {emptySlots.length > 0 && (
           <p className="mt-1 text-xs text-amber-600">
-            Публикация недоступна: в слотах {draftOnlySlots.join(", ")} не выбран игрок из списка.
+            Публикация недоступна: слоты {emptySlots.join(", ")} пустые.
           </p>
         )}
         {duplicateParticipantSlots.length > 0 && (

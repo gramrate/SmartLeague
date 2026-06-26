@@ -22,6 +22,12 @@ type seriesService interface {
 	Join(ctx context.Context, req *dto.JoinSeriesRequest) error
 	Leave(ctx context.Context, req *dto.LeaveSeriesRequest) error
 	GetLeaderboard(ctx context.Context, requesterID *uuid.UUID, req *dto.GetSeriesLeaderboardRequest) (*dto.GetSeriesLeaderboardResponse, error)
+
+	ListJudges(ctx context.Context, seriesID uuid.UUID) (*dto.GetSeriesJudgesResponse, error)
+	SetJudge(ctx context.Context, requesterID uuid.UUID, req *dto.SetSeriesJudgeRequest) error
+	RemoveJudge(ctx context.Context, requesterID uuid.UUID, req *dto.RemoveSeriesJudgeRequest) error
+
+	IsProfileBannedInClub(ctx context.Context, profileID uuid.UUID, clubID uuid.UUID) (bool, error)
 }
 
 func (s *ServiceProvider) SeriesService() seriesService {

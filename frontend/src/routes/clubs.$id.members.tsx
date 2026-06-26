@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PageHeader, PageShell } from "@/components/site/PageShell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { clubsApi } from "@/lib/api";
 import { EmptyBlock, LoadingBlock } from "@/components/site/States";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ export const Route = createFileRoute("/clubs/$id/members")({ component: ClubMemb
 
 function ClubMembersPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
   const qLimit = 50;
   const [clubStateFilter, setClubStateFilter] = useState<"all" | "leader" | "resident" | "member">(
@@ -59,10 +61,11 @@ function ClubMembersPage() {
         eyebrow={club.data?.name ?? "Клуб"}
         title="Участники клуба"
         actions={
-          <Button variant="outline" asChild>
-            <Link to="/clubs/$id" params={{ id }}>
-              К клубу
-            </Link>
+          <Button variant="outline" onClick={() => {
+            qc.invalidateQueries({ queryKey: ["club", id] });
+            void navigate({ to: "/clubs/$id", params: { id } });
+          }}>
+            К клубу
           </Button>
         }
       />

@@ -160,9 +160,21 @@ function ClubSeriesPage() {
                 {fmtDateRange(s.start_at, s.end_at)}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                  {s.is_rating ? "На рейтинг" : "Без рейтинга"}
-                </span>
+                {s.is_tournament && (
+                  <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
+                    Турнир
+                  </span>
+                )}
+                {!s.is_tournament && (
+                  <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
+                    {s.is_rating ? "На рейтинг" : "Без рейтинга"}
+                  </span>
+                )}
+                {s.is_club_only && (
+                  <span className="inline-flex rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+                    Для участников клуба
+                  </span>
+                )}
                 {Number(s.price_rub ?? 0) > 0 && (
                   <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
                     Платно · {fmtRub(s.price_rub)}

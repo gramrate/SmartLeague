@@ -25,6 +25,7 @@ import { Route as ClubsIdRouteImport } from './routes/clubs.$id'
 import { Route as UserIdSeriesRouteImport } from './routes/user.$id.series'
 import { Route as UserIdGamesRouteImport } from './routes/user.$id.games'
 import { Route as SeriesIdManageRouteImport } from './routes/series.$id.manage'
+import { Route as SeriesIdLeaderboardRouteImport } from './routes/series.$id.leaderboard'
 import { Route as GameIdManageRouteImport } from './routes/game.$id.manage'
 import { Route as ClubsIdSeriesRouteImport } from './routes/clubs.$id.series'
 import { Route as ClubsIdMembersRouteImport } from './routes/clubs.$id.members'
@@ -111,6 +112,11 @@ const SeriesIdManageRoute = SeriesIdManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => SeriesIdRoute,
 } as any)
+const SeriesIdLeaderboardRoute = SeriesIdLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => SeriesIdRoute,
+} as any)
 const GameIdManageRoute = GameIdManageRouteImport.update({
   id: '/manage',
   path: '/manage',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/clubs/$id/members': typeof ClubsIdMembersRoute
   '/clubs/$id/series': typeof ClubsIdSeriesRoute
   '/game/$id/manage': typeof GameIdManageRoute
+  '/series/$id/leaderboard': typeof SeriesIdLeaderboardRoute
   '/series/$id/manage': typeof SeriesIdManageRoute
   '/user/$id/games': typeof UserIdGamesRoute
   '/user/$id/series': typeof UserIdSeriesRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/clubs/$id/members': typeof ClubsIdMembersRoute
   '/clubs/$id/series': typeof ClubsIdSeriesRoute
   '/game/$id/manage': typeof GameIdManageRoute
+  '/series/$id/leaderboard': typeof SeriesIdLeaderboardRoute
   '/series/$id/manage': typeof SeriesIdManageRoute
   '/user/$id/games': typeof UserIdGamesRoute
   '/user/$id/series': typeof UserIdSeriesRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/clubs/$id/members': typeof ClubsIdMembersRoute
   '/clubs/$id/series': typeof ClubsIdSeriesRoute
   '/game/$id/manage': typeof GameIdManageRoute
+  '/series/$id/leaderboard': typeof SeriesIdLeaderboardRoute
   '/series/$id/manage': typeof SeriesIdManageRoute
   '/user/$id/games': typeof UserIdGamesRoute
   '/user/$id/series': typeof UserIdSeriesRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/clubs/$id/members'
     | '/clubs/$id/series'
     | '/game/$id/manage'
+    | '/series/$id/leaderboard'
     | '/series/$id/manage'
     | '/user/$id/games'
     | '/user/$id/series'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/clubs/$id/members'
     | '/clubs/$id/series'
     | '/game/$id/manage'
+    | '/series/$id/leaderboard'
     | '/series/$id/manage'
     | '/user/$id/games'
     | '/user/$id/series'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/clubs/$id/members'
     | '/clubs/$id/series'
     | '/game/$id/manage'
+    | '/series/$id/leaderboard'
     | '/series/$id/manage'
     | '/user/$id/games'
     | '/user/$id/series'
@@ -405,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeriesIdManageRouteImport
       parentRoute: typeof SeriesIdRoute
     }
+    '/series/$id/leaderboard': {
+      id: '/series/$id/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/series/$id/leaderboard'
+      preLoaderRoute: typeof SeriesIdLeaderboardRouteImport
+      parentRoute: typeof SeriesIdRoute
+    }
     '/game/$id/manage': {
       id: '/game/$id/manage'
       path: '/manage'
@@ -473,10 +492,12 @@ const ClubsRouteChildren: ClubsRouteChildren = {
 const ClubsRouteWithChildren = ClubsRoute._addFileChildren(ClubsRouteChildren)
 
 interface SeriesIdRouteChildren {
+  SeriesIdLeaderboardRoute: typeof SeriesIdLeaderboardRoute
   SeriesIdManageRoute: typeof SeriesIdManageRoute
 }
 
 const SeriesIdRouteChildren: SeriesIdRouteChildren = {
+  SeriesIdLeaderboardRoute: SeriesIdLeaderboardRoute,
   SeriesIdManageRoute: SeriesIdManageRoute,
 }
 
