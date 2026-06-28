@@ -29,6 +29,7 @@ type RowState = {
   removed: string;
   extra_points: string;
   total_points: string;
+  invalid?: boolean; // player removed from participants (e.g. became a judge)
 };
 
 const ROLE_OPTIONS: { value: MafiaRole; label: string }[] = [
@@ -57,21 +58,24 @@ function ManageGamePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const game = useQuery({ queryKey: ["game", id, "full"], queryFn: () => gamesApi.full(id) });
+  const game = useQuery({ queryKey: ["game", id, "full"], queryFn: () => gamesApi.full(id), refetchOnMount: "always" });
   const series = useQuery({
     queryKey: ["series", game.data?.series_id],
     queryFn: () => seriesApi.get(game.data!.series_id),
     enabled: !!game.data?.series_id,
+    refetchOnMount: "always",
   });
   const participants = useQuery({
     queryKey: ["series", game.data?.series_id, "participants"],
     queryFn: () => seriesApi.participants(game.data!.series_id),
     enabled: !!game.data?.series_id,
+    refetchOnMount: "always",
   });
   const judgesQuery = useQuery({
     queryKey: ["series", game.data?.series_id, "judges"],
     queryFn: () => seriesApi.judges(game.data!.series_id),
-    enabled: !!game.data?.series_id && !!me,
+    enabled: !!game.data?.series_id,
+    refetchOnMount: "always",
   });
 
   const isJudge = !!me && (judgesQuery.data?.items ?? []).some((j) => j.profile_id === me.id);
@@ -91,21 +95,27 @@ function ManageGamePage() {
   const [backDialogOpen, setBackDialogOpen] = useState(false);
   const initialSnapshot = useRef<string>("");
 
-  // Load rows: prefer server-side draft, fall back to published results
+  // Load rows: prefer server-side draft, fall back to published results.
+  // For drafts: wait until participants AND judges are loaded so we can validate all profile_ids.
   useEffect(() => {
     if (!game.data) return;
 
     const draft = game.data.draft;
     if (draft?.rows?.length) {
-      const participantMap = new Map((participants.data?.items ?? []).map((p) => [p.id, p]));
+      // Wait for both sources so we can fully validate draft profile_ids
+      if (!participants.data || !judgesQuery.data) return;
+
+      const participantMap = new Map(participants.data.items.map((p) => [p.id, p]));
       const draftRows: RowState[] = Array.from({ length: 10 }, (_, i) => {
         const slot = i + 1;
         const dr = draft.rows.find((r) => r.slot === slot);
         const profile = dr?.profile_id ? participantMap.get(dr.profile_id) : undefined;
+        // profile_id present but not in participants → player left or became a judge
+        const profileInvalid = !!dr?.profile_id && !profile;
         return {
           slot,
           nickname: dr?.guest_nickname ?? (profile ? (profile.nickname || profile.name || "") : ""),
-          profile_id: dr?.profile_id ?? undefined,
+          profile_id: profileInvalid ? undefined : (dr?.profile_id ?? undefined),
           guest_id: undefined,
           role: (dr?.role as MafiaRole | undefined) ?? "civilian",
           best_move: dr?.best_move ?? "",
@@ -114,6 +124,7 @@ function ManageGamePage() {
           removed: String(dr?.removed ?? 0),
           extra_points: String(dr?.extra_points ?? 0),
           total_points: String(dr?.total_points ?? 0),
+          invalid: profileInvalid,
         };
       });
       setRows(draftRows);
@@ -169,7 +180,7 @@ function ManageGamePage() {
     const loadedJudge = game.data.game_judge_id ?? (game.data.game_judge_confirmed ? "none" : "unset");
     setJudgeSelection(loadedJudge);
     initialSnapshot.current = JSON.stringify({ rows: init, judge: loadedJudge });
-  }, [game.data, participants.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game.data, participants.data, judgesQuery.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setCell = (slot: number, patch: Partial<RowState>) => {
     setRows((prev) => prev.map((r) => (r.slot === slot ? { ...r, ...patch } : r)));
@@ -182,6 +193,7 @@ function ManageGamePage() {
     setCell(slot, {
       nickname: value,
       profile_id: matched?.id,
+      invalid: false,
     });
   };
 
@@ -366,12 +378,14 @@ function ManageGamePage() {
                         onChange={(e) => onNicknameChange(r.slot, e.target.value)}
                         onFocus={() => setActiveSlot(r.slot)}
                         onBlur={() => setTimeout(() => setActiveSlot((s) => (s === r.slot ? null : s)), 120)}
-                        placeholder="Введите или выберите"
+                        placeholder={r.invalid ? "Игрок удалён — заполните слот" : "Введите или выберите"}
                         className="h-8"
-                        style={duplicateSlotSet.has(r.slot) ? {
-                          borderColor: "oklch(0.62 0.22 25 / 0.9)",
-                          boxShadow: "0 0 0 1px oklch(0.62 0.22 25 / 0.5), 0 0 12px -2px oklch(0.62 0.22 25 / 0.7)",
-                        } : undefined}
+                        style={
+                          duplicateSlotSet.has(r.slot) || r.invalid ? {
+                            borderColor: "oklch(0.62 0.22 25 / 0.9)",
+                            boxShadow: "0 0 0 1px oklch(0.62 0.22 25 / 0.5), 0 0 12px -2px oklch(0.62 0.22 25 / 0.7)",
+                          } : undefined
+                        }
                       />
                       {activeSlot === r.slot && (
                         <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
@@ -388,7 +402,7 @@ function ManageGamePage() {
                                 className="block w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => {
-                                  setCell(r.slot, { nickname: displayUserName(p), profile_id: p.id });
+                                  setCell(r.slot, { nickname: displayUserName(p), profile_id: p.id, invalid: false });
                                   setActiveSlot(null);
                                 }}
                               >
@@ -451,6 +465,11 @@ function ManageGamePage() {
           Черновики видны только судьям и лидерам клуба. После публикации игра становится доступной всем.
           Незарегистрированных гостей можно добавить просто введя никнейм — без привязки к аккаунту.
         </p>
+        {rows.some((r) => r.invalid) && (
+          <p className="mt-1 text-xs text-destructive">
+            Слоты {rows.filter((r) => r.invalid).map((r) => r.slot).join(", ")} — игроки больше не участники серии (возможно, стали судьями). Заполните их вручную.
+          </p>
+        )}
         {emptySlots.length > 0 && (
           <p className="mt-1 text-xs text-amber-600">
             Публикация недоступна: слоты {emptySlots.join(", ")} пустые.

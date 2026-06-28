@@ -175,6 +175,8 @@ export const clubsApi = {
     apiFetch<void>(`/api/v1/club/${id}/member/${memberId}/unban`, { method: "POST" }),
   blockProfile: (id: string, profileId: string) =>
     apiFetch<void>(`/api/v1/club/${id}/profile/${profileId}/block`, { method: "POST" }),
+  isProfileBanned: (id: string, profileId: string) =>
+    apiFetch<{ is_banned: boolean }>(`/api/v1/club/${id}/profile/${profileId}/is-banned`),
 };
 
 // ---------- Series ----------

@@ -32,6 +32,7 @@ type clubService interface {
 	BlockMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 	UnbanMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 	BlockProfile(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) error
+	IsProfileBanned(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) (bool, error)
 }
 
 type handler struct {
@@ -60,7 +61,7 @@ func NewHandler(
 
 func (h *handler) Setup(router *echo.Group) {
 	router.POST("/club", h.Create, h.authMiddleware.RequireAuth)
-	router.GET("/club/:id", h.GetByID)
+	router.GET("/club/:id", h.GetByID, h.authMiddleware.OptionalAuth)
 	router.GET("/club/all", h.GetAll)
 
 	router.PATCH("/club/:id", h.Update, h.authMiddleware.RequireAuth)
@@ -77,4 +78,5 @@ func (h *handler) Setup(router *echo.Group) {
 	router.POST("/club/:id/member/:member_id/block", h.BlockMember, h.authMiddleware.RequireAuth)
 	router.POST("/club/:id/member/:member_id/unban", h.UnbanMember, h.authMiddleware.RequireAuth)
 	router.POST("/club/:id/profile/:profile_id/block", h.BlockProfile, h.authMiddleware.RequireAuth)
+	router.GET("/club/:id/profile/:profile_id/is-banned", h.IsProfileBanned, h.authMiddleware.RequireAuth)
 }

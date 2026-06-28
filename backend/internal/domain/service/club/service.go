@@ -73,8 +73,17 @@ func (s *service) GetByID(ctx context.Context, req *dto.GetClubRequest) (*dto.Ge
 	if err != nil {
 		return nil, err
 	}
-	resp := dto.GetClubResponse(*toDTO(c))
-	return &resp, nil
+	base := toDTO(c)
+	resp := &dto.GetClubResponse{
+		ID:          base.ID,
+		CreatorID:   base.CreatorID,
+		Name:        base.Name,
+		Description: base.Description,
+	}
+	if req.ViewerID != nil {
+		resp.IsBanned, _ = s.repo.IsProfileBannedInClub(ctx, *req.ViewerID, req.ID)
+	}
+	return resp, nil
 }
 
 func (s *service) GetAll(ctx context.Context, req *dto.GetAllClubsRequest) (*dto.GetAllClubsResponse, error) {
@@ -487,4 +496,15 @@ func (s *service) BlockProfile(ctx context.Context, requesterID uuid.UUID, clubI
 		}
 	}
 	return s.repo.BanProfileInClub(ctx, profileID, clubID)
+}
+
+func (s *service) IsProfileBanned(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) (bool, error) {
+	requesterClubID, requesterState, err := s.repo.GetProfileClubState(ctx, requesterID)
+	if err != nil {
+		return false, err
+	}
+	if requesterClubID == nil || *requesterClubID != clubID || !canManageClub(requesterState) {
+		return false, errorz.Unauthorized
+	}
+	return s.repo.IsProfileBannedInClub(ctx, profileID, clubID)
 }

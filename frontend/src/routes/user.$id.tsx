@@ -28,6 +28,15 @@ function UserPage() {
   const qc = useQueryClient();
   const isMe = me?.id === id;
   const [editOpen, setEditOpen] = useState(false);
+  const isBannedQuery = useQuery({
+    queryKey: ["club", me?.club_id, "ban", id],
+    queryFn: () => clubsApi.isProfileBanned(me!.club_id!, id),
+    enabled:
+      !!me?.club_id &&
+      (me.club_state === ClubState.Leader || me.club_state === ClubState.President) &&
+      me.id !== id,
+  });
+  const isBanned = isBannedQuery.data?.is_banned ?? false;
   const [accountOpen, setAccountOpen] = useState(false);
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
@@ -122,7 +131,19 @@ function UserPage() {
       await clubsApi.blockProfile(me.club_id, user.data.id);
       qc.invalidateQueries({ queryKey: ["club", me.club_id, "members"] });
       qc.invalidateQueries({ queryKey: ["club", me.club_id, "bans"] });
+      qc.invalidateQueries({ queryKey: ["club", me.club_id, "ban", id], exact: true });
       toast.success("Игрок заблокирован");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Ошибка");
+    }
+  };
+  const unblockFromProfile = async () => {
+    if (!me?.club_id) return;
+    try {
+      await clubsApi.unban(me.club_id, user.data.id);
+      qc.invalidateQueries({ queryKey: ["club", me.club_id, "bans"] });
+      qc.invalidateQueries({ queryKey: ["club", me.club_id, "ban", id], exact: true });
+      toast.success("Игрок разблокирован");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Ошибка");
     }
@@ -141,10 +162,10 @@ function UserPage() {
                 {editOpen ? "Отмена" : "Редактировать профиль"}
               </Button>
             )}
-            {canBlockFromProfile && (
+            {canBlockFromProfile && !isBanned && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="secondary">Заблокировать в своем клубе</Button>
+                  <Button variant="secondary">Заблокировать в своём клубе</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -157,6 +178,27 @@ function UserPage() {
                     <AlertDialogCancel>Отмена</AlertDialogCancel>
                     <AlertDialogAction onClick={() => void blockFromProfile()}>
                       Заблокировать
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {canBlockFromProfile && isBanned && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline">Разблокировать в своём клубе</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Разблокировать игрока?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Игрок снова сможет вступать в ваш клуб.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Отмена</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void unblockFromProfile()}>
+                      Разблокировать
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

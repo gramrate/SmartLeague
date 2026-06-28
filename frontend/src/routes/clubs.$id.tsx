@@ -12,6 +12,8 @@ import { fmtDateRange, fmtRub } from "@/lib/format";
 import { Crown, LogOut, Settings, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 
 export const Route = createFileRoute("/clubs/$id")({ component: ClubPage });
 
@@ -22,10 +24,17 @@ function ClubPage() {
   const setMe = useAuthStore((s) => s.setMe);
   const qc = useQueryClient();
 
+  const [membersModalOpen, setMembersModalOpen] = useState(false);
+
   const club = useQuery({ queryKey: ["club", id], queryFn: () => clubsApi.get(id) });
   const members = useQuery({
     queryKey: ["club", id, "members", "preview"],
     queryFn: () => clubsApi.members(id, { limit: 15, offset: 0 }),
+  });
+  const allMembers = useQuery({
+    queryKey: ["club", id, "members", "all"],
+    queryFn: () => clubsApi.members(id, { limit: 200, offset: 0 }),
+    enabled: membersModalOpen,
   });
   const series = useQuery({ queryKey: ["club", id, "series"], queryFn: () => clubsApi.series(id, 10, 0) });
   const games = useQuery({
@@ -35,7 +44,8 @@ function ClubPage() {
 
   const canManage = canManageClub(me, id);
   const isInClub = me?.club_id === id;
-  const canJoin = me && !me.club_id;
+  const isBannedFromClub = !!club.data?.is_banned;
+  const canJoin = me && !me.club_id && !isBannedFromClub;
 
   const onJoin = async () => {
     try {
@@ -84,7 +94,10 @@ function ClubPage() {
         eyebrow="Клуб" title={club.data.name} description={club.data.description}
         actions={
           <>
-            {me && !isInClub && me.club_id && (
+            {me && isBannedFromClub && (
+              <span className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">Вы заблокированы в этом клубе</span>
+            )}
+            {me && !isInClub && !isBannedFromClub && me.club_id && (
               <span className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">Вы уже состоите в другом клубе</span>
             )}
             {canJoin && (
@@ -178,8 +191,8 @@ function ClubPage() {
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
             <div className="mb-4 flex items-center justify-between gap-2">
               <h2 className="font-display text-lg font-semibold">Участники</h2>
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/clubs/$id/members" params={{ id }}>Показать всех</Link>
+              <Button size="sm" variant="outline" onClick={() => setMembersModalOpen(true)}>
+                Показать всех
               </Button>
             </div>
             {members.isLoading ? <LoadingBlock /> :
@@ -254,6 +267,32 @@ function ClubPage() {
           </AlertDialog>
         </div>
       )}
+
+      <Dialog open={membersModalOpen} onOpenChange={setMembersModalOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Все участники — {club.data?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 pr-1">
+            {allMembers.isLoading ? <LoadingBlock /> : !allMembers.data?.items?.length ? (
+              <p className="text-sm text-muted-foreground">Участников пока нет</p>
+            ) : (
+              <ul className="divide-y divide-border/40">
+                {allMembers.data.items.map((m) => (
+                  <li key={m.id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                    <Link to="/user/$id" params={{ id: m.id }} className="min-w-0 flex-1 truncate hover:text-primary" onClick={() => setMembersModalOpen(false)}>
+                      {displayUserName(m)}
+                    </Link>
+                    {m.club_id === id && (m.club_state ?? ClubState.None) !== ClubState.None ? (
+                      <RoleBadge state={(m.club_state ?? ClubState.None) as ClubState} />
+                    ) : <span />}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }

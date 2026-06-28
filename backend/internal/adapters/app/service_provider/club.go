@@ -29,6 +29,7 @@ type clubService interface {
 	BlockMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 	UnbanMember(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, memberID uuid.UUID) error
 	BlockProfile(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) error
+	IsProfileBanned(ctx context.Context, requesterID uuid.UUID, clubID uuid.UUID, profileID uuid.UUID) (bool, error)
 }
 
 func (s *ServiceProvider) ClubService() clubService {

@@ -24,7 +24,12 @@ func (h *handler) GetByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.HTTPStatus{Code: http.StatusBadRequest, Message: "invalid id"})
 	}
 
-	resp, err := h.clubService.GetByID(c.Request().Context(), &dto.GetClubRequest{ID: id})
+	req := &dto.GetClubRequest{ID: id}
+	if viewerID, ok := c.Get("user_id").(uuid.UUID); ok && viewerID != uuid.Nil {
+		req.ViewerID = &viewerID
+	}
+
+	resp, err := h.clubService.GetByID(c.Request().Context(), req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.HTTPStatus{Code: http.StatusInternalServerError, Message: err.Error()})
 	}

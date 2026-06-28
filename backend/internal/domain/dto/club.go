@@ -20,10 +20,17 @@ type CreateClubRequest struct {
 type CreateClubResponse Club
 
 type GetClubRequest struct {
-	ID uuid.UUID `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	ID       uuid.UUID  `json:"-" validate:"required,uuid" swaggerignore:"true"`
+	ViewerID *uuid.UUID `json:"-" swaggerignore:"true"`
 }
 
-type GetClubResponse Club
+type GetClubResponse struct {
+	ID          uuid.UUID `json:"id"`
+	CreatorID   uuid.UUID `json:"creator_id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description,omitempty"`
+	IsBanned    bool      `json:"is_banned"`
+}
 
 type GetAllClubsRequest struct {
 	Query  *string `json:"q,omitempty" form:"q" validate:"omitempty,min=1,max=100" example:"лига"`

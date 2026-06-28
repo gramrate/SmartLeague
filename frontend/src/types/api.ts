@@ -53,6 +53,7 @@ export interface Club {
   name: string;
   description?: string;
   creator_id?: string;
+  is_banned?: boolean;
 }
 
 export enum JudgeRole {

@@ -16,6 +16,9 @@ import { ClubState, GameStatus, JudgeRole } from "@/types/api";
 import { RoleBadge } from "@/components/site/RoleBadge";
 import { Settings } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/series/$id")({ component: SeriesPage });
 
@@ -40,6 +43,46 @@ function SeriesPage() {
   const judges = full.data?.judges ?? [];
   const myJudge = me ? judges.find((j) => j.profile_id === me.id) : undefined;
   const isJudge = !!myJudge;
+
+  const judgesQ = useQuery({
+    queryKey: ["series", id, "judges"],
+    queryFn: () => seriesApi.judges(id),
+    enabled: canManage,
+  });
+  const allParticipants = useQuery({
+    queryKey: ["series", id, "participants", "manage-payments"],
+    queryFn: () => seriesApi.participants(id, 200, 0),
+    enabled: canManage,
+  });
+
+  const [judgeDialogOpen, setJudgeDialogOpen] = useState(false);
+  const [judgeSearchQ, setJudgeSearchQ] = useState("");
+  const [settingJudge, setSettingJudge] = useState(false);
+  const [removingJudge, setRemovingJudge] = useState<string | null>(null);
+
+  const invalidateJudgeRelated = () => {
+    qc.invalidateQueries({ queryKey: ["series", id, "judges"] });
+    qc.invalidateQueries({ queryKey: ["series", id, "full"] });
+    qc.invalidateQueries({ queryKey: ["series", id, "participants"], exact: true });
+    qc.invalidateQueries({ queryKey: ["series", id, "participants", "manage-payments"], exact: true });
+    qc.invalidateQueries({ queryKey: ["series", id, "payments"], exact: true });
+  };
+  const judgeSet = (profileId: string, role: JudgeRole) => async () => {
+    setSettingJudge(true);
+    try {
+      await seriesApi.setJudge(id, profileId, role);
+      invalidateJudgeRelated();
+    } catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
+    finally { setSettingJudge(false); }
+  };
+  const judgeRemove = (profileId: string) => async () => {
+    setRemovingJudge(profileId);
+    try {
+      await seriesApi.removeJudge(id, profileId);
+      invalidateJudgeRelated();
+    } catch (e) { toast.error(e instanceof ApiError ? e.message : "Ошибка"); }
+    finally { setRemovingJudge(null); }
+  };
 
   const [gameName, setGameName] = useState("");
   const [gameDescription, setGameDescription] = useState("");
@@ -275,21 +318,32 @@ function SeriesPage() {
         </section>
 
         <aside className="space-y-6">
-          {judges.length > 0 && (
+          {(canManage || judges.length > 0) && (
             <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
-              <h2 className="mb-4 font-display text-lg font-semibold">Судьи</h2>
-              <ul className="space-y-2 text-sm">
-                {judges.map((j) => (
-                  <li key={j.profile_id} className="flex items-center justify-between gap-2">
-                    <Link to="/user/$id" params={{ id: j.profile_id }} className="min-w-0 flex-1 truncate hover:text-primary">
-                      {displayUserName(j)}
-                    </Link>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${j.role === JudgeRole.Main ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
-                      {j.role === JudgeRole.Main ? "Главный" : "Боковой"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className="font-display text-lg font-semibold">Судьи</h2>
+                {canManage && (
+                  <Button size="sm" variant="outline" onClick={() => setJudgeDialogOpen(true)}>
+                    Изменить состав
+                  </Button>
+                )}
+              </div>
+              {judges.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Судей пока нет.</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {judges.map((j) => (
+                    <li key={j.profile_id} className="flex items-center justify-between gap-2">
+                      <Link to="/user/$id" params={{ id: j.profile_id }} className="min-w-0 flex-1 truncate hover:text-primary">
+                        {displayUserName(j)}
+                      </Link>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${j.role === JudgeRole.Main ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                        {j.role === JudgeRole.Main ? "Главный" : "Боковой"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
           <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
@@ -329,6 +383,79 @@ function SeriesPage() {
           </div>
         </aside>
       </div>
+
+      <Dialog open={judgeDialogOpen} onOpenChange={(open) => { setJudgeDialogOpen(open); if (!open) setJudgeSearchQ(""); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Управление судьями</DialogTitle>
+            <DialogDescription>Назначайте судей из участников серии.</DialogDescription>
+          </DialogHeader>
+          <Tabs defaultValue="judges" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="judges">Текущие судьи</TabsTrigger>
+              <TabsTrigger value="participants">Участники</TabsTrigger>
+            </TabsList>
+            <TabsContent value="judges" className="mt-3">
+              <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+                {!judgesQ.data?.items?.length ? (
+                  <p className="text-sm text-muted-foreground">Судей пока нет.</p>
+                ) : (
+                  <ul className="divide-y divide-border/40">
+                    {judgesQ.data.items.map((j) => (
+                      <li key={j.profile_id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Link to="/user/$id" params={{ id: j.profile_id }} className="truncate hover:text-primary">{displayUserName(j)}</Link>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${j.role === JudgeRole.Main ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>
+                            {j.role === JudgeRole.Main ? "Главный" : "Боковой"}
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {j.role !== JudgeRole.Main && (
+                            <Button size="sm" variant="outline" disabled={settingJudge} onClick={judgeSet(j.profile_id, JudgeRole.Main)}>→ Главный</Button>
+                          )}
+                          {j.role !== JudgeRole.Side && (
+                            <Button size="sm" variant="outline" disabled={settingJudge} onClick={judgeSet(j.profile_id, JudgeRole.Side)}>→ Боковой</Button>
+                          )}
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" disabled={removingJudge === j.profile_id} onClick={judgeRemove(j.profile_id)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="participants" className="mt-3 space-y-3">
+              <div className="space-y-1.5">
+                <Label>Поиск участника</Label>
+                <Input value={judgeSearchQ} maxLength={50} onChange={(e) => setJudgeSearchQ(e.target.value)} placeholder="Никнейм…" />
+              </div>
+              <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+                {(() => {
+                  const nonJudges = (allParticipants.data?.items ?? [])
+                    .filter((p) => !(judgesQ.data?.items ?? []).some((j) => j.profile_id === p.id))
+                    .filter((p) => !judgeSearchQ.trim() || displayUserName(p).toLowerCase().includes(judgeSearchQ.trim().toLowerCase()));
+                  if (!nonJudges.length) return <p className="text-sm text-muted-foreground">{judgeSearchQ.trim() ? "Никого не найдено." : "Все участники уже являются судьями."}</p>;
+                  return (
+                    <ul className="divide-y divide-border/40">
+                      {nonJudges.map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                          <span className="truncate">{displayUserName(p)}</span>
+                          <div className="flex shrink-0 gap-1">
+                            <Button size="sm" variant="outline" disabled={settingJudge} onClick={judgeSet(p.id, JudgeRole.Main)}>Главный</Button>
+                            <Button size="sm" variant="outline" disabled={settingJudge} onClick={judgeSet(p.id, JudgeRole.Side)}>Боковой</Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
